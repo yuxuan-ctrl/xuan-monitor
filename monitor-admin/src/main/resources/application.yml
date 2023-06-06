@@ -5,10 +5,8 @@ spring:
     password: yuxuan666
     driverClassName: com.mysql.cj.jdbc.Driver
 
-# MyBatis
-mybatis:
-  # 指定搜索包名
-  typeAliasesPackage: com.xuan.dao.domain
-  #配置mapper的扫描，找到所有的mapper.xml映射文件
-  #classpath:只能加载找到的第一个资源文件    classpath*:能加载多个路径下的资源文件
-  mapperLocations: classpath*:mapper/*.xml
+
+#配置日志  打印sql语句
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

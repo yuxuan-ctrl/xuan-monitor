@@ -1,4 +1,5 @@
-import React from "react";
+import { RouteObject } from "@/router/interface";
+
 const requireComponent = require.context(
   // 其组件目录的相对路径
   "./",
@@ -7,28 +8,14 @@ const requireComponent = require.context(
   // 匹配基础组件文件名的正则表达式
   /_base\.tsx$/
 );
-console.log(
-  "🚀 ~ file: index.tsx:36 ~ requireComponent:",
-  requireComponent.keys()
-);
 
-const Modules = requireComponent.keys().map((component: string) => {
-  console.log("🚀 ~ file: index.ts:17 ~ Modules ~ component:", component);
-  console.log(
-    "🚀 ~ file: index.ts:17 ~ Modules ~ component:",
-    import("./analysis/_base").then((res) => {
-      console.log(res);
-    })
-  );
-  console.log(React.lazy(() => import(component.replace(".tsx", ""))));
+const Modules: Array<RouteObject> = [];
 
-  console.log(
-    "🚀 ~ file: index.ts:17 ~ Modules ~ import(component):",
-    import(component.replace(".tsx", ""))
-  );
-  //   console.log("🚀 ~ file: index.ts:18 ~ Modules ~ component:", require(component))
-
-  return import(component);
+requireComponent.keys().forEach((componentModule: string) => {
+  const module = require(`${componentModule}`).default;
+  module.forEach((component: RouteObject) => {
+    Modules.push(component);
+  });
 });
 
-export {Modules};
+export { Modules };

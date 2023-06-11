@@ -1,10 +1,17 @@
 {
-  root: 'C:\\Users\\Administrator\\Desktop\\yx\\xuan-monitor\\monitor-ui',
+  root: 'D:\\xuan-projects\\monitor-xuan\\monitor-ui',
   registry: 'https://registry.npmmirror.com',
   pkgs: [
     {
-      name: 'html-webpack-plugin',
-      version: 'next',
+      name: '@types/react',
+      version: 'latest',
+      type: 'tag',
+      alias: undefined,
+      arg: [Result]
+    },
+    {
+      name: '18.2.11',
+      version: 'latest',
       type: 'tag',
       alias: undefined,
       arg: [Result]
@@ -12,16 +19,16 @@
   ],
   production: false,
   cacheStrict: false,
-  cacheDir: 'C:\\Users\\Administrator\\.npminstall_tarball',
+  cacheDir: 'C:\\Users\\xuan\\.npminstall_tarball',
   env: {
     npm_config_registry: 'https://registry.npmmirror.com',
-    npm_config_argv: '{"remain":[],"cooked":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\Administrator\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","-D","html-webpack-plugin@next"],"original":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\Administrator\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","-D","html-webpack-plugin@next"]}',
-    npm_config_user_agent: 'npminstall/7.8.0 npm/? node/v16.20.0 win32 x64',
-    npm_config_cache: 'C:\\Users\\Administrator\\.npminstall_tarball',
-    NODE: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_execpath: 'C:\\Users\\Administrator\\AppData\\Roaming\\nvm\\v16.20.0\\node_modules\\cnpm\\node_modules\\npminstall\\bin\\install.js',
-    npm_config_userconfig: 'C:\\Users\\Administrator\\.cnpmrc',
+    npm_config_argv: '{"remain":[],"cooked":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\xuan\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","@types/react","-D","18.2.11"],"original":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\xuan\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","@types/react","-D","18.2.11"]}',
+    npm_config_user_agent: 'npminstall/7.8.0 npm/? node/v16.13.1 win32 x64',
+    npm_config_cache: 'C:\\Users\\xuan\\.npminstall_tarball',
+    NODE: 'D:\\nvm\\v16.13.1\\node.exe',
+    npm_node_execpath: 'D:\\nvm\\v16.13.1\\node.exe',
+    npm_execpath: 'C:\\Users\\xuan\\AppData\\Roaming\\npm\\node_modules\\cnpm\\node_modules\\npminstall\\bin\\install.js',
+    npm_config_userconfig: 'C:\\Users\\xuan\\.cnpmrc',
     npm_config_disturl: 'https://cdn.npmmirror.com/binaries/node',
     npm_config_r: 'https://registry.npmmirror.com',
     COREPACK_NPM_REGISTRY: 'https://registry.npmmirror.com',
@@ -49,8 +56,8 @@
     npm_config_sharp_binary_host: 'https://cdn.npmmirror.com/binaries/sharp',
     npm_config_sharp_libvips_binary_host: 'https://cdn.npmmirror.com/binaries/sharp-libvips',
     npm_config_robotjs_binary_host: 'https://cdn.npmmirror.com/binaries/robotjs',
-    npm_rootpath: 'C:\\Users\\Administrator\\Desktop\\yx\\xuan-monitor\\monitor-ui',
-    INIT_CWD: 'C:\\Users\\Administrator\\Desktop\\yx\\xuan-monitor\\monitor-ui'
+    npm_rootpath: 'D:\\xuan-projects\\monitor-xuan\\monitor-ui',
+    INIT_CWD: 'D:\\xuan-projects\\monitor-xuan\\monitor-ui'
   },
   binaryMirrors: {
     ENVS: {
@@ -184,7 +191,7 @@
   disableFallbackStore: false,
   workspacesMap: Map(0) {},
   enableWorkspace: false,
-  workspaceRoot: 'C:\\Users\\Administrator\\Desktop\\yx\\xuan-monitor\\monitor-ui',
+  workspaceRoot: 'D:\\xuan-projects\\monitor-xuan\\monitor-ui',
   isWorkspaceRoot: true,
   isWorkspacePackage: false,
   offline: false,

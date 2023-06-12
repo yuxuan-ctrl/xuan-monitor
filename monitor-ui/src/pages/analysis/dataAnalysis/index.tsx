@@ -6,8 +6,8 @@ const dataAnalysis = () => {
   return (
     <>
       <div className="an-container">
-        <Title level={2} className="">
-          h2. Ant Design
+        <Title level={3} className="an-container-label">
+          数据分析
         </Title>
       </div>
     </>

@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-06-06 09:44:21
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2023-06-09 10:57:07
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-06-12 08:39:20
  * @FilePath: \monitor-ui\src\router\index.tsx
  * @Description:
  *
@@ -20,9 +20,9 @@
  */
 // 引入所需的依赖文件
 import * as React from "react";
-import { useRoutes, Navigate } from "react-router-dom";
-import { RouteObject } from "@/router/interface";
-import { Modules } from "./Modules";
+import {useRoutes, Navigate} from "react-router-dom";
+import {RouteObject} from "@/router/interface";
+import {Modules} from "./Modules";
 console.log("🚀 ~ file: index.tsx:26 ~ Modules:", Modules);
 // console.log("🚀 ~ file: index.tsx:26 ~ routeArray:", routeArray);
 
@@ -80,10 +80,11 @@ export const rootRouter: RouteObject[] = [
       requiresAuth: false,
       title: "首页",
       key: "home",
+      
     },
   },
   ...Modules,
-  {1
+  {
     path: "*",
     element: <Navigate to="/404" />,
   },

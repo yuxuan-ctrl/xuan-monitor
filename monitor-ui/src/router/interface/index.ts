@@ -1,4 +1,5 @@
 export interface MetaProps {
+  icon?: any;
 	keepAlive?: boolean;
 	requiresAuth?: boolean;
 	title: string;

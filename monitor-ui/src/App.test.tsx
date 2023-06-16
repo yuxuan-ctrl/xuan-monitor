@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl 
  * @Date: 2023-06-06 09:44:21
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2023-06-13 18:09:39
+ * @LastEditTime: 2023-06-14 09:32:54
  * @FilePath: \monitor-ui\src\App.test.tsx
  * @Description: 
  * 
@@ -10,18 +10,20 @@
  */
 // import React from 'react';
 // import { render, screen } from '@testing-library/react';
-// import App from './App';
+// import EasyAgentSDK from './utils/reportSDK';
 
-// test('renders learn react link', () => {
-//   render(<App />);
-//   const linkElement = screen.getByText(/learn react/i);
-//   expect(linkElement).toBeInTheDocument();
+// // test('renders learn react link', () => {
+// //   render(<App />);
+// //   const linkElement = screen.getByText(/learn react/i);
+// //   expect(linkElement).toBeInTheDocument();
+// // });
+
+// // 测试SDK是否能通过
+// describe('monitor sdk', () => {
+//   it('monitor sdk correctly', () => {
+//     // console.log("🚀 ~ file: index.test.ts:16 ~ it ~ EasyAgentSDK:", new EasyAgentSDK({}))
+//     new EasyAgentSDK({});
+//     // console.log('=============');
+//   });
 // });
-
-// 测试SDK是否能通过
-describe('monitor sdk', () => {
-  it('monitor sdk correctly', () => {
-    const EasyAgentSDK = require('@/utils/reportSDK');
-    console.log("🚀 ~ file: index.test.ts:16 ~ it ~ EasyAgentSDK:", EasyAgentSDK)
-  });
-});
+export {}

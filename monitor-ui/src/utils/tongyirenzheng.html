@@ -1,0 +1,981 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <title>用户登录</title>
+    <link rel="stylesheet" href="css/index.css?v=20221205" />
+    <link rel="stylesheet" href="css/indentification.css?v=20221205" />
+    <link rel="stylesheet" href="css/public-announcement.css?v=20230418" />
+    <link rel="stylesheet" href="css/public-announcement-detail.css?v=20230601" />
+    <style>
+        a {
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="">
+    <div class="ToLogin" id="ToLogin">
+        <div class="login_container">
+            <div class="form_conter">
+                <div class="former">
+                    <div class="login_text">
+                        <div class="login_tab scan_tab active">粤政易扫码登录</div>
+                        <div class="login_tab account_tab">账号密码登录</div>
+                    </div>
+                    <div class="form_inner scan_code">
+                        <div id="wx_reg"></div>
+                        <div id="network_error" style="display: none;">接入互联网可提供政务微信扫码登录服务</div><br />
+                    </div>
+                    <div class="form_inner accon_form" style="display: none;margin-top:10px">
+                        <div style="margin-bottom: 5px;line-height: 15px;">
+                            <div id="form-tips"
+                                style="display:none;padding: 3px 10px 3px;background: #ffebeb;color: #e4393c;border: 1px solid #faccc6;box-sizing: unset;">
+                            </div>
+                        </div>
+                        <div class="form_inner_item"><input id="username" placeholder="账号/手机号码/证件号码" maxlength="64" />
+                        </div>
+                        <div class="form_inner_item"><input type="password" id="password" placeholder="密码"
+                                maxlength="64" /></div>
+                        <div class="captcha_inner" id="captcha_contain">
+                            <div class="form_inner_item"><input id="captcha" placeholder="验证码" maxlength="64" /></div>
+                            <div class="codePic fr"><img id="codePic_img" src="" /></div>
+                        </div>
+                        <div class="form_inner_button"><a href="JavaScript:;" id="login">登录</a></div>
+                        <div>
+                            <div class="item-for-link"><a href="JavaScript:getDigitalToken();"
+                                    style="color:#0178E9;font-size:14px;float: left;">数字证书登录</a></div>
+                            <div class="item-for-link"><a id="fingerprintLoginEntry"
+                                    style="display:none; cursor:pointer; margin-left: 10px;color:#0178E9;font-size:14px;float: left;">指纹登录</a>
+                            </div>
+                            <div class="item-for-link" style="float:right;margin-bottom:20px;"><a
+                                    href="JavaScript:forgotPassword();" id=""
+                                    style="color:#0178E9;font-size:14px">忘记密码</a></div>
+                        </div>
+                    </div>
+                    <div class="redirect-tips" style="display: none;"><img width="65px" height="65px" class="tips-img"
+                            src="img/icon-success.png" />
+                        <p class="tips-content">政务认证登录成功，正在跳转至第三方业务系统...</p>
+                    </div>
+                    <div class="registerlink" id="register"><span class="link">新用户注册</span></div>
+                    <p class="login_tips code_tips" id="scan-tips"
+                        style="font-size: 12px; clear: both;color: #808080; line-height: 20px;margin: 30px 0 20px; text-align: center;">
+                    </p>
+                    <p class="login_tips pwd_tips" id="pwd-tips"
+                        style="font-size: 12px; clear: both;color: #808080; line-height: 20px;margin: 30px 0 20px; text-align: center;">
+                    </p>
+                </div>
+                <div class="footer">主办：广东省政务服务数据管理局<br />&nbsp;&nbsp;&nbsp;&nbsp;承办：广东省数字政府建设运营中心</div>
+            </div>
+        </div>
+    </div>
+    <div class="bg_login"></div>
+    <div class="public-announcement" style="display: none">
+        <div class="title"><span class="announcement-close"></span>
+            <div class="title-wrapper"></div>
+        </div>
+        <div class="detail">查看详情</div>
+    </div>
+    <div class="public-announcement-detail" style="display: none" id="annoucement">
+        <div class="detail-container"><span class="announcement-close"></span>
+            <div class="title"></div>
+            <div class="body">
+                <div class="name"></div>
+                <pre class="content">
+        </pre>
+                <pre class="end"></pre>
+            </div>
+            <div class="detail-footer"><span class="close-btn">关闭</span></div>
+        </div>
+        <div class="detail-mask"></div>
+    </div>
+    <div class="public-announcement-detail" style="display: none; background:#e0e0e0" id="adminSysAnnoucement">
+        <div class="detail-container"><span class="announcement-close close-event" style="display: none"></span>
+            <div class="title" style="color: red;">停用公告</div>
+            <div class="body">
+                <div class="name"></div>
+                <pre class="content" style="text-indent: 2rem;">
+        </pre>
+                <pre class="end"></pre>
+            </div>
+            <div class="detail-footer"><span class="close-btn close-event" style="display: none">关闭</span></div>
+        </div>
+        <div class="detail-mask"></div>
+    </div>
+    <script>var baseUrl = (window.location && window.location.origin ? window.location.origin : (window.location.protocol + "//" + window.location.host)) + '/orgDev'</script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/aes/aes.min.js"></script>
+    <script src="js/aes/aesconfig.js"></script>
+    <script src="js/forMobile.js"></script>
+    <script src="js/wwLogin-1.0.0.js?v=20230315"></script>
+    <script src="js/md5.js"></script>
+    <script src="js/trustworthy.js?version=1.1"></script>
+    <script src="js/identificationApi.js?v=20221205"></script>
+    <script src="js/modal.js?v=20230418"></script>
+    <script>
+        var fail_time = 0       //定义全局的是否需要显示图文验证码 1:需要，其他：不需要
+        var tempToken = 'auth' //sessionStorage.getItem('tempToken')           //获取存在sessionStorage里的token
+        var redirect_uri = getQueryString('redirect_uri')
+        var digitalTokenValue = getQueryString('access_token')
+        var agentid = getQueryString('agentid')
+        var appid = getQueryString('appid')
+        var state = getQueryString('state')
+        var isRz_hlwjg = getQueryString('isRz_hlwjg') // paasid是互联网监管
+        var isNationLogin = getQueryString('isNationLogin') // 不是从互联网过来
+        var uuidData;
+        var lockTimeInterval;//账户锁定倒计时计时器
+        var $formTips;
+        var isRedirecting = false;
+        window.__SDK_digitalgd_SM2 = {
+            isEnableSM2: false,
+            publicKeyHex: '',
+        };
+
+        var access_token_reg = new RegExp('[\?&]' + 'access_token=' + digitalTokenValue, "g")
+        if (digitalTokenValue && window.history) {
+            history.replaceState('', '', location.href.replace(access_token_reg, ''))
+        }
+
+        $().ready(function () {
+            $formTips = $('#form-tips');
+            $('#register').click(function () {
+                var loginUrl = encodeURIComponent(location.href);
+                var forgetUrl = encodeURIComponent(forgotPassword(true));
+                window.location.href = "/zwrz/um/pc/register?loginUrl=" + loginUrl + '&forgetUrl=' + forgetUrl;
+            })
+
+            // 获取临时token
+            //getToken()
+
+            // 如果redirect_uri不在同域名则修改为同域名
+            /*if (redirect_uri) {
+              var temp_url = redirect_uri.split('?')[1]
+              redirect_uri = location.origin + '/_tif_wwlocal_login_/?' + temp_url
+            }*/
+            //console.log(hex_md5("xtbgelk.digitalgd.com.cn"));
+            // 校验数字证书认证后的access_token
+            setCodePicImg()
+            checkDigitalToken()
+
+            if (window.location.host === "xtbg.gdzwfw.gov.cn" || window.location.host === "59.210.8.128:10001") {
+                $('#captcha').val('')
+            } else {
+                $('#captcha').val('aa123')
+            }
+
+            if (isRz_hlwjg === '1') {
+                // paasid是互联网监管，默认显示账密登录的tab页面
+                $('.account_tab').addClass('active')
+                $('.accon_form').show()
+
+                $('.scan_tab').removeClass('active')
+                $('.scan_code').hide()
+            }
+
+            // 不是从互联网过来
+            if (isNationLogin === '1') {
+                // 不是从互联网过来的，政务微信二维码的tab页不再显示二维码(因为显示不了)，然后在此tab页上提示：接入互联网可提供政务微信扫码登录服务。
+
+                $('#wx_reg').hide()
+                $('#network_error').show()
+
+            } else {
+                $('#wx_reg').show()
+                $('#network_error').hide()
+                //加载二维码
+                var redirect_uri1
+                if (redirect_uri && redirect_uri.indexOf('?') != -1) {
+                    redirect_uri1 = redirect_uri + '%26yhzxtype%3d1'
+                } else {
+                    redirect_uri1 = redirect_uri + '%3fyhzxtype%3d1'
+                }
+                redirect_uri1 = redirect_uri1.replace('%23', '%2523')
+                window.WwLogin({
+                    id: 'wx_reg',
+                    appid: appid,
+                    agentid: agentid,
+                    redirect_uri: redirect_uri1,
+                    state: state,
+                    href: baseUrl + '/rz/css/WeChat.css'
+                })
+            }
+        })
+        function showRedirectingTips() {
+            isRedirecting = true
+            $('.redirect-tips').show();
+            $('.scan_code').hide();
+            $('.accon_form').hide();
+        }
+
+        function getQueryString(name) {
+            var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i')
+            var r = window.location.search.substr(1).match(reg)
+            if (r != null) return unescape(r[2])
+            return null
+        }
+        //键盘ENTER键
+        document.onkeydown = function (event) {
+            e = event ? event : window.event ? window.event : null
+            if (e.keyCode == 13) {
+                //执行的方法 alert('回车检测到了'); search();return false;
+                $('#login').click()
+            }
+        }
+        //通知消息
+        //$(".notic_header").show();
+
+        //输入框提示语
+        $('#username').focus(function () {
+            $('#username').attr('placeholder', '账号/手机号码/证件号码').parent().removeClass('error_item')
+        })
+        $('#password').focus(function () {
+            $('#password').attr('placeholder', '密码').parent().removeClass('error_item')
+        })
+        $('#captcha').focus(function () {
+            $('#captcha').attr('placeholder', '验证码').parent().removeClass('error_item')
+        })
+        /**
+         * 获取uuid
+         */
+        function getUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                return (c === 'x' ? (Math.random() * 16) | 0 : 'r&0x3' | '0x8').toString(
+                    16
+                )
+            })
+        }
+        // 获取图形验证码
+        function getCaptcha() {
+            uuidData = getUUID()
+            var params = uuidData
+            return baseUrl + '/rz/auth/dsfcaptcha.jpg?uuid=' + params
+        }
+
+        function setIntervalFun() {
+            setInterval(function () {
+                setCodePicImg()
+            }, 60000)
+        }
+        // setIntervalFun()
+        // 给img赋值url
+        function setCodePicImg() {
+            $('#codePic_img').attr('src', getCaptcha())
+        }
+        // setCodePicImg()
+        // 点击验证码图片更换新验证码
+        $('#codePic_img').click(function () {
+            setCodePicImg()
+        })
+        // 截取某个字符后所有字符串
+        function getCaption(obj) {
+            var index = obj.lastIndexOf('\?')
+            obj = obj.substring(index, obj.length)
+            return obj
+        }
+        // 获取url某个值
+        function getParam(paramName) {
+            ; (paramValue = ''), (isFound = !1)
+            if (
+                redirect_uri &&
+                getCaption(redirect_uri).indexOf('?') == 0 &&
+                getCaption(redirect_uri).indexOf('=') > 1
+            ) {
+                ; (arrSource = unescape(getCaption(redirect_uri))
+                    .substring(1, getCaption(redirect_uri).length)
+                    .split('&')),
+                    (i = 0)
+                while (i < arrSource.length && !isFound)
+                    arrSource[i].indexOf('=') > 0 &&
+                        arrSource[i].split('=')[0].toLowerCase() == paramName.toLowerCase() &&
+                        ((paramValue = arrSource[i].split('=')[1]), (isFound = !0)),
+                        i++
+            }
+            return paramValue == '' && (paramValue = null), paramValue
+        }
+        if (getQueryString('code_auth')) {
+            identificationApi.verifyCodeAuth(
+                {
+                    code_auth: getQueryString('code_auth')
+                },
+                function (res) {
+                    if (res.status === 0) {
+                        var code = res.data
+                        identifyInfo(code)
+                    }
+                }
+            )
+        }
+        //登录操作
+        /*$('#login').click(function() {
+          var userName = $('#username').val()
+          if (userName == null || userName == '') {
+            $('#username').attr('placeholder', '账号不能为空')
+            $('#username')
+              .parent()
+              .addClass('error_item')
+            //alert("账号为空，请输入账号！");
+            //$("#username").focus();
+            return false
+          }
+          var passWord
+          if ($('#password').val() == null || $('#password').val() == '') {
+            $('#password').attr('placeholder', '密码不能为空')
+            $('#password')
+              .parent()
+              .addClass('error_item')
+            //$("#password").focus();
+            return false
+          } else {
+            passWord = hex_md5($('#password').val())
+          }
+      
+          if(fail_time == 1){
+            var captchaParams = $('#captcha').val()
+            if ($('#captcha').val() == null || $('#captcha').val() == '') {
+              $('#captcha').attr('placeholder', '验证码不能为空')
+              $('#captcha')
+                .parent()
+                .addClass('error_item')
+              return false
+            }
+            loginData(userName,passWord,uuidData,captchaParams)
+      
+          }
+          else{
+            requireFailTimes(function(res){
+              loginData(userName,passWord,uuidData)
+            })
+          }
+        })*/
+
+        //登录操作
+        $('#login').click(function () {
+            var $username = $('#username')
+            var userName = $username.val()
+            if (userName == null || userName == '') {
+                $username.attr('placeholder', '账号不能为空').parent().addClass('error_item')
+                //alert("账号为空，请输入账号！");
+                //$("#username").focus();
+                return false
+            }
+            var $password = $('#password')
+            var passWord = $password.val()
+            if (passWord == null || passWord == '') {
+                $password.attr('placeholder', '密码不能为空').parent().addClass('error_item')
+                //$("#password").focus();
+                return false
+            }
+
+            passWord = hex_md5($password.val())
+
+            var $captcha = $('#captcha')
+            var captchaParams = $captcha.val()
+            if (captchaParams == null || captchaParams == '') {
+                $captcha.attr('placeholder', '验证码不能为空').parent().addClass('error_item')
+                return false
+            }
+            loginData(userName, passWord, uuidData, captchaParams)
+
+        })
+
+        // 姓名文本框失去焦点
+        /*$('#username').on('blur',function(){
+          // 请求接口
+          requireFailTimes()
+        });
+      
+        function getToken(){
+          // todo 从后端获取临时token
+          if(!tempToken){
+            // tempToken为空，获取临时token
+            $.ajax({
+              type: 'post',
+              url:  baseUrl + '/rz/userLogin/getTempToken',
+              dataType: 'json',
+              success: function(msg) {
+                // 返回token，保存到sessionStorage  sessionStorage.setItem('tempToken',...)
+                if(msg.status == 0) {
+                  sessionStorage.setItem('tempToken', msg.tempToken)
+                  tempToken = sessionStorage.getItem('tempToken')
+                }
+              },
+              fail: function(e) {
+                console.log('接口请求错误', e)
+              }
+            })
+          }
+        }
+        */
+
+        function loginData(userName, passWord, uuidData, captchaParams) {
+            var params = {
+                userName: userName,
+                passWord: passWord,
+                captcha: captchaParams,
+                timestamp: Date.parse(new Date),
+            }
+            if (uuidData) {
+                params.uuid = uuidData
+            }
+
+            var value = ""
+            if (window.__SDK_digitalgd_SM2.isEnableSM2 === true) {
+                value = JSON.stringify({
+                    ciphertext: window.sm2encrypt(JSON.stringify(params))
+                })
+            } else {
+                value = window.encrypt(JSON.stringify(params))
+            }
+
+            $.ajax({
+                type: 'post',
+                url: baseUrl + '/rz/userLogin/login?ng=1',
+                headers: {
+                    tempToken: tempToken
+                },
+                contentType: "application/json;charset=utf-8",
+                dataType: 'json',
+                data: value,
+                success: function (msg) {
+                    clearLockedTime();
+                    $formTips.hide()
+                    if (msg.status == 0) {
+                        if (msg.isExpired) {
+                            //登录成功，密码快过期
+                            var expireDate = msg.expireDate || 0
+                            var minExpireDate = msg.minExpireDate || 0
+                            var maxExpireDate = msg.maxExpireDate || 0
+                            var redirectPath = redirect_uri ? (redirect_uri + (redirect_uri.indexOf('?') > -1 ? '&code=' : '?code=') + msg.code) : '#'
+                            showPasswordExpireModal(expireDate, redirectPath, minExpireDate, maxExpireDate)
+                            return
+                        }
+
+                        if (redirect_uri == null) {
+                            alert('登录成功！')
+                        } else {
+                            //alert("登录成功！")
+                            showRedirectingTips()
+                            if (getParam('url')) {
+                                var getThisUrl = getParam('url').split('/')[2]
+                                if (redirect_uri.indexOf('?') != -1) {
+                                    window.location.href = redirect_uri + '&code=' + msg.code
+                                } else {
+                                    window.location.href = redirect_uri + '?code=' + msg.code
+                                }
+                            } else {
+                                window.location.href = baseUrl + '/#/login'
+                            }
+                        }
+                        return
+                    }
+
+                    //输错6次，锁定账户，且锁定时间进行倒计时
+                    if (msg.status == -1007) {
+                        countDownLockedTime($formTips, msg.errmsg, '{1}', msg.lockedExpire)
+                        setCodePicImg()
+
+                        if (msg.validate == 1) {
+                            fail_time = 1
+                            $('#captcha').val('')
+                            $('#captcha_contain').css('display', 'block')
+                        }
+                        return
+                    }
+
+
+
+                    if (msg.status == -1001 || msg.status == -1002) {
+                        //密码错误
+                        setCodePicImg()
+                        $formTips.show().html(msg.errmsg)
+                        if (msg.validate == 1) {
+                            fail_time = 1
+                            $('#captcha').val('')
+                            $('#captcha_contain').css('display', 'block')
+                        }
+                        return
+                    }
+                    if (msg.status == 1005) {
+                        //登录成功，密码没重置 跳转到修改密码页面
+                        // var account = $('#username').val()
+                        var account = msg.mobile
+                        changePassword(account)
+                        return
+                    }
+                    if (msg.status == 1006) {
+                        //登录成功，密码快过期
+                        var expireDate = msg.expireDate || 0
+                        var minExpireDate = msg.minExpireDate || 0
+                        var maxExpireDate = msg.maxExpireDate || 0
+                        var redirectPath = redirect_uri ? (redirect_uri + (redirect_uri.indexOf('?') > -1 ? '&code=' : '?code=') + msg.code) : '#'
+                        showPasswordExpireModal(expireDate, redirectPath, minExpireDate, maxExpireDate)
+                        return
+                    }
+                    if (msg.status == -1003) {
+                        fail_time = 1
+                        // 验证码错误
+                        if (!uuidData) {
+                            $('#captcha').val('')
+                            $('#captcha_contain').css('display', 'block')
+                        } else {
+                            $('#captcha').val('').attr('placeholder', '验证码错误或失效').parent().addClass('error_item')
+                        }
+                        setCodePicImg()
+                        return
+                    }
+
+                    //其他错误
+                    setCodePicImg()
+                    alert(msg.errmsg)
+                }
+            })
+        }
+        /*
+          function requireFailTimes(callback){
+            // 请求登陆失败的次数
+            var userName = $('#username').val()
+            $.ajax({
+              type: 'get',
+              url:  baseUrl + '/rz/userLogin/needValidate',
+              dataType: 'json',
+              // data: {
+              //   userName: userName
+              // },
+              headers:{
+                tempToken:tempToken
+              },
+              success: function(msg) {
+                if (msg.status == 0) {
+                  // 不需要校验码，不提示
+                  callback && callback(msg)
+                }
+                else if (msg.status == 1) {
+                  // 需要校验码的情况，出现图文验证码并且提示'验证码不能为空'
+                  fail_time = msg.status
+                  // $('#captcha').val('')
+                  setIntervalFun()
+                  setCodePicImg()
+                  $('#captcha_contain').css('display','block')
+                }
+                else{
+                  getToken()
+                  // alert(msg.errmsg)
+                }
+              },
+              fail: function(e){
+                console.log('接口请求错误', e)
+              }
+            })
+          }*/
+        var IdentifyModal;
+        var queryQrxhr;
+        var isLoadingQr = false;
+        function identifyInfo(code) {
+            if (isLoadingQr) return;
+            isLoadingQr = true;
+            // 实名认证-人脸识别
+            identificationApi.getMiniProgrameQrCode(
+                {
+                    paasid: 'dzqz',
+                    scope: 'userinfo',
+                    from: 'wt',
+                    t: (new Date()).getTime()
+                },
+                function (qRes) {
+                    isLoadingQr = false;
+                    var stateIndex = 0
+                    if (qRes.errcode === 0) {
+                        var uuid = qRes.data.uuid
+                        var png = 'data:image/png;base64,' + qRes.data.pngbase64
+
+                        if (IdentifyModal) {
+                            IdentifyModal.refreshImage(png)
+                        } else {
+                            IdentifyModal = $('body').identifyModal({
+                                image: png,
+                                retry: function () {
+                                    queryQrxhr && queryQrxhr.abort();
+                                    identifyInfo(code)
+                                }
+                            })
+                        }
+                        var retryTimes = 10;
+                        queryStatus()
+                        // 开始轮询状态
+                        function queryStatus() {
+                            queryQrxhr = identificationApi.queryQrCodeStatus(
+                                {
+                                    uuid: uuid,
+                                    qrstate: stateIndex,
+                                    t: (new Date()).getTime()
+                                },
+                                function (res) {
+                                    if (res.statusText === 'abort') return;
+                                    if (res.errcode === 0) {
+                                        retryTimes = 10;
+                                        var state = res.data.state
+                                        if (stateIndex !== state) {
+                                            stateIndex = state
+                                            IdentifyModal.setStatus(state)
+                                        }
+                                        if (state !== 2) {
+                                            return queryStatus()
+                                        }
+                                        if (state === 2) {
+                                            var qrcode = res.data.code
+                                            identificationApi.setUserInfo(
+                                                {
+                                                    qrcode: qrcode,
+                                                    code: code
+                                                },
+                                                function (uRes) {
+                                                    if (uRes.status === -1006) {
+                                                        // alert(uRes.errmsg)
+                                                        var result = confirm(uRes.errmsg)
+                                                        if (result == true) {
+                                                            location.reload()
+                                                        } else {
+                                                            location.reload()
+                                                        }
+                                                    } else if (uRes.status === 200) {
+                                                        console.log('人脸识别成功')
+                                                        if (redirect_uri == null) {
+                                                            alert('登录成功！')
+                                                        } else {
+                                                            //alert("登录成功！")
+                                                            showRedirectingTips()
+                                                            if (getParam('url')) {
+                                                                var getThisUrl = getParam('url').split('/')[2]
+                                                                if (redirect_uri.indexOf('?') != -1) {
+                                                                    //alert(redirect_uri);
+                                                                    window.location.href =
+                                                                        redirect_uri + '&code=' + code
+                                                                } else {
+                                                                    //alert(redirect_uri);)
+                                                                    window.location.href =
+                                                                        redirect_uri + '?code=' + code
+                                                                }
+                                                            } else {
+                                                                window.location.href = baseUrl + '/#/login'
+                                                            }
+                                                        }
+                                                    } else {
+                                                        console.log('人脸识别失败')
+                                                        IdentifyModal.setStatus(0)
+                                                        confirm(uRes.errmsg);
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    } else if (res.errcode === 4003) {
+                                        // 4003 query 10分钟后，重新获取二维码
+                                        identifyInfo(code);
+                                    } else {
+                                        if (--retryTimes <= 0) {
+                                            return IdentifyModal.setStatus(-1)
+                                        }
+                                        return queryStatus()
+                                    }
+                                }
+                            )
+                        }
+                    } else {
+                        return IdentifyModal.setStatus(-1)
+                    }
+                }
+            )
+        }
+
+        // 跳转数字证书页面获取token
+        function getDigitalToken() {
+            // 数字证书IP及对应ID
+            var digitalIp;
+            var host = window.location.host;
+            // https://bs-test.digitalgd.com.cn/jcrzpt/gm/check-manage/CALogin?serviceType=zf&client_id=bjcaapp&type=1&service=https%3A%2F%2Fxtbg.digitalgd.com.cn%2ForgDev%2Frz%2Findex.html%3Fredirect_uri%3Dhttps%3A%2F%2Fxtbg.digitalgd.com.cn%2F_tif_wwlocal_login_%2F%3Furl%3Dhttps%253A%252F%252Fxtbg.digitalgd.com.cn%252ForgDev%252F
+            // 判断是否生产环境
+            if (host === "xtbg.gdzwfw.gov.cn") {
+                digitalIp = 'https://xtbg.gdzwfw.gov.cn/rz_jcrzpt/gm/zfc-check-manage/CALogin'
+            } else {
+                digitalIp = 'https://xtbg.digitalgd.com.cn/rz_jcrzpt/gm/zfc-check-manage/CALogin'
+            }
+
+            // 数字证书页面回调地址，认证成功后会在地址后面带上token
+            var digitalService = location.protocol + "//" + location.host + location.pathname + location.search.replace(access_token_reg, '')
+            window.location.href = digitalIp + '?serviceType=zf&client_id=bjcaapp&service=' + encodeURIComponent(digitalService)
+        }
+
+        // 校验数字证书认证后的access_token，存在则使用其登录用户中心
+        function checkDigitalToken() {
+            var winLocationHref = window.location.href
+            var digitalTokenKey = 'access_token%253D'
+            if (digitalTokenValue) {
+                /*var digitalTokenValue = winLocationHref.substring(
+                  winLocationHref.indexOf(digitalTokenKey) + digitalTokenKey.length,
+                  winLocationHref.indexOf(digitalTokenKey) + digitalTokenKey.length + 36
+                )*/
+                $.ajax({
+                    type: 'post',
+                    url: baseUrl + '/rz/userLogin/loginByDigital',
+                    dataType: 'json',
+                    data: {
+                        accessToken: digitalTokenValue
+                    },
+                    success: function (msg) {
+                        if (msg.status == 0) {
+                            if (redirect_uri == null) {
+                                alert('登录成功！')
+                            } else {
+                                showRedirectingTips()
+                                if (getParam('url')) {
+                                    var getThisUrl = getParam('url').split('/')[2]
+                                    // 截取该access_token前面的url，防止跳转后暴露在地址栏
+                                    // redirect_uri = redirect_uri.substring(
+                                    //  0,
+                                    //   redirect_uri.indexOf('%3Faccess_token')
+                                    // )
+                                    if (redirect_uri.indexOf('?') != -1) {
+                                        //alert(redirect_uri);
+                                        window.location.href = redirect_uri + '&code=' + msg.code
+                                    } else {
+                                        //alert(redirect_uri);)
+                                        window.location.href = redirect_uri + '?code=' + msg.code
+                                    }
+                                } else {
+                                    window.location.href = baseUrl + '/#/login'
+                                }
+                            }
+                        } else {
+                            //其他错误
+                            alert(msg.errmsg)
+                        }
+                    }
+                })
+            }
+        }
+
+        function forgotPassword(nojump) {
+            var link;
+            var currentUrl = window.location.href
+            var index = currentUrl.indexOf('?')
+            if (index != -1) {
+                link =
+                    baseUrl +
+                    '/pwd/#/forgotPassword?' +
+                    currentUrl.substring(index + 1, currentUrl.length)
+            } else {
+                link = baseUrl + '/pwd/#/forgotPassword'
+            }
+            if (nojump) {
+                return link;
+            }
+            window.location.href = link;
+        }
+
+        function changePassword(account) {
+            var currentUrl = window.location.href
+            var index = currentUrl.indexOf('?')
+            var accountQuery = account ? ('account=' + account) : ''
+            if (index != -1) {
+                window.location.href =
+                    baseUrl +
+                    '/pwd/#/changePassword?' + (accountQuery ? (accountQuery + '&') : '') + currentUrl.substring(index + 1, currentUrl.length)
+            } else {
+                window.location.href = baseUrl + '/pwd/#/changePassword?' + (accountQuery ? ('?' + accountQuery) : '')
+            }
+        }
+
+
+        //切换tab页
+        $('.login_tab').click(function () {
+            if (isRedirecting) return
+            $(this)
+                .addClass('active')
+                .siblings('.login_tab')
+                .removeClass('active')
+            $('.form_inner')
+                .eq($(this).index())
+                .show()
+                .siblings('.form_inner')
+                .hide()
+            $('.login_tips')
+                .eq($(this).index())
+                .show()
+                .siblings('.login_tips')
+                .hide()
+        })
+
+        // 显示密码过期弹层
+        function showPasswordExpireModal(expireDate, redirectPath, minExpireDate, maxExpireDate) {
+            if (expireDate <= 0) {
+                $.modal.show({
+                    canClose: false,
+                    title: '密码到期提示',
+                    name: '尊敬的用户:',
+                    tips: ' 为了您的账密安全，请定期修改密码，您的密码已超过' + maxExpireDate + '天未修改，超过' + maxExpireDate + '天未修改系统将引导您先完成修改密码的操作。您的密码已过有效期，烦请及时修改!',
+                    bottom: '<a class="g-button plain fleft" href="' + redirectPath + '">继续登录</a><a class="g-button fright" href="JavaScript:changePassword();">修改密码</a>'
+                })
+            } else if (expireDate > 0 && expireDate <= minExpireDate) {
+
+                $.modal.show({
+                    canClose: true,
+                    title: '密码到期提示',
+                    name: '尊敬的用户:',
+                    tips: ' 为了您的账密安全，请定期修改密码，您的密码已超过' + (maxExpireDate - minExpireDate) + '天未修改，超过' + maxExpireDate + '天未修改系统将引导您先完成修改密码的操作。您的密码有效期仅剩余' + expireDate + '天，烦请及时修改!',
+                    bottom: '<a class="g-button plain fleft" href="' + redirectPath + '">继续登录</a><a class="g-button fright" href="JavaScript:changePassword();">修改密码</a>'
+                })
+            }
+        }
+
+
+        //显示倒计时
+        function countDownLockedTime($dom, errmsg, replaceStr, lockedTime) {
+            $dom.show().html(errmsg.replace(replaceStr, formatSeconds(lockedTime)))
+            lockTimeInterval = setInterval(function () {
+                lockedTime -= 1
+                if (lockedTime <= 0) {
+                    $dom.html('账户已解锁，可重新进行登录')
+                    clearLockedTime()
+                } else {
+                    $dom.html(errmsg.replace(replaceStr, formatSeconds(lockedTime)))
+                }
+            }, 1000)
+        }
+        //清除倒计时
+        function clearLockedTime() {
+            clearInterval(lockTimeInterval)
+        }
+
+
+        function formatSeconds(value) {
+            var secondTime = parseInt(value); // 秒
+            var minuteTime = 0; // 分
+            var hourTime = 0; // 小时
+
+            if (secondTime > 60) {
+                minuteTime = parseInt(secondTime / 60);
+                secondTime = parseInt(secondTime % 60);
+                if (minuteTime > 60) {
+                    hourTime = parseInt(minuteTime / 60);
+                    minuteTime = parseInt(minuteTime % 60);
+                }
+
+            }
+            var result = _to2(hourTime) + "小时" + _to2(minuteTime) + "分钟" + _to2(secondTime) + "秒";
+            return result;
+
+            function _to2(val) {
+                return ('0' + val).slice(-2)
+            }
+        }
+
+        // 公告相关
+        function closeAnnouncement() {
+            $('.public-announcement').hide()
+        }
+        function showAnnouncement() {
+            $('.public-announcement').show()
+        }
+        function setAnnouncement(title) {
+            $('.public-announcement .title-wrapper').text(title)
+        }
+        function setAnnouncementDetail(data) {
+            // const { title, modifyTime, inscriber, salutation, body } = data;
+            var title = data.title;
+            var inscriber = data.inscriber;
+            var salutation = data.salutation;
+            var body = data.body;
+
+            $('#annoucement.public-announcement-detail .title').text(title)
+            $('#annoucement.public-announcement-detail .name').text(salutation)
+            $('#annoucement.public-announcement-detail .content').html(body)
+            $('#annoucement.public-announcement-detail .end').text(inscriber)
+        }
+        function showAnnouncementDetail(data) {
+            setAnnouncementDetail(data)
+            $('#annoucement.public-announcement-detail').show()
+        }
+        function closeAnnouncementDetail() {
+            $('#annoucement.public-announcement-detail').hide()
+            $('#adminSysAnnoucement.public-announcement-detail').hide()
+        }
+        $('.public-announcement .detail').click(function () {
+            closeAnnouncement()
+            getOneDetailAnnouncement()
+        })
+        $('.detail-footer .announcement-close').click(function () {
+            closeAnnouncement()
+            showAnnouncementDetail()
+        })
+        $('.public-announcement .announcement-close').click(function () {
+            closeAnnouncement()
+        })
+        $('.public-announcement-detail .close-btn').click(function () {
+            closeAnnouncementDetail()
+        })
+        $('.public-announcement-detail .announcement-close').click(function () {
+            closeAnnouncementDetail()
+        })
+
+        function getOneSummaryAnnouncement() {
+            $.ajax({
+                type: 'GET',
+                url: baseUrl + '/rz/zuul/getOneSummaryAnnouncement?range=1',
+                dataType: 'json',
+                success: function (res) {
+                    if (res.status === 0 && res.data && res.data.title) {
+                        setAnnouncement(res.data.title)
+                        showAnnouncement()
+                    }
+                },
+                error: function () {
+
+                },
+            });
+        }
+
+        function getOneDetailAnnouncement() {
+            $.ajax({
+                type: 'GET',
+                url: baseUrl + '/rz/zuul/getOneDetailAnnouncement?range=1',
+                dataType: 'json',
+                success: function (res) {
+                    if (res.status === 0) {
+                        showAnnouncementDetail(res.data)
+                    }
+                },
+                error: function () {
+
+                },
+            });
+        }
+
+
+        function isPc() {
+            if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        function setDetailWidth() {
+            if (isPc()) {
+                $('#annoucement.public-announcement-detail .detail-container').css('width', '642px')
+            } else {
+                $('#annoucement.public-announcement-detail .detail-container').css('width', '90%')
+            }
+        }
+        setDetailWidth()</script>
+    <script defer="defer" src="index.1cdd8071.js"></script>
+</body>
+
+</html>

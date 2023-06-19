@@ -16,6 +16,21 @@ const reportWebVitals = (onPerfEntry) => {
   }
 };
 
+// Json 转 FormData
+const json2FormData = (data) => {
+  const formData = new FormData();
+  Object.keys(data).forEach((key) => {
+    let value = null;
+    if (value instanceof Blob) {
+      value = data[key];
+    } else {
+      value = JSON.stringify(data[key]);
+    }
+    formData.append(key, value);
+  });
+  return formData;
+};
+
 export default class EasyAgentSDK {
   appId = "";
   baseUrl = "";
@@ -27,7 +42,6 @@ export default class EasyAgentSDK {
   flag = null;
   constructor(options: any = {}) {
     if (SDK) return;
-
     SDK = this;
     this.appId = options.appId;
     this.baseUrl = options.baseUrl || window.location.origin;
@@ -48,10 +62,6 @@ export default class EasyAgentSDK {
   flushQueue() {
     Promise.resolve().then(() => {
       QUEUE.forEach((fn) => fn());
-      console.log(
-        "🚀 ~ file: reportSDK.ts:50 ~ EasyAgentSDK ~ Promise.resolve ~ QUEUE:",
-        QUEUE
-      );
       QUEUE.length = 0;
     });
   }
@@ -62,10 +72,10 @@ export default class EasyAgentSDK {
     window.addEventListener("pageshow", () => {
       pageShowTime = performance.now();
       // 页面性能指标上报
-      reportWebVitals((data) => {
-        this.debounceReport({data});
-        // this.performanceReport({data});
-      });
+      // reportWebVitals((data) => {
+      //   this.report({data});
+      //   // this.performanceReport({data});
+      // });
       // 执行 onPageShow
       this.onPageShow();
     });
@@ -76,32 +86,54 @@ export default class EasyAgentSDK {
       // 刷新队列前执行 onPagesHide
       this.onPagesHide();
       // 刷新任务队列
-      this.flushQueue();
+      // this.flushQueue();
     });
+
     // 监听Vue路由的replace事件
     window.addEventListener("replaceState", () => {
-      this.debounceReport();
-      return console.log("replaceState");
+      const data = this.getPvUv();
+      this.report({data});
     });
     // 监听Vue的push事件和React的路由切换事件
     window.addEventListener("pushState", () => {
-      console.log("pushState");
-      this.getPvUv();
-      this.debounceReport();
+      const data = this.getPvUv();
+      this.actionReport({data}).then(() => this.debounceReport());
     });
     // 监听页面刷新或首次加载事件
     window.addEventListener("load", () => {
-      this.debounceReport();
-      return console.log("load");
+      const data = this.getPvUv();
+      this.report({data});
+      Promise.reject("UnhandleXXX").catch((err) => {
+        console.log(err);
+      });
     });
     // 监听页面错误事件
-    window.addEventListener("error", () => {
-      this.debounceReport();
-      return console.log("error");
+    window.onerror = function (msg, _url, line, col, error) {
+      console.log("onerror");
+      console.log(
+        "🚀 ~ file: reportSDK.ts:112 ~ EasyAgentSDK ~ listenPage ~ msg:",
+        msg
+      );
+    };
+    // 监听页面错误事件
+    window.addEventListener("error", (err) => {
+      console.log("addEventListenererr");
+      const errorInfo = {
+        errFileName: err.filename,
+        message: err.error.message,
+      };
+      this.errorReport({
+        errorInfo,
+      }).then(() => this.debounceReport());
     });
-    // 监听页面抛出的异常
+
+    // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
     window.addEventListener("unhandledrejection", () => {
       return console.log("unhandledrejection");
+    });
+    // 监听页面抛出的异常（Promise抛出异常已经用catch处理，即Promise.reject().catch()）
+    window.addEventListener("rejectionhandled", (event) => {
+      console.log("rejection handled"); // 1秒后打印"rejection handled"
     });
   }
 
@@ -117,23 +149,12 @@ export default class EasyAgentSDK {
     };
   }
 
-  // Json 转 FormData
-  json2FormData(data) {
-    const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-      let value = null;
-      if (value instanceof Blob) {
-        value = data[key];
-      } else {
-        value = JSON.stringify(data[key]);
-      }
-      formData.append(key, value);
-    });
-
-    return formData;
-  }
-
-  // 获取页面PV、UV信息
+  /**
+   *
+   * @description 获取页面PV、UV信息
+   * @return {*}
+   * @memberof EasyAgentSDK
+   */
   getPvUv() {
     console.log(window.location.href);
     console.log(performance.getEntriesByType("resource"));
@@ -148,7 +169,20 @@ export default class EasyAgentSDK {
           name: resource.name,
         };
       });
+    const performanceMetrics = this.getPerformance();
+    return {
+      url: window.location.href,
+      resourceList,
+      performanceMetrics,
+    };
+  }
 
+  /**
+   *
+   * @description 获取Performance（性能）参数
+   * @memberof EasyAgentSDK
+   */
+  getPerformance() {
     const timing = performance.timing;
     const performanceMetrics = {
       dnst: timing.domainLookupEnd - timing.domainLookupStart || 0,
@@ -165,32 +199,34 @@ export default class EasyAgentSDK {
     reportWebVitals((data) => {
       Reflect.set(performanceMetrics, data.name, data.value);
     });
-    console.log(
-      "🚀 ~ file: reportSDK.ts:167 ~ EasyAgentSDK ~ reportWebVitals ~ performanceMetrics:",
-      performanceMetrics
-    );
-    return {
-      url: window.location.href,
-      resourceList,
-      performanceMetrics,
-    };
+    return performanceMetrics;
   }
-  // 监听多次，只发送一次请求
-  debounceReport(data = {}) {
+
+  /**
+   *
+   * @description 触发任何一个report时间开始计时，只发送一次请求，清空队列
+   * @memberof EasyAgentSDK
+   */
+  debounceReport() {
     if (this.flag) {
       clearTimeout(this.flag);
     }
     console.log(this.flag);
     this.flag = setTimeout(() => {
-      this.report({data});
+      this.flushQueue();
     }, 1000);
   }
 
-  // 自定义上报类型
+  /**
+   *
+   *
+   * @param {*} config // 上报的数据格式类似{data}
+   * @memberof EasyAgentSDK
+   * @description 自定义上报类型
+   */
   report(config) {
-    console.log("report");
     QUEUE.push(() => {
-      const formData = this.json2FormData({
+      const formData = json2FormData({
         ...this.config,
         ...config,
         time: new Date().toLocaleString(),
@@ -203,33 +239,45 @@ export default class EasyAgentSDK {
 
   // 用户行为上报
   actionReport(config) {
-    this.report({
-      ...config,
-      type: "action",
+    return new Promise<void>((resolve) => {
+      this.report({
+        ...config,
+        type: "action",
+      });
+      resolve();
     });
   }
 
   // 网络状况上报
   networkReport(config) {
-    this.report({
-      ...config,
-      type: "network",
+    return new Promise<void>((resolve) => {
+      this.report({
+        ...config,
+        type: "network",
+      });
+      resolve();
     });
   }
 
   // 页面性能指标上报
   performanceReport(config) {
-    this.report({
-      ...config,
-      type: "performance",
+    return new Promise<void>((resolve) => {
+      this.report({
+        ...config,
+        type: "performance",
+      });
+      resolve();
     });
   }
 
   // 错误警告上报
   errorReport(config) {
-    this.report({
-      ...config,
-      type: "error",
+    return new Promise<void>((resolve) => {
+      this.report({
+        ...config,
+        type: "error",
+      });
+      resolve();
     });
   }
 }

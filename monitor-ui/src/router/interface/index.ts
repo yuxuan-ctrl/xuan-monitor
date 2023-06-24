@@ -1,4 +1,5 @@
 export interface MetaProps {
+  icon: JSX.Element;
 	keepAlive?: boolean;
 	requiresAuth?: boolean;
 	title: string;

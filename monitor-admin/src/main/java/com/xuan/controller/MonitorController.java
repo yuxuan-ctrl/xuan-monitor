@@ -11,5 +11,6 @@ public class MonitorController {
     @PostMapping("/report")
     public void report(ReportVo reportVo){
         System.out.println(reportVo.getData());
+        System.out.println(reportVo.getAppId());
     }
 }

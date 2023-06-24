@@ -1,7 +1,7 @@
 package com.xuan.service;
 
+import com.xuan.dao.pojo.entity.Webpvuv;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.xuan.dao.pojo.entity.User;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.xuan.dao.pojo.entity.User;
  * @author yuxuan-ctrl
  * @since 2023-06-24
  */
-public interface UserService extends IService<User> {
+public interface WebpvuvService extends IService<Webpvuv> {
 
 }

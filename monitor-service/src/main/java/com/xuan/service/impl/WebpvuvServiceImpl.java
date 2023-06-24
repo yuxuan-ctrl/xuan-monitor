@@ -1,8 +1,8 @@
 package com.xuan.service.impl;
 
-import com.xuan.dao.domain.pojo.entity.User;
-import com.xuan.dao.domain.mapper.UserMapper;
-import com.xuan.service.UserService;
+import com.xuan.dao.pojo.entity.Webpvuv;
+import com.xuan.dao.mapper.WebpvuvMapper;
+import com.xuan.service.WebpvuvService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2023-06-24
  */
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+public class WebpvuvServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> implements WebpvuvService {
 
 }

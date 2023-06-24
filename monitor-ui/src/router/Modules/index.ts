@@ -1,4 +1,4 @@
-import { RouteObject } from "@/router/interface";
+import {RouteObject} from "@/router/interface";
 
 const requireComponent = require.context(
   // 其组件目录的相对路径
@@ -18,4 +18,4 @@ requireComponent.keys().forEach((componentModule: string) => {
   });
 });
 
-export { Modules };
+export {Modules};

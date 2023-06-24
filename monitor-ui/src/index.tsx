@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl 
  * @Date: 2023-06-06 09:44:21
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2023-06-06 16:48:25
+ * @LastEditTime: 2023-06-14 09:35:01
  * @FilePath: \monitor-ui\src\index.tsx
  * @Description: 
  * 
@@ -12,8 +12,10 @@ import ReactDOM from "react-dom";
 import "./index.css";
 // import reportWebVitals from "./reportWebVitals";
 import App from "./App";
+import EasyAgentSDK from '@/utils/reportsdk'
 
 
+new EasyAgentSDK();
 // 18
 // const root = ReactDOM.createRoot(document.getElementById('root'));
 // root.render(

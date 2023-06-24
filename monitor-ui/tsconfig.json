@@ -9,7 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false, // 隐形格式为any不报错
     /* Strict Type-Checking Options */
-    "strict": true /* Enable all strict type-checking options. */,
+    "strict": false /* Enable all strict type-checking options. */,
     // "noImplicitAny": true,                 /* Raise error on expressions and declarations with an implied 'any' type. */
     // "strictNullChecks": true,              /* Enable strict null checks. */
     // "strictFunctionTypes": true,           /* Enable strict checking of function types. */
@@ -31,7 +31,8 @@
     "paths": {
       "@": ["src"],
       "@/*": ["src/*"]
-    }
+    },
+    "types":["webpack-env"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "vite.config.ts"],
   "exclude": ["node_modules", "dist", "**/*.js"]

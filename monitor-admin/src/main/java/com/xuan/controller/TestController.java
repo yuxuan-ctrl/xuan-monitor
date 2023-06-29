@@ -12,9 +12,10 @@ import java.io.IOException;
 public class TestController {
     @GetMapping("/redirectTo")
     void testRedirect(HttpServletResponse response) throws IOException {
-        String testUrl = "https://www.baidu.com";
-//        String testUrl2 = "http://localhost:3000/login";
-        response.sendRedirect(testUrl);
+//        String testUrl = "https://www.baidu.com";
+        String testUrl2 = "http://localhost:3000/login";
+        response.sendRedirect(testUrl2);
+
     }
 
     @PostMapping(value = "/redirectToPost")

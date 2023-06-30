@@ -6,7 +6,8 @@ const NOOP = (v) => v;
 // 通过 web-vitals 页面性能指标
 const reportWebVitals = (onPerfEntry) => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
-    import("web-vitals").then(({getCLS, getFID, getFCP, getLCP, getTTFB}) => {
+    import("web-vitals").then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      console.log();
       getCLS(onPerfEntry); // 布局偏移量
       getFID(onPerfEntry); // 首次输入延迟时间
       getFCP(onPerfEntry); // 首次内容渲染时间
@@ -72,10 +73,11 @@ export default class EasyAgentSDK {
     window.addEventListener("pageshow", () => {
       pageShowTime = performance.now();
       // 页面性能指标上报
-      // reportWebVitals((data) => {
-      //   this.report({data});
-      //   // this.performanceReport({data});
-      // });
+      const data = this.getPerformance();
+      console.log("page show");
+      this.performanceReport({ data }).then(() => {
+        this.debounceReport();
+      });
       // 执行 onPageShow
       this.onPageShow();
     });
@@ -85,27 +87,17 @@ export default class EasyAgentSDK {
       this.timeOnPage = performance.now() - pageShowTime;
       // 刷新队列前执行 onPagesHide
       this.onPagesHide();
-      // 刷新任务队列
-      // this.flushQueue();
     });
 
     // 监听Vue路由的replace事件
     window.addEventListener("replaceState", () => {
       const data = this.getPvUv();
-      this.report({data});
+      this.report({ data });
     });
     // 监听Vue的push事件和React的路由切换事件
     window.addEventListener("pushState", () => {
       const data = this.getPvUv();
-      this.actionReport({data}).then(() => this.debounceReport());
-    });
-    // 监听页面刷新或首次加载事件
-    window.addEventListener("load", () => {
-      const data = this.getPvUv();
-      this.report({data});
-      Promise.reject("UnhandleXXX").catch((err) => {
-        console.log(err);
-      });
+      this.actionReport({ data }).then(() => this.debounceReport());
     });
     // 监听页面错误事件
     window.onerror = function (msg, _url, line, col, error) {
@@ -116,25 +108,37 @@ export default class EasyAgentSDK {
       );
     };
     // 监听页面错误事件
-    window.addEventListener("error", (err) => {
-      console.log("addEventListenererr");
-      const errorInfo = {
-        errFileName: err.filename,
-        message: err.error.message,
-      };
-      this.errorReport({
-        errorInfo,
-      }).then(() => this.debounceReport());
-    });
+    window.addEventListener(
+      "error",
+      (err) => {
+        console.log("addEventListenererr");
+        const errorInfo = {
+          errFileName: err.filename,
+          message: err.error.message,
+        };
+        this.errorReport({
+          errorInfo,
+        }).then(() => this.debounceReport());
+      },
+      true
+    );
 
     // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
-    window.addEventListener("unhandledrejection", () => {
-      return console.log("unhandledrejection");
-    });
+    window.addEventListener(
+      "unhandledrejection",
+      () => {
+        return console.log("unhandledrejection");
+      },
+      true
+    );
     // 监听页面抛出的异常（Promise抛出异常已经用catch处理，即Promise.reject().catch()）
-    window.addEventListener("rejectionhandled", (event) => {
-      console.log("rejection handled"); // 1秒后打印"rejection handled"
-    });
+    window.addEventListener(
+      "rejectionhandled",
+      (event) => {
+        console.log("rejection handled"); // 1秒后打印"rejection handled"
+      },
+      true
+    );
   }
 
   //绑定replaceState事件
@@ -182,7 +186,7 @@ export default class EasyAgentSDK {
    * @description 获取Performance（性能）参数
    * @memberof EasyAgentSDK
    */
-  getPerformance() {
+  async getPerformance() {
     const timing = performance.timing;
     const performanceMetrics = {
       dnst: timing.domainLookupEnd - timing.domainLookupStart || 0,
@@ -233,7 +237,11 @@ export default class EasyAgentSDK {
         appId: this.appId,
         pageUrl: window.location.href,
       });
-      navigator.sendBeacon(`${this.baseUrl}${config.url || ""}`, formData);
+
+      navigator.sendBeacon(
+        `${this.baseUrl}${config.url || "/monitor/report"}`,
+        formData
+      );
     });
   }
 

@@ -15,5 +15,6 @@ import java.util.List;
  */
 public interface UserService extends IService<User> {
 
-List<User> selectPage();
+    List<User> selectPage();
+    User selectById(String id);
 }

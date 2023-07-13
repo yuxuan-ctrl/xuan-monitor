@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ import java.util.List;
  * @author yuxuan-ctrl
  * @since 2023-06-05
  */
-@Controller
+@RestController
 @RequestMapping("/user")
 public class UserController {
 
@@ -29,6 +31,11 @@ public class UserController {
     @GetMapping("/getUserPage")
     public List<User> getUserPage(){
         return userService.selectPage();
+    }
+
+    @GetMapping("/getUserById")
+    public User getUserById(@RequestParam String id){
+        return userService.selectById(id);
     }
 }
 

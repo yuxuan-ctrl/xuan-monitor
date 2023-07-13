@@ -28,7 +28,7 @@ public class UserController {
 
     @GetMapping("/getUserPage")
     public List<User> getUserPage(){
-        return userService.getUserPage();
+        return userService.selectPage();
     }
 }
 

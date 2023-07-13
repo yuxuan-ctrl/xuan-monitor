@@ -112,7 +112,7 @@ public class CodeGeneratorTest {
 
         // 包配置
         PackageConfig pc = new PackageConfig();
-        pc.setParent("com.xuan.dao.domain");// 自定义包路径
+        pc.setParent("com.xuan.dao");// 自定义包路径
         pc.setController("controller");// 这里是控制器包名，默认 web
         pc.setMapper("mapper");// 设置Mapper包名，默认mapper
         pc.setService("service");// 设置Service包名，默认service

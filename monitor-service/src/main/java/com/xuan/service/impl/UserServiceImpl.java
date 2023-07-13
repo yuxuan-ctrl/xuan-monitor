@@ -1,10 +1,12 @@
 package com.xuan.service.impl;
 
-import com.xuan.dao.domain.pojo.entity.User;
-import com.xuan.dao.domain.mapper.UserMapper;
+import com.xuan.dao.pojo.entity.User;
+import com.xuan.dao.mapper.UserMapper;
 import com.xuan.service.UserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +19,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    UserMapper userMapper;
+    @Override
+    public List<User> selectPage() {
+        return userMapper.selectPage();
+    }
 }

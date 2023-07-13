@@ -3,6 +3,8 @@ package com.xuan.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuan.dao.pojo.entity.User;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -13,4 +15,5 @@ import com.xuan.dao.pojo.entity.User;
  */
 public interface UserService extends IService<User> {
 
+List<User> selectPage();
 }

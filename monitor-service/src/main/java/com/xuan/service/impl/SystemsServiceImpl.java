@@ -1,7 +1,7 @@
 package com.xuan.service.impl;
 
-import com.xuan.dao.domain.pojo.entity.Systems;
-import com.xuan.dao.domain.mapper.SystemsMapper;
+import com.xuan.dao.pojo.entity.Systems;
+import com.xuan.dao.mapper.SystemsMapper;
 import com.xuan.service.SystemsService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;

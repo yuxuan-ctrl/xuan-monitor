@@ -1,5 +1,6 @@
 package com.xuan.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuan.dao.pojo.entity.User;
 
@@ -15,6 +16,7 @@ import java.util.List;
  */
 public interface UserService extends IService<User> {
 
-    List<User> selectPage();
+    IPage<User> selectPage();
+    List<User> selectList();
     User selectById(String id);
 }

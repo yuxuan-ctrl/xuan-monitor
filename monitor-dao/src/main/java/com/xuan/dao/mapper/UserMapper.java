@@ -1,9 +1,12 @@
 package com.xuan.dao.mapper;
 
-import com.xuan.dao.pojo.entity.User;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.xuan.dao.pojo.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -17,8 +20,21 @@ import java.util.List;
 @Mapper
 public interface UserMapper extends BaseMapper<User> {
 
-    List<User> selectPage();
+    @Override
+    int insert(User entity);
 
-    User selectById(String id);
+    @Override
+    User selectById(Serializable id);
 
+    @Override
+    List<User> selectList(Wrapper<User> queryWrapper);
+
+    @Override
+    <P extends IPage<User>> P selectPage(P page, Wrapper<User> queryWrapper);
+
+    @Override
+    int deleteById(Serializable id);
+
+    @Override
+    int update(User entity, Wrapper<User> updateWrapper);
 }

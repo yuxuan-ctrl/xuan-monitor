@@ -3,8 +3,7 @@ package com.xuan.dao.pojo.entity;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -18,6 +17,9 @@ import java.util.Date;
  * @since 2023-06-05
  */
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="User对象", description="")
 public class User extends Model<User> {

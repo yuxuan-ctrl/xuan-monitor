@@ -15,4 +15,25 @@
         <result column="id" property="id" />
     </resultMap>
 
+    <select id="getPageData" resultType="com.xuan.dao.pojo.entity.User">
+        select * from user
+        <where>
+            <if test="PageUserDto.userName != null and PageUserDto.userName != ''">
+                and user_name like concat('%',#{PageUserDto.userName},'%')
+            </if>
+            <if test="PageUserDto.id != null and PageUserDto.id != '' ">
+                and id = #{PageUserDto.id}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectByUserName" resultType="com.xuan.dao.pojo.entity.User">
+        select * from user
+        <where>
+            <if test="userName != null and userName != ''">
+                and user_name = #{userName}
+            </if>
+        </where>
+    </select>
 </mapper>

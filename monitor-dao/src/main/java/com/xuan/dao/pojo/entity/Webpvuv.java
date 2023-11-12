@@ -2,8 +2,7 @@ package com.xuan.dao.pojo.entity;
 
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import io.swagger.annotations.ApiModel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.util.Date;
 
@@ -16,6 +15,9 @@ import java.util.Date;
  * @since 2023-06-24
  */
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="Webpvuv对象", description="")
 public class Webpvuv extends Model<Webpvuv> {

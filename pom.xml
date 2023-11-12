@@ -7,6 +7,7 @@
         <module>monitor-admin</module>
         <module>monitor-service</module>
         <module>monitor-dao</module>
+        <module>monitor-common</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -54,6 +55,11 @@
                 <artifactId>mointor-dao</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.xuan</groupId>
+                <artifactId>mointor-common</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
             <!-- MyBatis -->
             <dependency>
                 <groupId>org.mybatis.spring.boot</groupId>
@@ -96,7 +102,11 @@
                 <artifactId>commons-lang</artifactId>
                 <version>2.6</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-boot-starter</artifactId>
+                <version>3.0.2</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity-engine-core</artifactId>
@@ -107,6 +117,11 @@
                 <artifactId>swagger-annotations</artifactId>
                 <version>1.5.13</version>
             </dependency>
+            <dependency>
+                <groupId>com.github.pagehelper</groupId>
+                <artifactId>pagehelper-spring-boot-starter</artifactId>
+                <version>1.4.1</version>
+            </dependency>
         </dependencies>
 
     </dependencyManagement>
@@ -116,6 +131,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>

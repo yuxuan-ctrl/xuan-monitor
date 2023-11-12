@@ -43,5 +43,16 @@
             <groupId>com.xuan</groupId>
             <artifactId>monitor-service</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.xuan</groupId>
+            <artifactId>monitor-common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-spring-boot-starter</artifactId>
+        </dependency>
     </dependencies>
 </project>

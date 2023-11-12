@@ -4,6 +4,7 @@
     <file url="file://$PROJECT_DIR$/monitor-admin/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/monitor-admin/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/monitor-admin/src/main/resources/application.yml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/monitor-common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/monitor-dao/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/monitor-dao/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/monitor-service/src/main/java" charset="UTF-8" />

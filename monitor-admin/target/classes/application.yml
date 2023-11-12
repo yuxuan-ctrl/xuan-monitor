@@ -10,3 +10,20 @@ spring:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #下划线转驼峰
+    map-underscore-to-camel-case: true
+
+xuan:
+  jwt:
+    # 设置jwt签名加密时使用的秘钥
+    admin-secret-key: xuanmonitorabc
+    # 设置jwt过期时间
+    admin-ttl: 7200000
+    # 设置前端传递过来的令牌名称
+    admin-token-name: token
+    # 设置jwt签名加密时使用的秘钥
+    user-secret-key: xuanmonitorabc
+    # 设置jwt过期时间
+    user-ttl: 7200000
+    # 设置前端传递过来的令牌名称
+    user-token-name: token

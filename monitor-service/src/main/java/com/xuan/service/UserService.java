@@ -2,7 +2,10 @@ package com.xuan.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.xuan.dao.pojo.dto.PageUserDto;
+import com.xuan.dao.pojo.dto.UserDto;
 import com.xuan.dao.pojo.entity.User;
+import com.xuan.result.PageResult;
 
 import java.util.List;
 
@@ -16,7 +19,15 @@ import java.util.List;
  */
 public interface UserService extends IService<User> {
 
-    IPage<User> selectPage();
+    IPage<User> selectPage(PageUserDto pageUserDto);
+
+    /**
+     *
+     * @return
+     */
+    PageResult getPageData(PageUserDto pageUserDto);
     List<User> selectList();
     User selectById(String id);
+
+    User login(UserDto userDto);
 }

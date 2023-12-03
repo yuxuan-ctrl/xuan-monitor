@@ -19,7 +19,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="User对象", description="")
-public class User extends Model<User> {
+public class Users extends Model<Users> {
 
     private static final long serialVersionUID = 1L;
 

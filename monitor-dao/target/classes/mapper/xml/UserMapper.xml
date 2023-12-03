@@ -3,7 +3,7 @@
 <mapper namespace="com.xuan.dao.mapper.UserMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.xuan.dao.pojo.entity.User">
+    <resultMap id="BaseResultMap" type="com.xuan.dao.pojo.entity.Users">
         <id column="user_name" property="userName" />
         <result column="pass_word" property="passWord" />
         <result column="system_ids" property="systemIds" />
@@ -15,8 +15,8 @@
         <result column="id" property="id" />
     </resultMap>
 
-    <select id="getPageData" resultType="com.xuan.dao.pojo.entity.User">
-        select * from user
+    <select id="getPageData" resultType="com.xuan.dao.pojo.entity.Users">
+        select * from users
         <where>
             <if test="PageUserDto.userName != null and PageUserDto.userName != ''">
                 and user_name like concat('%',#{PageUserDto.userName},'%')
@@ -28,8 +28,8 @@
         order by create_time desc
     </select>
 
-    <select id="selectByUserName" resultType="com.xuan.dao.pojo.entity.User">
-        select * from user
+    <select id="selectByUserName" resultType="com.xuan.dao.pojo.entity.Users">
+        select * from users
         <where>
             <if test="userName != null and userName != ''">
                 and user_name = #{userName}

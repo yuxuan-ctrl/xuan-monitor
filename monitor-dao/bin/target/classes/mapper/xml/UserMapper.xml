@@ -3,7 +3,7 @@
 <mapper namespace="com.xuan.dao.mapper.UserMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.xuan.dao.pojo.entity.User">
+    <resultMap id="BaseResultMap" type="com.xuan.dao.pojo.entity.Users">
         <id column="user_name" property="userName" />
         <result column="pass_word" property="passWord" />
         <result column="system_ids" property="systemIds" />

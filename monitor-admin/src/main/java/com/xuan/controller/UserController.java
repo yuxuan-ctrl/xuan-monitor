@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.xuan.constant.JwtClaimsConstant;
 import com.xuan.dao.pojo.dto.PageUserDto;
 import com.xuan.dao.pojo.dto.UserDto;
-import com.xuan.dao.pojo.entity.User;
+import com.xuan.dao.pojo.entity.Users;
 import com.xuan.dao.pojo.vo.LoginVo;
 import com.xuan.properties.JwtProperties;
 import com.xuan.result.PageResult;
@@ -42,19 +42,19 @@ public class UserController {
     public JwtProperties jwtProperties;
     @ApiOperation("用户分页查询")
     @GetMapping("/getUserPage")
-    public Result<IPage<User>> getUserPage(PageUserDto pageUserDto){
-        IPage<User> res = userService.selectPage(pageUserDto);
+    public Result<IPage<Users>> getUserPage(PageUserDto pageUserDto){
+        IPage<Users> res = userService.selectPage(pageUserDto);
         return Result.success(res);
     }
     @GetMapping("/getUserList")
     @ApiOperation("用户列表查询")
-    public List<User> getUserList(){
+    public List<Users> getUserList(){
         return userService.selectList();
     }
 
     @GetMapping("/getUserById")
     @ApiOperation("用户通过Id查询")
-    public User getUserById(@RequestParam String id){
+    public Users getUserById(@RequestParam String id){
         return userService.selectById(id);
     }
 
@@ -68,12 +68,12 @@ public class UserController {
     @PostMapping("/login")
     @ApiOperation("用戶登录")
     public Result<LoginVo> login(UserDto userDto){
-        User user = userService.login(userDto);
+        Users users = userService.login(userDto);
         Map map = new HashMap<>();
-        map.put(JwtClaimsConstant.USER_ID,user.getId());
+        map.put(JwtClaimsConstant.USER_ID, users.getId());
         String jwtToken = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getUserTtl(), map);
         LoginVo loginVo = new LoginVo();
-        BeanUtils.copyProperties(user,loginVo);
+        BeanUtils.copyProperties(users,loginVo);
         loginVo.setToken(jwtToken);
         return Result.success(loginVo);
     }

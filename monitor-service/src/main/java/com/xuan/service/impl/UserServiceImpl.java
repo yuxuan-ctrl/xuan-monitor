@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.pojo.dto.PageUserDto;
 import com.xuan.dao.pojo.dto.UserDto;
-import com.xuan.dao.pojo.entity.User;
+import com.xuan.dao.pojo.entity.Users;
 import com.xuan.exception.AccountNotFoundException;
 import com.xuan.exception.PasswordEditFailedException;
 import com.xuan.properties.JwtProperties;
@@ -29,7 +29,7 @@ import java.util.List;
  */
 @Service
 @Slf4j
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements UserService {
 
     @Autowired
     UserMapper userMapper;
@@ -38,53 +38,53 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     JwtProperties jwtProperties;
 
     @Override
-    public IPage<User> selectPage(PageUserDto pageUserDto) {
+    public IPage<Users> selectPage(PageUserDto pageUserDto) {
         log.info("用戶傳來的DTO：{}", pageUserDto);
-        Page<User> page = new Page<User>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
-        IPage<User> userPage = userMapper.selectPage(page, this.getQueryMapper(pageUserDto));
+        Page<Users> page = new Page<Users>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
+        IPage<Users> userPage = userMapper.selectPage(page, this.getQueryMapper(pageUserDto));
         return userPage;
     }
 
     @Override
     public PageResult getPageData(PageUserDto pageUserDto) {
         Page<PageUserDto> page = new Page<PageUserDto>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
-        IPage<User> userPage = userMapper.getPageData(page, pageUserDto);
+        IPage<Users> userPage = userMapper.getPageData(page, pageUserDto);
         return new PageResult(userPage.getTotal(), userPage.getRecords(), userPage.getSize());
     }
 
     @Override
-    public List<User> selectList() {
+    public List<Users> selectList() {
         return userMapper.selectList(null);
     }
 
     @Override
-    public User selectById(String id) {
+    public Users selectById(String id) {
         return userMapper.selectById(id);
     }
 
     @Override
-    public User login(UserDto userDto) {
+    public Users login(UserDto userDto) {
         String userName = userDto.getUserName();
         String password = userDto.getPassWord();
 
         //1、根据用户名查询数据库中的数据
-        User user = userMapper.selectByUserName(userName);
+        Users users = userMapper.selectByUserName(userName);
 
         //2、判斷是否有該用戶
-        if(user == null) {
+        if(users == null) {
             throw new AccountNotFoundException("用戶不存在");
         }
 
         //3、判斷密碼是否正確
-        if(!user.getPassWord().equals(password) ){
+        if(!users.getPassWord().equals(password) ){
             throw new PasswordEditFailedException("密碼錯誤");
         }
 
-        return user;
+        return users;
     }
 
     private QueryWrapper getQueryMapper(PageUserDto pageUserDto) {
-        QueryWrapper<User> userQueryWrapper = new QueryWrapper<User>();
+        QueryWrapper<Users> userQueryWrapper = new QueryWrapper<Users>();
         if (pageUserDto.getId() != 0) {
             userQueryWrapper.eq("id", pageUserDto.getId());
         }

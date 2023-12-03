@@ -100,7 +100,7 @@ const getInfo = () => {
     })
       .then(async (res) => {
         const { data } = await res.json();
-        console.log("🚀 ~ file: user.ts:41 ~ .then ~ data:", data);
+        console.log("🚀 ~ file: users.ts:41 ~ .then ~ data:", data);
         username.value = data?.username || "";
         userId.value = data?.userId || "";
         registerType.value = data?.registerType || "";
@@ -117,7 +117,7 @@ const getInfo = () => {
         resolve(data);
       })
       .catch((error) => {
-        console.log("🚀 ~ file: user.ts:56 ~ returnnewPromise ~ error:", error);
+        console.log("🚀 ~ file: users.ts:56 ~ returnnewPromise ~ error:", error);
         reject(error);
       });
   });
@@ -219,10 +219,10 @@ white-list.ts 职责：白名单集合，包括免登陆的路由页面，无须
 
 #### 5、配置常量数据 src/constants/cacheKey.ts
 
-**用户中心配 user,其他模块配 access**
+**用户中心配 users,其他模块配 access**
 
 ```javascript
-const SYSTEM_NAME = "user";
+const SYSTEM_NAME = "users";
 
 /** 缓存数据时用到的 Key */
 class CacheKey {

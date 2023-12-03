@@ -35,10 +35,10 @@ CREATE TABLE `systems` (
 -- ----------------------------
 
 -- ----------------------------
--- Table structure for user
+-- Table structure for users
 -- ----------------------------
-DROP TABLE IF EXISTS `user`;
-CREATE TABLE `user` (
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
   `user_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '用户名称',
   `pass_word` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '用户密码',
   `system_ids` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '用户所拥有的系统Id',
@@ -52,9 +52,9 @@ CREATE TABLE `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- ----------------------------
--- Records of user
+-- Records of users
 -- ----------------------------
-INSERT INTO `user` VALUES ('asd', 'asdas', 'asda', '123', '123', 'asdas', 'asdas', '2023-06-01', '1');
+INSERT INTO `users` VALUES ('asd', 'asdas', 'asda', '123', '123', 'asdas', 'asdas', '2023-06-01', '1');
 
 -- ----------------------------
 -- Table structure for webpvuv

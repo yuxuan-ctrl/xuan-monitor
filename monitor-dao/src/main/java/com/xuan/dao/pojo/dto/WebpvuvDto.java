@@ -1,21 +1,22 @@
 package com.xuan.dao.pojo.dto;
 
+import java.util.List;
+
 public class WebpvuvDto {
     String appId;
     String pageUrl;
     String time;
-    String type;
-    Object data;
+
+    List<EventList> eventList;
 
     public WebpvuvDto() {
     }
 
-    public WebpvuvDto(String appId, String pageUrl, String time, String type, Object data) {
+    public WebpvuvDto(String appId, String pageUrl, String time, List eventList) {
         this.appId = appId;
         this.pageUrl = pageUrl;
         this.time = time;
-        this.type = type;
-        this.data = data;
+        this.eventList = eventList;
     }
 
     /**
@@ -66,39 +67,26 @@ public class WebpvuvDto {
         this.time = time;
     }
 
+
+
+
     /**
      * 获取
-     * @return type
+     * @return eventList
      */
-    public String getType() {
-        return type;
+    public List getEventList() {
+        return eventList;
     }
 
     /**
      * 设置
-     * @param type
+     * @param eventList
      */
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    /**
-     * 获取
-     * @return data
-     */
-    public Object getData() {
-        return data;
-    }
-
-    /**
-     * 设置
-     * @param data
-     */
-    public void setData(Object data) {
-        this.data = data;
+    public void setEventList(List eventList) {
+        this.eventList = eventList;
     }
 
     public String toString() {
-        return "WebpvuvDto{appId = " + appId + ", pageUrl = " + pageUrl + ", time = " + time + ", type = " + type + ", data = " + data + "}";
+        return "WebpvuvDto{appId = " + appId + ", pageUrl = " + pageUrl + ", time = " + time + ", eventList = " + eventList + "}";
     }
 }

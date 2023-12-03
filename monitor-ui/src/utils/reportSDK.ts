@@ -57,9 +57,6 @@ export default class EasyAgentSDK {
   }
 
   initSchedulers() {
-    console.log(
-      "🚀 ~ file: reportSDK.ts:59 ~ EasyAgentSDK ~ initSchedulers ~ initSchedulers:"
-    );
     // 定时发送 PV/UV 监控数据
     this.scheduleTimer = setInterval(() => {
       this.flushQueue("pvuv");

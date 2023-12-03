@@ -8,6 +8,7 @@ import com.xuan.dao.pojo.dto.PageUserDto;
 import com.xuan.dao.pojo.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.io.Serializable;
 import java.util.List;
@@ -31,6 +32,7 @@ public interface UserMapper extends BaseMapper<User> {
     User selectByUserName(@Param("userName") String userName);
 
     @Override
+    @Select("Select * From user")
     List<User> selectList(Wrapper<User> queryWrapper);
 
     @Override

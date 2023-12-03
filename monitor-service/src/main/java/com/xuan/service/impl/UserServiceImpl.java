@@ -8,14 +8,12 @@ import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.pojo.dto.PageUserDto;
 import com.xuan.dao.pojo.dto.UserDto;
 import com.xuan.dao.pojo.entity.User;
-import com.xuan.dao.pojo.vo.LoginVo;
 import com.xuan.exception.AccountNotFoundException;
 import com.xuan.exception.PasswordEditFailedException;
 import com.xuan.properties.JwtProperties;
 import com.xuan.result.PageResult;
 import com.xuan.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

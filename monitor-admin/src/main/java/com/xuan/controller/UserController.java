@@ -51,6 +51,7 @@ public class UserController {
     public List<User> getUserList(){
         return userService.selectList();
     }
+
     @GetMapping("/getUserById")
     @ApiOperation("用户通过Id查询")
     public User getUserById(@RequestParam String id){

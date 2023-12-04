@@ -5,17 +5,15 @@ public class ReportVo {
     String appId;
     String pageUrl;
     String time;
-    String type;
     Object data;
 
     public ReportVo() {
     }
 
-    public ReportVo(String appId, String pageUrl, String time, String type, Object data) {
+    public ReportVo(String appId, String pageUrl, String time, Object data) {
         this.appId = appId;
         this.pageUrl = pageUrl;
         this.time = time;
-        this.type = type;
         this.data = data;
     }
 
@@ -67,21 +65,6 @@ public class ReportVo {
         this.time = time;
     }
 
-    /**
-     * 获取
-     * @return type
-     */
-    public String getType() {
-        return type;
-    }
-
-    /**
-     * 设置
-     * @param type
-     */
-    public void setType(String type) {
-        this.type = type;
-    }
 
     /**
      * 获取
@@ -100,6 +83,6 @@ public class ReportVo {
     }
 
     public String toString() {
-        return "ReportVo{appId = " + appId + ", pageUrl = " + pageUrl + ", time = " + time + ", type = " + type + ", data = " + data + "}";
+        return "ReportVo{appId = " + appId + ", pageUrl = " + pageUrl + ", time = " + time + ", data = " + data + "}";
     }
 }

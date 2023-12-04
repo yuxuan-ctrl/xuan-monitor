@@ -25,8 +25,7 @@ public class MonitorController {
     @PostMapping("/report")
     @ApiOperation("监控信息上传")
     public Result<ReportVo> report(@RequestBody WebpvuvDto webpvuvDto) throws Exception{
-        monitorService.recordMonitorInfo(webpvuvDto);
-        ReportVo reportVo = new ReportVo("1123","1232","2312","213",webpvuvDto);
+        ReportVo reportVo = monitorService.recordMonitorInfo(webpvuvDto);
         return Result.success(reportVo);
     }
 

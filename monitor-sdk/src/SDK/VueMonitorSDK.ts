@@ -15,45 +15,44 @@ export default class VueMonitorSDK extends BaseMonitorSDK {
   }
 
   /**
-   * @description: 监听页面变化
-   */
+     * @description: 监听页面变化
+     */
   listenPageVue() {
     let pageShowTime = 0;
-
-    this.app.config.errorHandler = (err: any, vm: any, info: any) => {
+    this.app.config.errorHandler = (err, vm, info) => {
       console.log("errorHandle", err, vm, info);
+      this.errorReport({
+        err,
+      }).then(() => this.flushQueue());
       // err，错误对象
       // vm，发生错误的组件实例
       // info，Vue特定的错误信息，例如错误发生的生命周期、错误发生的事件
     };
-
-    window.addEventListener("pageshow", () => {
-      pageShowTime = performance.now();
-      // 页面性能指标上报
-      const data = this.getPerformance();
-      console.log("page show");
-      this.performanceReport({ data });
-      // 执行 onPageShow
-      this.onPageShow();
-    });
-
+    // window.addEventListener("pageshow", async () => {
+    //   pageShowTime = performance.now();
+    //   // 页面性能指标上报
+    //   const data = await this.getPerformance();
+    //   console.log("page show");
+    //   this.performanceReport({ data });
+    //   // 执行 onPageShow
+    //   this.onPageShow();
+    // });
     window.addEventListener("pagehide", () => {
       // 记录用户在页面停留时间
       this.timeOnPage = performance.now() - pageShowTime;
       // 刷新队列前执行 onPagesHide
       this.onPagesHide();
     });
-
     // 监听Vue路由的replace事件
-    window.addEventListener("replaceState", () => {
-      const data = this.getPvUv();
-      this.report({ data });
+    window.addEventListener("replaceState", async () => {
+      const data = await this.getPvUv();
+      this.actionReport({data});
     });
 
     // 监听Vue的push事件和React的路由切换事件
-    window.addEventListener("pushState", () => {
-      const data = this.getPvUv();
-      this.actionReport({ data });
+    window.addEventListener("pushState", async () => {
+      //   const data = await this.getPvUv();
+      //   this.actionReport({ data });
     });
 
     // 监听页面错误事件
@@ -64,7 +63,6 @@ export default class VueMonitorSDK extends BaseMonitorSDK {
         msg
       );
     };
-
     // 监听页面错误事件
     window.addEventListener(
       "error",
@@ -75,11 +73,10 @@ export default class VueMonitorSDK extends BaseMonitorSDK {
         };
         this.errorReport({
           errorInfo,
-        }).then(() => this.flushQueue("error"));
+        }).then(() => this.flushQueue());
       },
       true
     );
-
     // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
     window.addEventListener(
       "unhandledrejection",
@@ -88,7 +85,6 @@ export default class VueMonitorSDK extends BaseMonitorSDK {
       },
       true
     );
-
     // 监听页面抛出的异常（Promise抛出异常已经用catch处理，即Promise.reject().catch()）
     window.addEventListener(
       "rejectionhandled",

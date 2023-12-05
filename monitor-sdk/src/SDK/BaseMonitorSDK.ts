@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-05 14:03:01
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-05 18:46:45
+ * @FilePath: \xuan-monitor\monitor-sdk\src\SDK\BaseMonitorSDK.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
 import { PerformanceType, QueueEventType, SDKConfigType } from "../types";
 import { EventQueueManager } from "../Queue/eventQueueManager";
 import { json2FormData, sendBeacon } from "../utils/utils";
@@ -52,7 +62,7 @@ export default class BaseMonitorSDK {
   initSchedulers() {
     // 定时发送 PV/UV 监控数据
     this.scheduleTimer = setInterval(() => {
-      this.flushQueue("pvuv");
+      this.flushQueue();
     }, 10000); // 60秒发送一次，可以根据需求调整时间间隔
   }
 
@@ -64,25 +74,32 @@ export default class BaseMonitorSDK {
   /**
    * @description: 刷新任务队列
    */
-  async flushQueue(type) {
+  async flushQueue() {
     if (this.QUEUE.length === 0) {
       return Promise.resolve([]);
     }
 
     // 请求队列
-    const EventList = this.QUEUE.map((event) => {
+    const eventList = this.QUEUE.map((event) => {
       return { ...event };
       // 上报事件
     });
     const formData = json2FormData({
       ...this.config,
-      EventList,
+      eventList,
       time: new Date().toLocaleString(),
       appId: this.appId,
       pageUrl: window.location.href,
     });
-    const status = await sendBeacon({ baseUrl: this.baseUrl }, formData);
-    status && this.eventQueueManager.clearQueue();
+    // const status = await sendBeacon({ baseUrl: this.baseUrl }, formData);
+    const res = await fetch(`/${this.baseUrl}/monitor/report`, {
+      body: formData,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    this.eventQueueManager.clearQueue();
   }
 
   /**
@@ -110,13 +127,13 @@ export default class BaseMonitorSDK {
     // 监听Vue路由的replace事件
     window.addEventListener("replaceState", () => {
       const data = this.getPvUv();
-      this.report({ data });
+      this.actionReport({data});
     });
 
     // 监听Vue的push事件和React的路由切换事件
     window.addEventListener("pushState", () => {
       const data = this.getPvUv();
-      this.actionReport({ data });
+      this.actionReport({data});
     });
 
     // 监听页面错误事件
@@ -137,7 +154,7 @@ export default class BaseMonitorSDK {
         };
         this.errorReport({
           errorInfo,
-        }).then(() => this.flushQueue("error"));
+        }).then(() => this.flushQueue());
       },
       true
     );
@@ -182,25 +199,25 @@ export default class BaseMonitorSDK {
    * @return {*}
    * @memberof EasyAgentSDK
    */
-  getPvUv() {
+  async getPvUv() {
     console.log(window.location.href);
     console.log(performance.getEntriesByType("resource"));
-    const resourceList = performance
-      .getEntriesByType("resource")
-      .map((resource: any) => {
-        return {
-          type: resource.initiatorType,
-          duration: resource.duration,
-          decodedBodySize: resource.decodedBodySize,
-          nextHopProtocol: resource.nextHopProtocol,
-          name: resource.name,
-        };
-      });
+    // const resourceList = performance
+    //   .getEntriesByType("resource")
+    //   .map((resource: any) => {
+    //     return {
+    //       type: resource.initiatorType,
+    //       duration: resource.duration,
+    //       decodedBodySize: resource.decodedBodySize,
+    //       nextHopProtocol: resource.nextHopProtocol,
+    //       name: resource.name,
+    //     };
+    //   });
     const performanceMetrics = this.getPerformance();
     return {
-      url: window.location.href,
-      resourceList,
-      performanceMetrics,
+      // url: window.location.href,
+      // resourceList,
+      ...performanceMetrics,
     };
   }
 
@@ -295,13 +312,13 @@ export default class BaseMonitorSDK {
    * @description 触发任何一个report时间开始计时，只发送一次请求，清空队列
    * @memberof EasyAgentSDK
    */
-  debounceReport(type) {
+  debounceReport() {
     if (this.flag) {
       clearTimeout(this.flag);
     }
     console.log(this.flag);
     this.flag = setTimeout(() => {
-      this.flushQueue(type);
+      this.flushQueue();
     }, 1000);
   }
 

@@ -8,13 +8,19 @@ import com.xuan.dao.pojo.dto.Performance;
 import com.xuan.dao.pojo.dto.WebpvuvDto;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
+import com.xuan.properties.JwtProperties;
 import com.xuan.service.MonitorService;
+import com.xuan.utils.JwtUtil;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 
@@ -33,8 +39,16 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
     @Autowired
     public WebpvuvMapper webpvuvMapper;
 
+    @Autowired
+    public JwtProperties jwtProperties;
+
     @Override
     public ReportVo recordMonitorInfo(WebpvuvDto webpvuvDto) {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attributes.getRequest();
+        String token = request.getHeader("Authorization");
+        Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), token);
+        log.info("claims：{}",claims);
         log.info("监控信息：{}",webpvuvDto);
         String appId = webpvuvDto.getAppId();
         String pageUrl = webpvuvDto.getPageUrl();
@@ -45,8 +59,6 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
             eventList.stream().forEach(event->{
                 String type = event.getType();
                 String uuid = event.getUuid();
-//                String type = (String) event.get("type");
-//                String uuid = (String) event.get("uuid");
                 Integer timestamp = event.getTimestamp();
                 Object errorInfo = event.getErrorInfo();
                 Performance data = event.getData();

@@ -3,6 +3,8 @@ package com.xuan.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.dao.mapper.WebpvuvMapper;
+import com.xuan.dao.pojo.dto.EventList;
+import com.xuan.dao.pojo.dto.Performance;
 import com.xuan.dao.pojo.dto.WebpvuvDto;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
@@ -37,15 +39,17 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
         String appId = webpvuvDto.getAppId();
         String pageUrl = webpvuvDto.getPageUrl();
         String time = webpvuvDto.getTime();
-        List<HashMap<String,Object>> eventList = webpvuvDto.getEventList();
+//        List<HashMap<String,Object>> eventList = webpvuvDto.getEventList();
+        List<EventList> eventList = webpvuvDto.getEventList();
         if(!CollectionUtils.isEmpty(eventList)){
             eventList.stream().forEach(event->{
-
-                String type = (String) event.get("type");
-                String uuid = (String) event.get("uuid");
-//                Integer timestamp = event.getTimestamp();
-//                Object errorInfo = event.getErrorInfo();
-//                Performance data = event.getData();
+                String type = event.getType();
+                String uuid = event.getUuid();
+//                String type = (String) event.get("type");
+//                String uuid = (String) event.get("uuid");
+                Integer timestamp = event.getTimestamp();
+                Object errorInfo = event.getErrorInfo();
+                Performance data = event.getData();
                 if(type.equals("action")){
                     QueryWrapper<Webpvuv> wrapper = new QueryWrapper<>();
                     wrapper.eq("webpvuv.page_url",pageUrl);

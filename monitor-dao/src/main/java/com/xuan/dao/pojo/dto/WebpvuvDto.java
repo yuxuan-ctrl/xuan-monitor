@@ -12,7 +12,7 @@ public class WebpvuvDto {
     public WebpvuvDto() {
     }
 
-    public WebpvuvDto(String appId, String pageUrl, String time, List eventList) {
+    public WebpvuvDto(String appId, String pageUrl, String time, List<EventList> eventList) {
         this.appId = appId;
         this.pageUrl = pageUrl;
         this.time = time;
@@ -74,7 +74,7 @@ public class WebpvuvDto {
      * 获取
      * @return eventList
      */
-    public List getEventList() {
+    public List<EventList> getEventList() {
         return eventList;
     }
 
@@ -82,7 +82,7 @@ public class WebpvuvDto {
      * 设置
      * @param eventList
      */
-    public void setEventList(List eventList) {
+    public void setEventList(List<EventList> eventList) {
         this.eventList = eventList;
     }
 

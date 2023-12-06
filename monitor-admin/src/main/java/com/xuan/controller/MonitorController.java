@@ -9,7 +9,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpRequest;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,7 +28,7 @@ public class MonitorController {
     @ApiOperation("监控信息上传")
     public Result<ReportVo> report(@RequestBody WebpvuvDto webpvuvDto, HttpServletRequest httpRequest) throws Exception{
         log.info("监控信息：{}",httpRequest);
-//        log.info("监控信息：{}",httpRequest.getHeader("Authorization"));
+        log.info("监控信息：{}",httpRequest.getHeader("Authorization"));
 
         ReportVo reportVo = monitorService.recordMonitorInfo(webpvuvDto);
         return Result.success(reportVo);

@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-05 14:03:00
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-06 09:08:54
+ * @FilePath: \xuan-monitor\monitor-admin\src\main\java\com\xuan\configuration\WebMvcConfiguration.java
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
 package com.xuan.configuration;
 
 import com.xuan.interceptor.JwtTokenAdminInterceptor;
@@ -32,9 +42,9 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     protected void addInterceptors(InterceptorRegistry registry) {
         log.info("开始注册自定义拦截器...");
 
-//        registry.addInterceptor(jwtTokenUserInterceptor)
-////                .addPathPatterns("/user/**")
-//                .excludePathPatterns("/user/login","/user/getUserPage");
+       registry.addInterceptor(jwtTokenUserInterceptor)
+               .addPathPatterns("/user/**")
+               .excludePathPatterns("/user/login","/user/getUserPage");
     }
 
     /**

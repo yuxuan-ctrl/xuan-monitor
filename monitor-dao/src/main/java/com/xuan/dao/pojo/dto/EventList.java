@@ -4,14 +4,14 @@ public class EventList {
     public  String type;
     public  String uuid;
     public  String pageUrl;
-    public  Integer timestamp;
+    public  Long timestamp;
     public  Object errorInfo;
     public  Performance data;
 
     public EventList() {
     }
 
-    public EventList(String type, String uuid, String pageUrl, Integer timestamp, Object errorInfo, Performance data) {
+    public EventList(String type, String uuid, String pageUrl, Long timestamp, Object errorInfo, Performance data) {
         this.type = type;
         this.uuid = uuid;
         this.pageUrl = pageUrl;
@@ -72,7 +72,7 @@ public class EventList {
      * 获取
      * @return timestamp
      */
-    public Integer getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
@@ -80,7 +80,7 @@ public class EventList {
      * 设置
      * @param timestamp
      */
-    public void setTimestamp(Integer timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 

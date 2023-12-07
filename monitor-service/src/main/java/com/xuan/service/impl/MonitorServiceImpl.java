@@ -88,11 +88,6 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
                                 .uv(userId)
                                 .pageUrl(pageUrl)
                                 .build();
-                        // webpvuv.setAppId(appId);
-                        // webpvuv.setType(type);
-                        // webpvuv.setPv(1);
-                        // webpvuv.setUv(userId);
-                        // webpvuv.setPageUrl(pageUrl);
                         webpvuvMapper.insert(webpvuv);
                     } else {
                         Webpvuv webpvuv = new Webpvuv();

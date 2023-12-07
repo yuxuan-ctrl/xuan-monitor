@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl 
  * @Date: 2023-12-05 14:03:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2023-12-06 09:08:54
+ * @LastEditTime: 2023-12-07 10:33:30
  * @FilePath: \xuan-monitor\monitor-admin\src\main\java\com\xuan\configuration\WebMvcConfiguration.java
  * @Description: 
  * 
@@ -44,7 +44,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
 
        registry.addInterceptor(jwtTokenUserInterceptor)
                .addPathPatterns("/user/**")
-               .excludePathPatterns("/user/login","/user/getUserPage");
+               .excludePathPatterns("/user/login","/monitor/report");
     }
 
     /**

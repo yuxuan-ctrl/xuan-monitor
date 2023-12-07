@@ -1,22 +1,21 @@
 /*
- * @Author: yuxuan-ctrl 
+ * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2023-12-05 18:46:45
+ * @LastEditTime: 2023-12-07 10:31:48
  * @FilePath: \xuan-monitor\monitor-sdk\src\SDK\BaseMonitorSDK.ts
- * @Description: 
- * 
- * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
-import { PerformanceType, QueueEventType, SDKConfigType } from "../types";
-import { EventQueueManager } from "../Queue/eventQueueManager";
-import { json2FormData, sendBeacon } from "../utils/utils";
+import {PerformanceType, QueueEventType, SDKConfigType} from "../types";
+import {EventQueueManager} from "../Queue/eventQueueManager";
 
 let SDK: any = null; // EasyAgentSDK 实例对象
 
 const reportWebVitals = (onPerfEntry: any) => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
-    import("web-vitals").then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+    import("web-vitals").then(({getCLS, getFID, getFCP, getLCP, getTTFB}) => {
       console.log();
       getCLS(onPerfEntry); // 布局偏移量
       getFID(onPerfEntry); // 首次输入延迟时间
@@ -43,7 +42,7 @@ export default class BaseMonitorSDK {
   constructor(config: SDKConfigType) {
     if (SDK) return;
     SDK = this;
-    const { appId, baseUrl, onPageShow, onPagesHide } = config;
+    const {appId, baseUrl, onPageShow, onPagesHide} = config;
     // 初始化事件队列管理器
     this.eventQueueManager = new EventQueueManager();
     this.QUEUE = this.eventQueueManager.QUEUE;
@@ -81,10 +80,10 @@ export default class BaseMonitorSDK {
 
     // 请求队列
     const eventList = this.QUEUE.map((event) => {
-      return { ...event };
+      return {...event};
       // 上报事件
     });
-    const formData = json2FormData({
+    const formData = JSON.stringify({
       ...this.config,
       eventList,
       time: new Date().toLocaleString(),
@@ -112,7 +111,7 @@ export default class BaseMonitorSDK {
       // 页面性能指标上报
       const data = this.getPerformance();
       console.log("page show");
-      this.performanceReport({ data });
+      this.performanceReport({data});
       // 执行 onPageShow
       this.onPageShow();
     });

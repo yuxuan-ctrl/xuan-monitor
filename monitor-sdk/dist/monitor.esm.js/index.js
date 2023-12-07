@@ -2,20 +2,6 @@
  * @description: Json 转 FormData
  * @param {*} data
  */
-function json2FormData(data) {
-    const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-        let value = null;
-        if (value instanceof Blob) {
-            value = data[key];
-        }
-        else {
-            value = JSON.stringify(data[key]);
-        }
-        formData.append(key, value);
-    });
-    return formData;
-}
 /**
  * @description: 生成uuid
  * @return {*}
@@ -28,13 +14,6 @@ function createUUid() {
         return (char === "x" ? rand : (rand & 0x3) | 0x8).toString(16);
     });
     return uuid;
-}
-function sendBeacon(params, formData) {
-    return new Promise((resolve, reject) => {
-        const result = navigator.sendBeacon(`/${params.baseUrl}/monitor/report`, formData);
-        result && resolve(result);
-        !result && reject(result);
-    });
 }
 
 /**
@@ -153,7 +132,7 @@ class BaseMonitorSDK {
     initSchedulers() {
         // 定时发送 PV/UV 监控数据
         this.scheduleTimer = setInterval(() => {
-            this.flushQueue("pvuv");
+            this.flushQueue();
         }, 10000); // 60秒发送一次，可以根据需求调整时间间隔
     }
     // 设置 config
@@ -163,24 +142,32 @@ class BaseMonitorSDK {
     /**
      * @description: 刷新任务队列
      */
-    async flushQueue(type) {
+    async flushQueue() {
         if (this.QUEUE.length === 0) {
             return Promise.resolve([]);
         }
         // 请求队列
-        const EventList = this.QUEUE.map((event) => {
+        const eventList = this.QUEUE.map((event) => {
             return { ...event };
             // 上报事件
         });
-        const formData = json2FormData({
+        const formData = JSON.stringify({
             ...this.config,
-            EventList,
+            eventList,
             time: new Date().toLocaleString(),
             appId: this.appId,
             pageUrl: window.location.href,
         });
-        const status = await sendBeacon({ baseUrl: this.baseUrl }, formData);
-        status && this.eventQueueManager.clearQueue();
+        // const status = await sendBeacon({ baseUrl: this.baseUrl }, formData);
+        await fetch(`/${this.baseUrl}/monitor/report`, {
+            body: formData,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization":`${getToken}`
+            },
+        });
+        this.eventQueueManager.clearQueue();
     }
     /**
      * @description: 监听页面变化
@@ -205,7 +192,7 @@ class BaseMonitorSDK {
         // 监听Vue路由的replace事件
         window.addEventListener("replaceState", () => {
             const data = this.getPvUv();
-            this.report({ data });
+            this.actionReport({ data });
         });
         // 监听Vue的push事件和React的路由切换事件
         window.addEventListener("pushState", () => {
@@ -225,7 +212,7 @@ class BaseMonitorSDK {
             };
             this.errorReport({
                 errorInfo,
-            }).then(() => this.flushQueue("error"));
+            }).then(() => this.flushQueue());
         }, true);
         // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
         window.addEventListener("unhandledrejection", () => {
@@ -256,25 +243,25 @@ class BaseMonitorSDK {
      * @return {*}
      * @memberof EasyAgentSDK
      */
-    getPvUv() {
+    async getPvUv() {
         console.log(window.location.href);
         console.log(performance.getEntriesByType("resource"));
-        const resourceList = performance
-            .getEntriesByType("resource")
-            .map((resource) => {
-            return {
-                type: resource.initiatorType,
-                duration: resource.duration,
-                decodedBodySize: resource.decodedBodySize,
-                nextHopProtocol: resource.nextHopProtocol,
-                name: resource.name,
-            };
-        });
+        // const resourceList = performance
+        //   .getEntriesByType("resource")
+        //   .map((resource: any) => {
+        //     return {
+        //       type: resource.initiatorType,
+        //       duration: resource.duration,
+        //       decodedBodySize: resource.decodedBodySize,
+        //       nextHopProtocol: resource.nextHopProtocol,
+        //       name: resource.name,
+        //     };
+        //   });
         const performanceMetrics = this.getPerformance();
         return {
-            url: window.location.href,
-            resourceList,
-            performanceMetrics,
+            // url: window.location.href,
+            // resourceList,
+            ...performanceMetrics,
         };
     }
     /**
@@ -327,13 +314,13 @@ class BaseMonitorSDK {
      * @description 触发任何一个report时间开始计时，只发送一次请求，清空队列
      * @memberof EasyAgentSDK
      */
-    debounceReport(type) {
+    debounceReport() {
         if (this.flag) {
             clearTimeout(this.flag);
         }
         console.log(this.flag);
         this.flag = setTimeout(() => {
-            this.flushQueue(type);
+            this.flushQueue();
         }, 1000);
     }
     /**
@@ -388,25 +375,28 @@ class VueMonitorSDK extends BaseMonitorSDK {
         return;
     }
     /**
-     * @description: 监听页面变化
-     */
+       * @description: 监听页面变化
+       */
     listenPageVue() {
         let pageShowTime = 0;
         this.app.config.errorHandler = (err, vm, info) => {
             console.log("errorHandle", err, vm, info);
+            this.errorReport({
+                err,
+            }).then(() => this.flushQueue());
             // err，错误对象
             // vm，发生错误的组件实例
             // info，Vue特定的错误信息，例如错误发生的生命周期、错误发生的事件
         };
-        window.addEventListener("pageshow", () => {
-            pageShowTime = performance.now();
-            // 页面性能指标上报
-            const data = this.getPerformance();
-            console.log("page show");
-            this.performanceReport({ data });
-            // 执行 onPageShow
-            this.onPageShow();
-        });
+        // window.addEventListener("pageshow", async () => {
+        //   pageShowTime = performance.now();
+        //   // 页面性能指标上报
+        //   const data = await this.getPerformance();
+        //   console.log("page show");
+        //   this.performanceReport({ data });
+        //   // 执行 onPageShow
+        //   this.onPageShow();
+        // });
         window.addEventListener("pagehide", () => {
             // 记录用户在页面停留时间
             this.timeOnPage = performance.now() - pageShowTime;
@@ -414,14 +404,14 @@ class VueMonitorSDK extends BaseMonitorSDK {
             this.onPagesHide();
         });
         // 监听Vue路由的replace事件
-        window.addEventListener("replaceState", () => {
-            const data = this.getPvUv();
-            this.report({ data });
+        window.addEventListener("replaceState", async () => {
+            const data = await this.getPvUv();
+            this.actionReport({ data });
         });
         // 监听Vue的push事件和React的路由切换事件
-        window.addEventListener("pushState", () => {
-            const data = this.getPvUv();
-            this.actionReport({ data });
+        window.addEventListener("pushState", async () => {
+            //   const data = await this.getPvUv();
+            //   this.actionReport({ data });
         });
         // 监听页面错误事件
         window.onerror = function (msg, _url, line, col, error) {
@@ -436,7 +426,7 @@ class VueMonitorSDK extends BaseMonitorSDK {
             };
             this.errorReport({
                 errorInfo,
-            }).then(() => this.flushQueue("error"));
+            }).then(() => this.flushQueue());
         }, true);
         // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
         window.addEventListener("unhandledrejection", () => {

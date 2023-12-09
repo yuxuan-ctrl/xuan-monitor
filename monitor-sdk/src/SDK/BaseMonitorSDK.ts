@@ -1,7 +1,7 @@
 import { PerformanceType, QueueEventType, SDKConfigType } from "../types";
 import { EventQueueManager } from "../Queue/eventQueueManager";
 import { json2FormData, sendBeacon } from "../utils/utils";
-
+import { useFetch } from "../lib/vueuse";
 let SDK: any = null; // EasyAgentSDK 实例对象
 
 const reportWebVitals = (onPerfEntry: any) => {

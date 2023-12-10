@@ -7,18 +7,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup --environment NODE_ENV:development -c scripts/rollup.base.js",
-    "build:tsc": "tsc"
+    "build:tsc": "tsc ./src/index.ts --outDir ./dist  --outfile index.js --module amd --target ES5 --declaration --esModuleInterop --skipLibCheck"
   },
   "author": "yuxuanli",
   "license": "ISC",
   "dependencies": {
     "@babel/preset-typescript": "^7.23.3",
-    "@rollup/plugin-typescript": "^11.1.2",
     "@vueuse/core": "^10.7.0",
     "js-cookie": "^3.0.5",
     "lodash-es": "^4.17.21",
     "pinia": "^2.1.7",
-    "rollup": "^3.26.2",
     "vue": "^3.3.4",
     "vue-router": "^4.2.4",
     "web-vitals": "^3.5.0"
@@ -38,17 +36,20 @@
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.1.0",
     "@rollup/plugin-replace": "^5.0.2",
+    "@rollup/plugin-typescript": "^11.1.2",
     "@types/node": "^20.4.2",
     "@vue/compiler-sfc": "^3.3.4",
     "element-plus": "^2.2.32",
-    "rollup": "^3.26.2",
+    "rollup": "^4.6.1",
     "rollup-plugin-clear": "^2.0.7",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-esbuild": "^6.1.0",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-require-context": "^1.0.1",
     "rollup-plugin-scss": "^4.0.0",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.35.0",
     "rollup-plugin-vue": "^6.0.0",
-    "typescript": "^5.1.6"
+    "typescript": "^4.9.5"
   }
 }

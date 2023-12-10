@@ -1,28 +1,22 @@
-<<<<<<< HEAD
-import { PerformanceType, QueueEventType, SDKConfigType } from "../types";
-import { EventQueueManager } from "../Queue/eventQueueManager";
-import { json2FormData, sendBeacon } from "../utils/utils";
-import { useFetch } from "../lib/vueuse";
-=======
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2023-12-07 10:31:48
  * @FilePath: \xuan-monitor\monitor-sdk\src\SDK\BaseMonitorSDK.ts
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
-import {PerformanceType, QueueEventType, SDKConfigType} from "../types";
-import {EventQueueManager} from "../Queue/eventQueueManager";
+import { PerformanceType, QueueEventType, SDKConfigType } from "../types";
+import { EventQueueManager } from "../Queue/eventQueueManager";
+import { useFetch } from "@vueuse/core";
 
->>>>>>> 43a208ebbb8fd0f780caacca4fda814643e0e834
 let SDK: any = null; // EasyAgentSDK 实例对象
 
 const reportWebVitals = (onPerfEntry: any) => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
-    import("web-vitals").then(({getCLS, getFID, getFCP, getLCP, getTTFB}) => {
+    import("web-vitals").then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
       console.log();
       getCLS(onPerfEntry); // 布局偏移量
       getFID(onPerfEntry); // 首次输入延迟时间
@@ -49,7 +43,7 @@ export default class BaseMonitorSDK {
   constructor(config: SDKConfigType) {
     if (SDK) return;
     SDK = this;
-    const {appId, baseUrl, onPageShow, onPagesHide} = config;
+    const { appId, baseUrl, onPageShow, onPagesHide } = config;
     // 初始化事件队列管理器
     this.eventQueueManager = new EventQueueManager();
     this.QUEUE = this.eventQueueManager.QUEUE;
@@ -87,7 +81,7 @@ export default class BaseMonitorSDK {
 
     // 请求队列
     const eventList = this.QUEUE.map((event) => {
-      return {...event};
+      return { ...event };
       // 上报事件
     });
     const formData = JSON.stringify({
@@ -97,8 +91,8 @@ export default class BaseMonitorSDK {
       appId: this.appId,
       pageUrl: window.location.href,
     });
-    // const status = await sendBeacon({ baseUrl: this.baseUrl }, formData);
-    const res = await fetch(`/${this.baseUrl}/monitor/report`, {
+
+    await useFetch(`/${this.baseUrl}/monitor/report`, {
       body: formData,
       method: "POST",
       headers: {
@@ -118,7 +112,7 @@ export default class BaseMonitorSDK {
       // 页面性能指标上报
       const data = this.getPerformance();
       console.log("page show");
-      this.performanceReport({data});
+      this.performanceReport({ data });
       // 执行 onPageShow
       this.onPageShow();
     });
@@ -133,13 +127,13 @@ export default class BaseMonitorSDK {
     // 监听Vue路由的replace事件
     window.addEventListener("replaceState", () => {
       const data = this.getPvUv();
-      this.actionReport({data});
+      this.actionReport({ data });
     });
 
     // 监听Vue的push事件和React的路由切换事件
     window.addEventListener("pushState", () => {
       const data = this.getPvUv();
-      this.actionReport({data});
+      this.actionReport({ data });
     });
 
     // 监听页面错误事件

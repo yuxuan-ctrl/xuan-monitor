@@ -1,13 +1,14 @@
 /*
- * @Author: yuxuan-ctrl
+ * @Author: yuxuan-ctrl 
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2023-12-07 10:31:48
- * @FilePath: \xuan-monitor\monitor-sdk\src\SDK\BaseMonitorSDK.ts
- * @Description:
- *
- * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-11 14:38:08
+ * @FilePath: \monitor-sdk\src\SDK\BaseMonitorSDK.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
  */
+
 import { PerformanceType, QueueEventType, SDKConfigType } from "../types";
 import { EventQueueManager } from "../Queue/eventQueueManager";
 import { useFetch } from "@vueuse/core";

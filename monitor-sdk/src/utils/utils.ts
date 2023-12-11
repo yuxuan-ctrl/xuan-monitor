@@ -1,3 +1,5 @@
+import {useEventListener} from "../lib/vueuse";
+
 /**
  * @description: Json 转 FormData
  * @param {*} data
@@ -34,7 +36,7 @@ export function createUUid(): string {
 }
 
 export function sendBeacon(
-  params: { baseUrl: string },
+  params: {baseUrl: string},
   formData: FormData
 ): Promise<boolean> {
   return new Promise((resolve, reject) => {
@@ -45,4 +47,23 @@ export function sendBeacon(
     result && resolve(result);
     !result && reject(result);
   });
+}
+
+export function addEventListener(
+  event: string,
+  element: Element | Document = document,
+  callback = () => {}
+) {
+  const cleanup = useEventListener(element, event, callback);
+
+  return cleanup(); // This will unregister the listener.
+}
+
+export function log(target, name, decriptor) {
+  console.log("🚀 ~ file: utils.ts:63 ~ log ~ decriptor:", decriptor)
+  console.log("🚀 ~ file: utils.ts:63 ~ log ~ name:", name)
+  console.log("🚀 ~ file: utils.ts:63 ~ log ~ target:", target)
+
+
+  return decriptor;
 }

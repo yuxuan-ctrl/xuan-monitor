@@ -11,6 +11,8 @@ import {
   useGeolocation,
   useIdle, //跟踪用户是否处于非活动状态。
   useElementByPoint, //以坐标点响应式操作元素。
+  MaybeRefOrGetter,
+  WebSocketStatus,
 } from "@vueuse/core";
 
 export {
@@ -24,6 +26,8 @@ export {
   useTextSelection,
   useNetwork,
   useGeolocation,
-  useIdle, //跟踪用户是否处于非活动状态。
-  useElementByPoint, //以坐标点响应式操作元素。
+  useIdle,
+  useElementByPoint,
 };
+
+export type {MaybeRefOrGetter, WebSocketStatus};

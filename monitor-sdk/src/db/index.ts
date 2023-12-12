@@ -1,4 +1,4 @@
-export class customizedDB {
+export default class CustomizedDB {
   monitorZDB: IDBFactory;
   onerror: any;
   onsuccess: any;
@@ -14,7 +14,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 18:24:18
    * @params：
    * @Description：统一对数据库开启，使用回调
    */
@@ -63,7 +62,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 18:19:44
    * @params：{dbname:数据库名称,version:数据库版本号,
    * stores:表信息数组
    * [
@@ -81,6 +79,7 @@ export class customizedDB {
   open(opt) {
     let that = this;
     this.initdb(opt).then((e) => {
+      console.log("🚀 ~ file: index.ts:83 ~ CustomizedDB ~ this.initdb ~ opt:", opt)
       if (opt.stores && opt.stores.length) {
         opt.stores.forEach((store) => {
           if (!that.db.objectStoreNames.contains(store.storename)) {
@@ -105,7 +104,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 18:08:29
    * @params：{storeName:表名， data:添加的数据}
    * @Description：添加数据
    */
@@ -128,7 +126,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 18:09:04
    * @params：{storeName:表名，key:主键,value:主键值}
    * @Description：删除数据
    */
@@ -154,7 +151,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 18:10:03
    * @params：{storeName:表名，key:主键,value:主键值}
    * @Description：获取数据
    */
@@ -182,7 +178,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 17:59:33
    * @params：{storeName:表名 key:键值 newData：新数据}
    * @Description：更新数据
    */
@@ -215,7 +210,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 17:57:35
    * @params：{delstores:空间名称数组}
    * @Description：删除空间
    */
@@ -232,7 +226,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 17:58:27
    * @params：{db:indexedDB对象}
    * @Description：关闭数据库
    */
@@ -241,7 +234,6 @@ export class customizedDB {
   }
 
   /**
-   * @CreatedTime：2019/06/20 17:58:58
    * @params：{name:数据库名称}
    * @Description：删除数据库
    */

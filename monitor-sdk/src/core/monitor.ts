@@ -1,4 +1,4 @@
-import { addEventListener } from "@/utils/utils";
+import { addEventListener } from "../utils/utils";
 import { Report } from "./report";
 export class Monitor {
   pageShowTime: number = 0;

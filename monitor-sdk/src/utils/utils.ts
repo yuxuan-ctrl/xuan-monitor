@@ -52,7 +52,7 @@ export function sendBeacon(
 export function addEventListener(
   event: string,
   element: Element | Document = document,
-  callback = () => {}
+  callback = (err?) => {}
 ): () => void {
   const cleanup = useEventListener(element, event, callback);
   return cleanup; // This will unregister the listener.

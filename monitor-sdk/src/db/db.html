@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script type="module" lang="ts">
+      import CustomizedDB from "./index.js";
+      console.log("🚀 ~ file: db.html:11 ~ customizedDB:", CustomizedDB);
+      const monitorDB = new CustomizedDB();
+      monitorDB.open({
+        dbname: "testDB",
+        version: 1,
+        description: "testDB",
+      })
+    </script>
+  </body>
+</html>

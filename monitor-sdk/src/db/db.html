@@ -8,13 +8,27 @@
   <body>
     <script type="module" lang="ts">
       import CustomizedDB from "./index.js";
-      console.log("🚀 ~ file: db.html:11 ~ customizedDB:", CustomizedDB);
-      const monitorDB = new CustomizedDB();
-      monitorDB.open({
-        dbname: "testDB",
+      const dbConfig = {
+        dbname: "mydb",
         version: 1,
-        description: "testDB",
-      })
+        stores: [
+          {
+            name: "myTable",
+            keyPath: "id",
+            autoIncrement: true,
+            indexes: [
+              {
+                name: "nameIndex",
+                keyPath: "name",
+              },
+            ],
+          },
+        ],
+      };
+
+      const db = new CustomizedDB();
+
+      console.log(db.open(dbConfig));
     </script>
   </body>
 </html>

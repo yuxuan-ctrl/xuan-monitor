@@ -6,7 +6,7 @@ export default class CustomizedDB {
   db: any;
   useupgrad: boolean;
   // 构造
-  constructor(opt) {
+  constructor(opt: { onsuccess: any; onerror: any; onupgradeneeded: any }) {
     if (!opt) return;
     this.onsuccess = opt.onsuccess;
     this.onerror = opt.onerror;
@@ -14,10 +14,11 @@ export default class CustomizedDB {
   }
 
   /**
+   * @CreatedTime：2019/06/20 18:24:18
    * @params：
    * @Description：统一对数据库开启，使用回调
    */
-  initdb(opt) {
+  initdb(opt: { dbname: string; version: string | number }) {
     if (!opt) {
       console.log("缺少配置项");
       return;
@@ -45,13 +46,17 @@ export default class CustomizedDB {
         console.log("成功打开DB");
         if (!that.useupgrad) {
           that.db = (e.target as any).result;
-          success(e);
+          // success(e);
         }
         that.onsuccess && that.onsuccess(e);
       };
 
       request.onupgradeneeded = function (e) {
-        that.db = (e.target as any).resul;
+        console.log(
+          "🚀 ~ file: index.ts:55 ~ CustomizedDB ~ returnnewPromise ~ onupgradeneeded:",
+          "onupgradeneeded"
+        );
+        that.db = (e.target as any).result;
         that.useupgrad = true;
         console.log("数据库版本更改为： " + opt.version);
         that.onupgradeneeded && that.onupgradeneeded(e);
@@ -62,6 +67,7 @@ export default class CustomizedDB {
   }
 
   /**
+   * @CreatedTime：2019/06/20 18:19:44
    * @params：{dbname:数据库名称,version:数据库版本号,
    * stores:表信息数组
    * [
@@ -76,13 +82,18 @@ export default class CustomizedDB {
    * delstore:表名数组}
    * @Description：数据库开启/创建表/删除表
    */
-  open(opt) {
+
+  open(opt: { stores?: any; dbname?: string; version?: string | number }) {
     let that = this;
     this.initdb(opt).then((e) => {
-      console.log("🚀 ~ file: index.ts:83 ~ CustomizedDB ~ this.initdb ~ opt:", opt)
       if (opt.stores && opt.stores.length) {
-        opt.stores.forEach((store) => {
+        opt.stores.forEach((store: { storename: any; keys: any[] }) => {
           if (!that.db.objectStoreNames.contains(store.storename)) {
+            console.log(
+              "🚀 ~ file: index.ts:93 ~ CustomizedDB ~ opt.stores.forEach ~ that.db:",
+              that.db
+            );
+
             // 如果表格不存在，创建一个新的表格（keyPath，主键 ； autoIncrement,是否自增），会返回一个对象（objectStore）
             let objectStore = that.db.createObjectStore(store.storename, {
               keyPath: "id",
@@ -91,7 +102,7 @@ export default class CustomizedDB {
 
             // 指定可以被索引的字段，unique字段是否唯一
             if (store.keys && store.keys.length) {
-              store.keys.forEach((key) => {
+              store.keys.forEach((key: { name: any; unique: any }) => {
                 objectStore.createIndex(key.name, key.name, {
                   unique: key.unique,
                 });
@@ -104,10 +115,11 @@ export default class CustomizedDB {
   }
 
   /**
+   * @CreatedTime：2019/06/20 18:08:29
    * @params：{storeName:表名， data:添加的数据}
    * @Description：添加数据
    */
-  add(opt) {
+  add(opt: { storeName: any; data: any }) {
     let that = this;
     return new Promise((success, error) => {
       // 创建事务
@@ -116,20 +128,21 @@ export default class CustomizedDB {
         .objectStore(opt.storeName)
         .add(opt.data);
 
-      request.onsuccess = (e) => {
+      request.onsuccess = (e: { target: { result: unknown } }) => {
         success(e.target.result);
       };
-      request.onerror = (e) => {
+      request.onerror = (e: any) => {
         error(e);
       };
     });
   }
 
   /**
+   * @CreatedTime：2019/06/20 18:09:04
    * @params：{storeName:表名，key:主键,value:主键值}
    * @Description：删除数据
    */
-  delete(opt) {
+  delete(opt: { storeName: any; key: any; value: any }) {
     let that = this;
     return new Promise((success, error) => {
       let store = that.db
@@ -141,23 +154,24 @@ export default class CustomizedDB {
       } else {
         request = store["delete"](opt.value);
       }
-      request.onsuccess = (e) => {
+      request.onsuccess = (e: { target: { result: unknown } }) => {
         success(e.target.result);
       };
-      request.onerror = (e) => {
+      request.onerror = (e: any) => {
         error(e);
       };
     });
   }
 
   /**
+   * @CreatedTime：2019/06/20 18:10:03
    * @params：{storeName:表名，key:主键,value:主键值}
    * @Description：获取数据
    */
-  get(opt) {
+  get(opt: { storeName: any; key: any; value: any }) {
     let that = this;
     return new Promise((success, error) => {
-      let request,
+      let request: { onsuccess: (e: any) => void; onerror: (e: any) => void },
         store = that.db
           .transaction(opt.storeName, "readwrite")
           .objectStore(opt.storeName);
@@ -168,25 +182,31 @@ export default class CustomizedDB {
         request = store.get(opt.value);
       }
 
-      request.onsuccess = (e) => {
+      request.onsuccess = (e: { target: { result: unknown } }) => {
         success(e.target.result);
       };
-      request.onerror = (e) => {
+      request.onerror = (e: any) => {
         error(e);
       };
     });
   }
 
   /**
+   * @CreatedTime：2019/06/20 17:59:33
    * @params：{storeName:表名 key:键值 newData：新数据}
    * @Description：更新数据
    */
-  update(opt) {
+  update(opt: {
+    storeName: any;
+    key: any;
+    value: any;
+    newData: { [x: string]: any };
+  }) {
     let that = this;
     return new Promise((success, error) => {
       let transaction = that.db.transaction(opt.storeName, "readwrite");
 
-      let request,
+      let request: { onsuccess: (e: any) => void; onerror: (e: any) => void },
         store = transaction.objectStore(opt.storeName);
 
       if (opt.key) {
@@ -194,7 +214,7 @@ export default class CustomizedDB {
       } else {
         request = store.get(opt.value);
       }
-      request.onsuccess = (e) => {
+      request.onsuccess = (e: { target: { result: unknown } }) => {
         var data = e.target.result;
         for (let a in opt.newData) {
           // 除了keypath之外
@@ -203,20 +223,25 @@ export default class CustomizedDB {
         store.put(data);
         success(e.target.result);
       };
-      request.onerror = (e) => {
+      request.onerror = (e: any) => {
         error(e);
       };
     });
   }
 
   /**
+   * @CreatedTime：2019/06/20 17:57:35
    * @params：{delstores:空间名称数组}
    * @Description：删除空间
    */
-  deleteStore(opt) {
+  deleteStore(opt: {
+    dbname?: string;
+    version?: string | number;
+    delstores?: any;
+  }) {
     let that = this;
     if (opt.delstores && opt.delstores.length) {
-      opt.delstores.forEach((store) => {
+      opt.delstores.forEach((store: any) => {
         if (that.db.objectStoreNames.contains(store)) {
           // 如果存在表格，则删除
           that.db.deleteObjectStore(store);
@@ -226,18 +251,20 @@ export default class CustomizedDB {
   }
 
   /**
+   * @CreatedTime：2019/06/20 17:58:27
    * @params：{db:indexedDB对象}
    * @Description：关闭数据库
    */
-  closeDB(db) {
+  closeDB(db: { close: () => void }) {
     db.close();
   }
 
   /**
+   * @CreatedTime：2019/06/20 17:58:58
    * @params：{name:数据库名称}
    * @Description：删除数据库
    */
-  deleteDB(name) {
+  deleteDB(name: string) {
     this.monitorZDB.deleteDatabase(name);
   }
 }

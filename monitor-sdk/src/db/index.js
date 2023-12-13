@@ -1,230 +1,298 @@
-export default class CustomizedDB {
-    // 构造
-    constructor(opt) {
-        if (!opt)
-            return;
-        this.onsuccess = opt.onsuccess;
-        this.onerror = opt.onerror;
-        this.onupgradeneeded = opt.onupgradeneeded;
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+export default class IndexedDBWrapper {
+    constructor(dbName, version, storeName) {
+        // 数据库实例
+        this.db = null;
+        this.dbName = dbName;
+        this.version = version;
+        this.storeName = storeName;
     }
-    /**
-     * @CreatedTime：2019/06/20 18:24:18
-     * @params：
-     * @Description：统一对数据库开启，使用回调
-     */
-    initdb(opt) {
-        if (!opt) {
-            console.log("缺少配置项");
-            return;
-        }
-        let that = this;
-        this.monitorZDB = window.indexedDB;
-        //    ||
-        //   window.webkitIndexedDB ||
-        //   window.mozIndexedDB ||
-        //   window.msIndexedDB;
-        if (!this.monitorZDB) {
-            console.log("你的浏览器不支持IndexedDB");
-            return;
-        }
-        return new Promise((success, error) => {
-            let request = this.monitorZDB.open(opt.dbname, opt.version);
-            request.onerror = function (e) {
-                that.onerror && that.onerror(e);
-                error(e);
-            };
-            request.onsuccess = function (e) {
-                console.log("成功打开DB");
-                if (!that.useupgrad) {
-                    that.db = e.target.result;
-                    // success(e);
-                }
-                that.onsuccess && that.onsuccess(e);
-            };
-            request.onupgradeneeded = function (e) {
-                console.log("🚀 ~ file: index.ts:55 ~ CustomizedDB ~ returnnewPromise ~ onupgradeneeded:", "onupgradeneeded");
-                that.db = e.target.result;
-                that.useupgrad = true;
-                console.log("数据库版本更改为： " + opt.version);
-                that.onupgradeneeded && that.onupgradeneeded(e);
-                that.deleteStore(opt);
-                success(e);
-            };
-        });
-    }
-    /**
-     * @CreatedTime：2019/06/20 18:19:44
-     * @params：{dbname:数据库名称,version:数据库版本号,
-     * stores:表信息数组
-     * [
-     *   {
-     *    storename:表名,keys:主键
-     *     {
-     *       name:主键名称,
-     *       unique:是否可重复
-     *     }
-     *   }
-     * ],
-     * delstore:表名数组}
-     * @Description：数据库开启/创建表/删除表
-     */
-    open(opt) {
-        let that = this;
-        this.initdb(opt).then((e) => {
-            if (opt.stores && opt.stores.length) {
-                opt.stores.forEach((store) => {
-                    if (!that.db.objectStoreNames.contains(store.storename)) {
-                        console.log("🚀 ~ file: index.ts:93 ~ CustomizedDB ~ opt.stores.forEach ~ that.db:", that.db);
-                        // 如果表格不存在，创建一个新的表格（keyPath，主键 ； autoIncrement,是否自增），会返回一个对象（objectStore）
-                        let objectStore = that.db.createObjectStore(store.storename, {
+    openDatabase() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                // 打开数据库
+                const request = indexedDB.open(this.dbName, this.version);
+                // 数据库打开失败时触发
+                request.onerror = (event) => {
+                    var _a;
+                    reject(`Failed to open database: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                };
+                // 数据库打开成功时触发
+                request.onsuccess = (event) => {
+                    var _a;
+                    this.db = (_a = event.target) === null || _a === void 0 ? void 0 : _a.result;
+                    resolve(this.db);
+                };
+                // 数据库升级时触发
+                request.onupgradeneeded = (event) => {
+                    var _a;
+                    this.db = (_a = event.target) === null || _a === void 0 ? void 0 : _a.result;
+                    // 如果数据库中不包含指定的对象存储，则创建它
+                    if (!this.db.objectStoreNames.contains(this.storeName)) {
+                        const objectStore = this.db.createObjectStore(this.storeName, {
                             keyPath: "id",
                             autoIncrement: true,
                         });
-                        // 指定可以被索引的字段，unique字段是否唯一
-                        if (store.keys && store.keys.length) {
-                            store.keys.forEach((key) => {
-                                objectStore.createIndex(key.name, key.name, {
-                                    unique: key.unique,
-                                });
-                            });
-                        }
+                        // You can add indexes if needed
+                        // 添加索引，如果需要的话
+                        // objectStore.createIndex('name', 'name', { unique: false });
                     }
-                });
-            }
-        });
-    }
-    /**
-     * @CreatedTime：2019/06/20 18:08:29
-     * @params：{storeName:表名， data:添加的数据}
-     * @Description：添加数据
-     */
-    add(opt) {
-        let that = this;
-        return new Promise((success, error) => {
-            // 创建事务
-            let request = that.db
-                .transaction([opt.storeName], "readwrite")
-                .objectStore(opt.storeName)
-                .add(opt.data);
-            request.onsuccess = (e) => {
-                success(e.target.result);
-            };
-            request.onerror = (e) => {
-                error(e);
-            };
-        });
-    }
-    /**
-     * @CreatedTime：2019/06/20 18:09:04
-     * @params：{storeName:表名，key:主键,value:主键值}
-     * @Description：删除数据
-     */
-    delete(opt) {
-        let that = this;
-        return new Promise((success, error) => {
-            let store = that.db
-                .transaction(opt.storeName, "readwrite")
-                .objectStore(opt.storeName);
-            let request = null;
-            if (opt.key) {
-                request = store.index(opt.key || "id")["delete"](opt.value);
-            }
-            else {
-                request = store["delete"](opt.value);
-            }
-            request.onsuccess = (e) => {
-                success(e.target.result);
-            };
-            request.onerror = (e) => {
-                error(e);
-            };
-        });
-    }
-    /**
-     * @CreatedTime：2019/06/20 18:10:03
-     * @params：{storeName:表名，key:主键,value:主键值}
-     * @Description：获取数据
-     */
-    get(opt) {
-        let that = this;
-        return new Promise((success, error) => {
-            let request, store = that.db
-                .transaction(opt.storeName, "readwrite")
-                .objectStore(opt.storeName);
-            if (opt.key) {
-                request = store.index(opt.key || "id").get(opt.value);
-            }
-            else {
-                request = store.get(opt.value);
-            }
-            request.onsuccess = (e) => {
-                success(e.target.result);
-            };
-            request.onerror = (e) => {
-                error(e);
-            };
-        });
-    }
-    /**
-     * @CreatedTime：2019/06/20 17:59:33
-     * @params：{storeName:表名 key:键值 newData：新数据}
-     * @Description：更新数据
-     */
-    update(opt) {
-        let that = this;
-        return new Promise((success, error) => {
-            let transaction = that.db.transaction(opt.storeName, "readwrite");
-            let request, store = transaction.objectStore(opt.storeName);
-            if (opt.key) {
-                request = store.index(opt.key || "id").get(opt.value);
-            }
-            else {
-                request = store.get(opt.value);
-            }
-            request.onsuccess = (e) => {
-                var data = e.target.result;
-                for (let a in opt.newData) {
-                    // 除了keypath之外
-                    data[a] = opt.newData[a];
-                }
-                store.put(data);
-                success(e.target.result);
-            };
-            request.onerror = (e) => {
-                error(e);
-            };
-        });
-    }
-    /**
-     * @CreatedTime：2019/06/20 17:57:35
-     * @params：{delstores:空间名称数组}
-     * @Description：删除空间
-     */
-    deleteStore(opt) {
-        let that = this;
-        if (opt.delstores && opt.delstores.length) {
-            opt.delstores.forEach((store) => {
-                if (that.db.objectStoreNames.contains(store)) {
-                    // 如果存在表格，则删除
-                    that.db.deleteObjectStore(store);
-                }
+                };
             });
+        });
+    }
+    closeDatabase() {
+        if (this.db) {
+            this.db.close();
+            this.db = null;
         }
     }
-    /**
-     * @CreatedTime：2019/06/20 17:58:27
-     * @params：{db:indexedDB对象}
-     * @Description：关闭数据库
-     */
-    closeDB(db) {
-        db.close();
+    ensureDatabaseOpen() {
+        if (this.db) {
+            return Promise.resolve(this.db);
+        }
+        else {
+            return this.openDatabase();
+        }
     }
-    /**
-     * @CreatedTime：2019/06/20 17:58:58
-     * @params：{name:数据库名称}
-     * @Description：删除数据库
-     */
-    deleteDB(name) {
-        this.monitorZDB.deleteDatabase(name);
+    // 新增一些数据操作方法，使用 ensureDatabaseOpen 保证数据库已打开
+    add(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            const transaction = db.transaction([this.storeName], "readwrite");
+            const objectStore = transaction.objectStore(this.storeName);
+            return new Promise((resolve, reject) => {
+                const request = objectStore.add(data);
+                request.onsuccess = (event) => {
+                    var _a;
+                    resolve((_a = event.target) === null || _a === void 0 ? void 0 : _a.result);
+                };
+                request.onerror = (event) => {
+                    var _a;
+                    reject(`Failed to add data: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                };
+            });
+        });
+    }
+    get(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            return new Promise((resolve, reject) => {
+                // 获取事务对象
+                const transaction = db.transaction([this.storeName], "readonly");
+                // 获取对象存储对象
+                const objectStore = transaction === null || transaction === void 0 ? void 0 : transaction.objectStore(this.storeName);
+                if (transaction && objectStore) {
+                    // 获取指定id的数据
+                    const request = objectStore.get(id);
+                    // 请求成功时
+                    request.onsuccess = (event) => {
+                        var _a;
+                        // 获取数据
+                        const data = (_a = event.target) === null || _a === void 0 ? void 0 : _a.result;
+                        // 返回数据
+                        resolve(data);
+                    };
+                    // 请求失败时
+                    request.onerror = (event) => {
+                        var _a;
+                        // 返回错误信息
+                        reject(`Failed to get data: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                    };
+                }
+                else {
+                    // 返回错误信息
+                    reject("Transaction or objectStore is null.");
+                }
+            });
+        });
+    }
+    update(id, newData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.storeName], "readwrite");
+                const objectStore = transaction === null || transaction === void 0 ? void 0 : transaction.objectStore(this.storeName);
+                if (transaction && objectStore) {
+                    const getRequest = objectStore.get(id);
+                    getRequest.onsuccess = (event) => {
+                        var _a;
+                        const existingData = (_a = event.target) === null || _a === void 0 ? void 0 : _a.result;
+                        if (existingData) {
+                            const updatedData = Object.assign(Object.assign({}, existingData), newData);
+                            const updateRequest = objectStore.put(updatedData);
+                            updateRequest.onsuccess = () => {
+                                resolve();
+                            };
+                            updateRequest.onerror = (event) => {
+                                var _a;
+                                reject(`Failed to update data: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                            };
+                        }
+                        else {
+                            reject(`Data with ID ${id} not found.`);
+                        }
+                    };
+                    getRequest.onerror = (event) => {
+                        var _a;
+                        reject(`Failed to get data for update: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                    };
+                }
+                else {
+                    reject("Transaction or objectStore is null.");
+                }
+            });
+        });
+    }
+    delete(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.storeName], "readwrite");
+                const objectStore = transaction === null || transaction === void 0 ? void 0 : transaction.objectStore(this.storeName);
+                if (transaction && objectStore) {
+                    const request = objectStore.delete(id);
+                    request.onsuccess = () => {
+                        resolve();
+                    };
+                    request.onerror = (event) => {
+                        var _a;
+                        reject(`Failed to delete data: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                    };
+                }
+                else {
+                    reject("Transaction or objectStore is null.");
+                }
+            });
+        });
+    }
+    getAll() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.storeName], "readonly");
+                const objectStore = transaction === null || transaction === void 0 ? void 0 : transaction.objectStore(this.storeName);
+                const data = [];
+                if (transaction && objectStore) {
+                    const request = objectStore.openCursor();
+                    request.onsuccess = (event) => {
+                        var _a;
+                        const cursor = (_a = event.target) === null || _a === void 0 ? void 0 : _a.result;
+                        if (cursor) {
+                            data.push(cursor.value);
+                            cursor.continue();
+                        }
+                        else {
+                            resolve(data);
+                        }
+                    };
+                    request.onerror = (event) => {
+                        var _a;
+                        reject(`Failed to get all data: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                    };
+                }
+                else {
+                    reject("Transaction or objectStore is null.");
+                }
+            });
+        });
+    }
+    query(condition) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.storeName], "readonly");
+                const objectStore = transaction === null || transaction === void 0 ? void 0 : transaction.objectStore(this.storeName);
+                const data = [];
+                if (transaction && objectStore) {
+                    const request = objectStore.openCursor();
+                    request.onsuccess = (event) => {
+                        var _a;
+                        const cursor = (_a = event.target) === null || _a === void 0 ? void 0 : _a.result;
+                        if (cursor) {
+                            const currentData = cursor.value;
+                            if (condition(currentData)) {
+                                data.push(currentData);
+                            }
+                            cursor.continue();
+                        }
+                        else {
+                            resolve(data);
+                        }
+                    };
+                    request.onerror = (event) => {
+                        var _a;
+                        reject(`Failed to query data: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                    };
+                }
+                else {
+                    reject("Transaction or objectStore is null.");
+                }
+            });
+        });
+    }
+    clear() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.storeName], "readwrite");
+                const objectStore = transaction === null || transaction === void 0 ? void 0 : transaction.objectStore(this.storeName);
+                if (transaction && objectStore) {
+                    const request = objectStore.clear();
+                    request.onsuccess = () => {
+                        resolve();
+                    };
+                    request.onerror = (event) => {
+                        var _a;
+                        reject(`Failed to clear object store: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                    };
+                }
+                else {
+                    reject("Transaction or objectStore is null.");
+                }
+            });
+        });
+    }
+    getCount() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield this.ensureDatabaseOpen();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.storeName], "readonly");
+                const objectStore = transaction === null || transaction === void 0 ? void 0 : transaction.objectStore(this.storeName);
+                if (transaction && objectStore) {
+                    const request = objectStore.count();
+                    request.onsuccess = (event) => {
+                        var _a;
+                        const count = (_a = event.target) === null || _a === void 0 ? void 0 : _a.result;
+                        resolve(count);
+                    };
+                    request.onerror = (event) => {
+                        var _a;
+                        reject(`Failed to get record count: ${(_a = event.target) === null || _a === void 0 ? void 0 : _a.error}`);
+                    };
+                }
+                else {
+                    reject("Transaction or objectStore is null.");
+                }
+            });
+        });
+    }
+    getBaseInfo() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.db) {
+                return this.db;
+            }
+            else {
+                throw new Error("Database is not open.");
+            }
+        });
     }
 }

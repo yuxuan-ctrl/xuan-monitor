@@ -7,28 +7,29 @@
   </head>
   <body>
     <script type="module" lang="ts">
-      import CustomizedDB from "./index.js";
-      const dbConfig = {
-        dbname: "mydb",
-        version: 1,
-        stores: [
-          {
-            name: "myTable",
-            keyPath: "id",
-            autoIncrement: true,
-            indexes: [
-              {
-                name: "nameIndex",
-                keyPath: "name",
-              },
-            ],
-          },
-        ],
+      import IndexedDBWrapper from "./index.js";
+      const dbName = "YourDatabaseName";
+      const dbVersion = 1;
+      const storeName = "YourObjectStoreName";
+
+      const indexedDBWrapper = new IndexedDBWrapper(
+        dbName,
+        dbVersion,
+        storeName
+      );
+      const dataToAdd = {
+        name: "Jane Doe",
+        age: 30,
+        email: "jane@example.com",
       };
+      const addedId = await indexedDBWrapper.add(dataToAdd);
+      const data = await indexedDBWrapper.get(addedId);
+      const condition = (data) => data.age >= 25;
 
-      const db = new CustomizedDB();
+      // 使用 ensureQueryDataByCondition 执行查询
+      const queriedData = await indexedDBWrapper.query(condition);
 
-      console.log(db.open(dbConfig));
+      console.log("Queried Data:", queriedData);
     </script>
   </body>
 </html>

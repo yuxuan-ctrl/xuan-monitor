@@ -9,7 +9,7 @@
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
 // const Monitor = require("../core/monitor");
-import { Monitor } from "../core/monitor";
+import { Monitor } from "../monitor";
 
 describe("Monitor Class test", () => {
   test("listener decorator", () => {

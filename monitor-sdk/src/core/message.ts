@@ -13,17 +13,22 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   // 实例
   static instance: MessageQueueDBWrapper;
 
-  constructor(dbName: string, version: number) {
-    super(dbName, version, MessageQueueDBWrapper.MESSAGE_STORE_NAME);
+  constructor(dbName: string, version: number, storeName: string) {
+    super(
+      dbName,
+      version,
+      storeName || MessageQueueDBWrapper.MESSAGE_STORE_NAME
+    );
   }
 
   // 获取实例
   public static getInstance(
     dbName: string,
-    dbVersion: number
+    dbVersion: number,
+    storeName: string
   ): MessageQueueDBWrapper {
     if (!window.instance) {
-      this.instance = new MessageQueueDBWrapper(dbName, dbVersion);
+      this.instance = new MessageQueueDBWrapper(dbName, dbVersion, storeName);
       window.instance = this.instance;
     }
     return window.instance;

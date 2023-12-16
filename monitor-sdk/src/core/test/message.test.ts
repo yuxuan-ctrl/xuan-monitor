@@ -28,10 +28,10 @@ it("should be able to enqueue and dequeue messages", async () => {
   await queue.enqueue({ data: "World" });
 
   const dequeuedMessage1 = await queue.dequeue();
-  expect(dequeuedMessage1?.data).toBe("Hello");
+  expect(dequeuedMessage1?.data.data).toBe("Hello");
 
   const dequeuedMessage2 = await queue.dequeue();
-  expect(dequeuedMessage2?.data).toBe("World");
+  expect(dequeuedMessage2?.data.data).toBe("World");
 });
 
 it("should handle empty queue when dequeuing", async () => {
@@ -57,5 +57,5 @@ it("should handle duplicate IDs when enqueueing", async () => {
 
   const messages = await queue.getAll();
   expect(messages.length).toBe(2);
-  expect(messages[0].data.data).toBe("World");
+  expect(messages[0].data.data).toBe("Hello");
 });

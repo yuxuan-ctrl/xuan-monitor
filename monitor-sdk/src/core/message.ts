@@ -50,9 +50,11 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   public async dequeue(): Promise<IMessage | undefined> {
     const messages = await this.getAll();
     if (messages.length > 0) {
-      const [newestPendingMessage] = messages.sort(
-        (a, b) => b.timestamp - a.timestamp
-      );
+      const newestPendingMessage = messages
+        .filter((mes) => {
+          return mes.status === "pending";
+        })
+        .sort((a, b) => a.timestamp - b.timestamp)[0];
       if (newestPendingMessage.status === "pending") {
         await this.update(newestPendingMessage.id!, { status: "consumed" });
         return newestPendingMessage;

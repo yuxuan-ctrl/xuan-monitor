@@ -1,0 +1,117 @@
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import Monitor from "./monitor";
+
+interface UVData {
+  uniqueKey: string;
+  timestamp: number;
+  userAgent?: string;
+  language?: string;
+  timeZoneOffset?: number;
+  screenResolution?: {
+    width: number;
+    height: number;
+  };
+  // 添加更多可能感兴趣的用户信息字段
+}
+
+export default class UvTracker {
+  private uvData: UVData | null = null;
+  private customKey?: string;
+  private refreshIntervalId?: number;
+  monitor: Monitor;
+
+  constructor(customKey?: string, monitor?: Monitor) {
+    this.customKey = customKey;
+    this.monitor = monitor;
+  }
+
+  /**
+   * 获取或生成唯一的用户标识符（unique key）。
+   *
+   * @returns 返回唯一用户标识符。
+   */
+  async getUniqueKey(): Promise<string> {
+    if (this.customKey) {
+      return this.customKey;
+    }
+
+    // 如果没有自定义键，使用FingerprintJS生成设备指纹
+    const fp = await FingerprintJS.load();
+    const result = await fp.get();
+
+    // 使用FingerprintJS生成的组件哈希作为唯一键
+    const uniqueKey = result.components.reduce(
+      (acc, component) => acc + component.value,
+      ""
+    );
+
+    return uniqueKey;
+  }
+
+  /**
+   * 收集用户的附加信息。
+   *
+   * @returns 返回包含附加用户信息的对象。
+   */
+  collectUserInfo(): Partial<UVData> {
+    const userInfo: Partial<UVData> = {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      timeZoneOffset: new Date().getTimezoneOffset(),
+      screenResolution: {
+        width: window.screen.width,
+        height: window.screen.height,
+      },
+      // 添加更多可能感兴趣的用户信息字段
+    };
+
+    return userInfo;
+  }
+
+  /**
+   * 记录UV数据。
+   *
+   * @param customKey 可选的自定义唯一键。
+   */
+  async trackUv(customKey?: string): Promise<UVData> {
+    if (customKey) {
+      this.customKey = customKey;
+    }
+
+    const uniqueKey = await this.getUniqueKey();
+    const userInfo = this.collectUserInfo();
+
+    // 存储UV数据
+    this.uvData = {
+      uniqueKey,
+      timestamp: Date.now(),
+      ...userInfo,
+    };
+
+    // 在这里添加将UV数据发送到服务器或其他处理逻辑
+    console.log("UV data:", this.uvData);
+    return this.uvData;
+  }
+
+  /**
+   * 初始化定期刷新UV数据的定时器。
+   */
+  public initRefreshInterval(sendMessage: Function) {
+    const refreshIntervalInHours = 1; // 设置为每小时刷新一次
+
+    this.refreshIntervalId = window.setInterval(async () => {
+      await this.trackUv();
+      sendMessage.call(this.monitor);
+    }, refreshIntervalInHours * 60 * 60 * 1000);
+  }
+
+  /**
+   * 停止定期刷新UV数据的定时器。
+   */
+  stopRefreshInterval() {
+    if (this.refreshIntervalId) {
+      clearInterval(this.refreshIntervalId);
+      this.refreshIntervalId = undefined;
+    }
+  }
+}

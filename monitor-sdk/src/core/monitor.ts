@@ -1,82 +1,98 @@
-import { addEventListener } from "../utils/utils.js";
-import { PageViewData } from "../types";
-import MessageQueueDBWrapper from "./message.js";
-import { DB_CONFIG } from "../config/dbconfig.js";
+import PageViewTracker from "./PageViewTracker";
+import UvTracker from "./UserViewTracker";
+import MessageQueueDBWrapper, { IMessage } from "./message";
+
+interface IPVData {
+  title?: string;
+  url?: string;
+  userAgent?: string;
+  platform?: string;
+  screenResolution?: {
+    width: number;
+    height: number;
+  };
+  timestamp?: number;
+  referrer?: string | null;
+}
+
+interface UVData {
+  uniqueKey: string;
+  timestamp: number;
+  userAgent?: string;
+  language?: string;
+  timeZoneOffset?: number;
+  screenResolution?: {
+    width: number;
+    height: number;
+  };
+}
+
 export default class Monitor {
-  pageShowTime: number = 0;
-  duration: number = 0;
-  report: Report;
-  userId: string = "";
-  messageQueue: MessageQueueDBWrapper;
+  private pvTracker: PageViewTracker;
+  private uvTracker: UvTracker;
+  uvData: UVData;
+  pvData: IPVData;
 
-  constructor(config) {
-    // this.report = new Report(config);
-    this.listenToPageData();
-    this.listenError();
-    this.messageQueue = MessageQueueDBWrapper.getInstance(
-      DB_CONFIG.DB_NAME,
-      1,
-      "pvStore"
-    );
-    console.log(
-      "🚀 ~ file: monitor.ts:22 ~ Monitor ~ constructor ~ this.messageQueue:",
-      this.messageQueue
-    );
+  constructor(userId?: string, customKey?: string) {
+    this.pvTracker = new PageViewTracker(userId, this);
+    this.uvTracker = new UvTracker(customKey, this);
   }
 
-  trackPageView() {
-    const pageViewData: PageViewData = {
-      userId: this.userId,
-      pageShowTime: performance.now(),
-      duration: this.duration,
-      timestamp: 0,
-      pagePath: "",
-      appId: "",
-      ipAddress: "",
-      userAgent: "",
-      browser: "",
-      os: "",
-    };
-    this.messageQueue.enqueue(pageViewData);
+  startTracking() {
+    this.addEventListeners();
+    this.uvTracker.initRefreshInterval(this.sendMessage);
   }
 
-  listenToPageData() {
-    const endUpPageShow = addEventListener("pageshow", document, () => {
-      this.pageShowTime = performance.now();
-      this.trackPageView();
-    });
-    const endUpPageHide = addEventListener("pagehide", document, () => {
-      this.duration = performance.now() - this.pageShowTime;
-      this.trackPageView();
-    });
-    const endUpPageReplace = addEventListener("replaceState", document, () => {
-      this.duration = performance.now() - this.pageShowTime;
-      this.pageShowTime = performance.now();
-    });
-    return {
-      endUpPageShow,
-      endUpPageHide,
-      endUpPageReplace,
-    };
+  stopTracking() {
+    this.removeEventListeners();
+    this.uvTracker.stopRefreshInterval();
   }
 
-  listenError() {
-    const endError = addEventListener("error", document, (err: any) => {
-      const errorInfo = {
-        errFileName: err.filename,
-        message: err.error.message,
-      };
-    });
-    const endUpRejection = addEventListener(
-      "unhandledrejection",
-      document,
-      () => {
-        this.duration = performance.now() - this.pageShowTime;
-      }
-    );
-    return {
-      endError,
-      endUpRejection,
+  private addEventListeners() {
+    window.addEventListener("popstate", this.onPopState.bind(this));
+    history.pushState = this.onPageChange.bind(this, "pushState");
+    history.replaceState = this.onPageChange.bind(this, "replaceState");
+    window.addEventListener("load", this.onLoad.bind(this));
+    window.addEventListener("pageshow", this.onPageShow.bind(this));
+  }
+
+  private removeEventListeners() {
+    window.removeEventListener("popstate", this.onPopState);
+    history.pushState = history.originalPushState || history.pushState;
+    history.replaceState = history.originalReplaceState || history.replaceState;
+    window.removeEventListener("load", this.onLoad);
+    window.removeEventListener("pageshow", this.onPageShow);
+  }
+
+  private onPageChange(method: string, ...args: any[]) {
+    this.pvData = this.pvTracker.trackPageView(method, ...args);
+  }
+
+  private onPopState(event: PopStateEvent) {
+    this.pvData = this.pvTracker.trackPageView("popstate", event);
+  }
+
+  private async onLoad(event: Event) {
+    this.uvData = await this.uvTracker.trackUv();
+    this.pvData = this.pvTracker.trackPageView("load", event);
+  }
+
+  private onPageShow(event: PageTransitionEvent) {
+    // if (event.persisted) {
+    // }
+  }
+
+  public async sendMessage() {
+    const message: IMessage = {
+      data: { ...this.pvData, ...this.uvData },
+      timestamp: Date.now(),
+      name: "pv_uv_data",
+      userId: this.pvTracker.userId,
     };
+    MessageQueueDBWrapper.getInstance({
+      dbName: "page_view_tracker",
+      dbVersion: 1,
+      storeName: "messages",
+    }).enqueue(message);
   }
 }

@@ -12,6 +12,7 @@
   "author": "yuxuanli",
   "license": "ISC",
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.2.1",
     "@vueuse/core": "^10.7.0",
     "jest": "^29.7.0",
     "js-cookie": "^3.0.5",

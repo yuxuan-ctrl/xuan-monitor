@@ -41,6 +41,19 @@ export default class PageViewTracker {
    * 用户 ID。
    */
   private _userId?: string;
+  pvData: {
+    title?: string;
+    url?: string;
+    userAgent?: string;
+    platform?: string;
+    screenResolution?: { width: number; height: number };
+    timestamp?: number;
+    referrer?: string;
+    totalPageViews: number;
+    maxStayDuration: number; // 单位：毫秒
+    mostVisitedPageId: string;
+    mostVisitedPageViews: number;
+  };
 
   /**
    * 构造函数。
@@ -49,7 +62,7 @@ export default class PageViewTracker {
    */
   constructor(userId?: string) {
     this.userId = userId;
-    this.addEventListeners();
+    // this.addEventListeners();
     history.originalReplaceState = history.replaceState;
   }
 
@@ -72,32 +85,12 @@ export default class PageViewTracker {
   }
 
   /**
-   * 添加事件监听器。
-   */
-  private addEventListeners() {
-    window.addEventListener("popstate", this.onPopState.bind(this));
-    history.pushState = this.trackPageView.bind(this, "pushState");
-    history.replaceState = this.trackPageView.bind(this, "replaceState");
-    window.addEventListener("load", this.onLoad.bind(this));
-  }
-
-  /**
-   * 移除事件监听器。
-   */
-  private removeEventListeners() {
-    window.removeEventListener("popstate", this.onPopState);
-    history.pushState = history.originalPushState || history.pushState;
-    history.replaceState = history.originalReplaceState || history.replaceState;
-    window.removeEventListener("load", this.onLoad);
-  }
-
-  /**
    * 跟踪页面浏览。
    *
    * @param method 跟踪的方法。
    * @param args 方法的参数。
    */
-  private trackPageView(method: string, ...args: any[]) {
+  public trackPageView(method: string, ...args: any[]) {
     this.isTracking = true;
     switch (method) {
       case "pushState":
@@ -108,50 +101,13 @@ export default class PageViewTracker {
         break;
       case "popstate":
       case "load":
-        this.updatePageViewTime("current_page");
+        this.pvData = this.updatePageViewTime("current_page");
         break;
       default:
         throw new Error(`Invalid method: ${method}`);
     }
     this.isTracking = false;
-  }
-
-  /**
-   * 发送消息到消息队列。
-   *
-   * @param eventName 消息名称。
-   * @param eventData 消息数据。
-   */
-  private sendMessage(eventName: string, eventData: any) {
-    const message: IMessage = {
-      data: eventData,
-      timestamp: Date.now(),
-      name: eventName,
-      userId: this.userId,
-    };
-    MessageQueueDBWrapper.getInstance({
-      dbName: "page_view_tracker",
-      dbVersion: 1,
-      storeName: "messages",
-    }).enqueue(message);
-  }
-
-  /**
-   * 处理 popstate 事件。
-   *
-   * @param event popstate 事件对象。
-   */
-  private onPopState(event: PopStateEvent) {
-    this.trackPageView("popstate");
-  }
-
-  /**
-   * 处理 load 事件。
-   *
-   * @param event load 事件对象。
-   */
-  private onLoad(event: Event) {
-    this.trackPageView("load");
+    return this.pvData;
   }
 
   /**
@@ -189,7 +145,7 @@ export default class PageViewTracker {
     };
     this.pageVisits.set(pageId, pvData);
 
-    this.calculateAndSendPVData(pvData);
+    return this.calculateAndSendPVData(pvData);
   }
 
   /**
@@ -233,21 +189,13 @@ export default class PageViewTracker {
       `Most visited page views: ${mostVisitedPageViews}`
     );
 
-    // 发送 PV 数据到消息队列
-    this.sendMessage("pv_data", {
+    return {
       totalPageViews,
       maxStayDuration, // 单位：毫秒
       mostVisitedPageId,
       mostVisitedPageViews,
       ...pvData,
-    });
-  }
-
-  /**
-   * 停止跟踪页面浏览。
-   */
-  public stopTracking() {
-    this.removeEventListeners();
+    };
   }
 
   /**
@@ -257,6 +205,6 @@ export default class PageViewTracker {
    * @param eventData 事件数据。
    */
   public triggerCustomEvent(eventName: string, eventData: any) {
-    this.sendMessage(eventName, eventData);
+    // this.sendMessage(eventName, eventData);
   }
 }

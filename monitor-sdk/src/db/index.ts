@@ -1,59 +1,73 @@
+interface IIndexedDBConfig {
+  dbName?: string;
+  version?: number;
+  storeName?: string;
+}
+
+const DEFAULT_CONFIG: IIndexedDBConfig = {
+  dbName: "myDatabase",
+  version: 1,
+  storeName: "myObjectStore",
+};
+
 interface IData {
   timestamp?: any;
   id?: number;
   name?: string;
   age?: number;
   email?: string;
+  data?: any;
   status?: "pending" | "consumed";
   // Add other properties based on your data structure
 }
 
+interface IDBDatabaseInfo extends IDBDatabase {}
+
 export default class IndexedDBWrapper {
-  private dbName: string;
-  // 数据库版本号
-  private version: number;
-  // 存储名称
-  private storeName: string;
-  // 数据库实例
+  private config: IIndexedDBConfig;
   private db: IDBDatabase | null = null;
-  constructor(dbName: string, version: number, storeName: string) {
-    this.dbName = dbName;
-    this.version = version;
-    this.storeName = storeName;
+
+  constructor(config?: IIndexedDBConfig) {
+    this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
   public async openDatabase(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      // 打开数据库
-      const request = indexedDB.open(this.dbName, this.version);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await new Promise<IDBOpenDBRequest>(
+          (resolve, reject) => {
+            const request = indexedDB.open(
+              this.config.dbName,
+              this.config.version
+            );
+            request.onerror = (event) => {
+              reject(
+                `Failed to open database: ${(event.target as any)?.error}`
+              );
+            };
+            request.onupgradeneeded = (event) => {
+              const db = (event.target as any)?.result as IDBDatabase;
+              if (!db.objectStoreNames.contains(this.config.storeName)) {
+                const objectStore = db.createObjectStore(
+                  this.config.storeName,
+                  {
+                    keyPath: "id",
+                    autoIncrement: true,
+                  }
+                );
+              }
+            };
+            resolve(request);
+          }
+        );
 
-      // 数据库打开失败时触发
-      request.onerror = (event) => {
-        reject(`Failed to open database: ${(event.target as any)?.error}`);
-      };
-
-      // 数据库打开成功时触发
-      request.onsuccess = (event) => {
-        this.db = (event.target as any)?.result as IDBDatabase;
-        resolve(this.db);
-      };
-
-      // 数据库升级时触发
-      request.onupgradeneeded = (event) => {
-        this.db = (event.target as any)?.result as IDBDatabase;
-
-        // 如果数据库中不包含指定的对象存储，则创建它
-        if (!this.db.objectStoreNames.contains(this.storeName)) {
-          const objectStore = this.db.createObjectStore(this.storeName, {
-            keyPath: "id",
-            autoIncrement: true,
-          });
-
-          // You can add indexes if needed
-          // 添加索引，如果需要的话
-          // objectStore.createIndex('name', 'name', { unique: false });
-        }
-      };
+        result.onsuccess = (event) => {
+          this.db = (event.target as any)?.result as IDBDatabase;
+          resolve(this.db);
+        };
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 
@@ -64,7 +78,7 @@ export default class IndexedDBWrapper {
     }
   }
 
-  protected ensureDatabaseOpen(): Promise<IDBDatabase> {
+  protected async ensureDatabaseOpen(): Promise<IDBDatabase> {
     if (this.db) {
       return Promise.resolve(this.db);
     } else {
@@ -72,14 +86,12 @@ export default class IndexedDBWrapper {
     }
   }
 
-  // 新增一些数据操作方法，使用 ensureDatabaseOpen 保证数据库已打开
-
   public async add(data: IData): Promise<number> {
     const db = await this.ensureDatabaseOpen();
-    const transaction = db.transaction([this.storeName], "readwrite");
-    const objectStore = transaction.objectStore(this.storeName);
-
     return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.config.storeName, "readwrite");
+      const objectStore = transaction.objectStore(this.config.storeName);
+
       const request = objectStore.add(data);
 
       request.onsuccess = (event) => {
@@ -95,205 +107,165 @@ export default class IndexedDBWrapper {
   public async get(id: number): Promise<IData | undefined> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      // 获取事务对象
-      const transaction = db.transaction([this.storeName], "readonly");
-      // 获取对象存储对象
-      const objectStore = transaction?.objectStore(this.storeName);
+      const transaction = db.transaction(this.config.storeName, "readonly");
+      const objectStore = transaction.objectStore(this.config.storeName);
 
-      if (transaction && objectStore) {
-        // 获取指定id的数据
-        const request = objectStore.get(id);
+      const request = objectStore.get(id);
 
-        // 请求成功时
-        request.onsuccess = (event) => {
-          // 获取数据
-          const data = (event.target as any)?.result as IData;
-          // 返回数据
-          resolve(data);
-        };
+      request.onsuccess = (event) => {
+        resolve((event.target as any)?.result as IData);
+      };
 
-        // 请求失败时
-        request.onerror = (event) => {
-          // 返回错误信息
-          reject(`Failed to get data: ${(event.target as any)?.error}`);
-        };
-      } else {
-        // 返回错误信息
-        reject("Transaction or objectStore is null.");
-      }
+      request.onerror = (event) => {
+        reject(`Failed to get data: ${(event.target as any)?.error}`);
+      };
     });
   }
 
   public async update(id: number, newData: IData): Promise<void> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readwrite");
-      const objectStore = transaction?.objectStore(this.storeName);
+      const transaction = db.transaction(this.config.storeName, "readwrite");
+      const objectStore = transaction.objectStore(this.config.storeName);
 
-      if (transaction && objectStore) {
-        const getRequest = objectStore.get(id);
+      const getRequest = objectStore.get(id);
 
-        getRequest.onsuccess = (event) => {
-          const existingData = (event.target as any)?.result as IData;
+      getRequest.onsuccess = (event) => {
+        const existingData = (event.target as any)?.result as IData;
 
-          if (existingData) {
-            const updatedData = { ...existingData, ...newData };
+        if (existingData) {
+          const updatedData = { ...existingData, ...newData };
 
-            const updateRequest = objectStore.put(updatedData);
+          const updateRequest = objectStore.put(updatedData);
 
-            updateRequest.onsuccess = () => {
-              resolve();
-            };
+          updateRequest.onsuccess = () => {
+            resolve();
+          };
 
-            updateRequest.onerror = (event) => {
-              reject(`Failed to update data: ${(event.target as any)?.error}`);
-            };
-          } else {
-            reject(`Data with ID ${id} not found.`);
-          }
-        };
+          updateRequest.onerror = (event) => {
+            reject(`Failed to update data: ${(event.target as any)?.error}`);
+          };
+        } else {
+          reject(`Data with ID ${id} not found.`);
+        }
+      };
 
-        getRequest.onerror = (event) => {
-          reject(
-            `Failed to get data for update: ${(event.target as any)?.error}`
-          );
-        };
-      } else {
-        reject("Transaction or objectStore is null.");
-      }
+      getRequest.onerror = (event) => {
+        reject(
+          `Failed to get data for update: ${(event.target as any)?.error}`
+        );
+      };
     });
   }
 
   public async delete(id: number): Promise<void> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readwrite");
-      const objectStore = transaction?.objectStore(this.storeName);
+      const transaction = db.transaction(this.config.storeName, "readwrite");
+      const objectStore = transaction.objectStore(this.config.storeName);
 
-      if (transaction && objectStore) {
-        const request = objectStore.delete(id);
+      const request = objectStore.delete(id);
 
-        request.onsuccess = () => {
-          resolve();
-        };
+      request.onsuccess = () => {
+        resolve();
+      };
 
-        request.onerror = (event) => {
-          reject(`Failed to delete data: ${(event.target as any)?.error}`);
-        };
-      } else {
-        reject("Transaction or objectStore is null.");
-      }
+      request.onerror = (event) => {
+        reject(`Failed to delete data: ${(event.target as any)?.error}`);
+      };
     });
   }
 
   public async getAll(): Promise<IData[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readonly");
-      const objectStore = transaction?.objectStore(this.storeName);
+      const transaction = db.transaction(this.config.storeName, "readonly");
+      const objectStore = transaction.objectStore(this.config.storeName);
       const data: IData[] = [];
 
-      if (transaction && objectStore) {
-        const request = objectStore.openCursor();
+      const request = objectStore.openCursor();
 
-        request.onsuccess = (event) => {
-          const cursor = (event.target as any)?.result as IDBCursorWithValue;
+      request.onsuccess = (event) => {
+        const cursor = (event.target as any)?.result as IDBCursorWithValue;
 
-          if (cursor) {
-            data.push(cursor.value);
-            cursor.continue();
-          } else {
-            resolve(data);
-          }
-        };
+        if (cursor) {
+          data.push(cursor.value);
+          cursor.continue();
+        } else {
+          resolve(data);
+        }
+      };
 
-        request.onerror = (event) => {
-          reject(`Failed to get all data: ${(event.target as any)?.error}`);
-        };
-      } else {
-        reject("Transaction or objectStore is null.");
-      }
+      request.onerror = (event) => {
+        reject(`Failed to get all data: ${(event.target as any)?.error}`);
+      };
     });
   }
 
   public async query(condition: (data: IData) => boolean): Promise<IData[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readonly");
-      const objectStore = transaction?.objectStore(this.storeName);
+      const transaction = db.transaction(this.config.storeName, "readonly");
+      const objectStore = transaction.objectStore(this.config.storeName);
       const data: IData[] = [];
 
-      if (transaction && objectStore) {
-        const request = objectStore.openCursor();
+      const request = objectStore.openCursor();
 
-        request.onsuccess = (event) => {
-          const cursor = (event.target as any)?.result as IDBCursorWithValue;
+      request.onsuccess = (event) => {
+        const cursor = (event.target as any)?.result as IDBCursorWithValue;
 
-          if (cursor) {
-            const currentData = cursor.value as IData;
-            if (condition(currentData)) {
-              data.push(currentData);
-            }
-
-            cursor.continue();
-          } else {
-            resolve(data);
+        if (cursor) {
+          const currentData = cursor.value as IData;
+          if (condition(currentData)) {
+            data.push(currentData);
           }
-        };
 
-        request.onerror = (event) => {
-          reject(`Failed to query data: ${(event.target as any)?.error}`);
-        };
-      } else {
-        reject("Transaction or objectStore is null.");
-      }
+          cursor.continue();
+        } else {
+          resolve(data);
+        }
+      };
+
+      request.onerror = (event) => {
+        reject(`Failed to query data: ${(event.target as any)?.error}`);
+      };
     });
   }
 
   public async clear(): Promise<void> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readwrite");
-      const objectStore = transaction?.objectStore(this.storeName);
+      const transaction = db.transaction(this.config.storeName, "readwrite");
+      const objectStore = transaction.objectStore(this.config.storeName);
 
-      if (transaction && objectStore) {
-        const request = objectStore.clear();
+      const request = objectStore.clear();
 
-        request.onsuccess = () => {
-          resolve();
-        };
+      request.onsuccess = () => {
+        resolve();
+      };
 
-        request.onerror = (event) => {
-          reject(
-            `Failed to clear object store: ${(event.target as any)?.error}`
-          );
-        };
-      } else {
-        reject("Transaction or objectStore is null.");
-      }
+      request.onerror = (event) => {
+        reject(`Failed to clear object store: ${(event.target as any)?.error}`);
+      };
     });
   }
 
   public async getCount(): Promise<number> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readonly");
-      const objectStore = transaction?.objectStore(this.storeName);
+      const transaction = db.transaction(this.config.storeName, "readonly");
+      const objectStore = transaction.objectStore(this.config.storeName);
 
-      if (transaction && objectStore) {
-        const request = objectStore.count();
+      const request = objectStore.count();
 
-        request.onsuccess = (event) => {
-          const count = (event.target as any)?.result as number;
-          resolve(count);
-        };
+      request.onsuccess = (event) => {
+        const count = (event.target as any)?.result as number;
+        resolve(count);
+      };
 
-        request.onerror = (event) => {
-          reject(`Failed to get record count: ${(event.target as any)?.error}`);
-        };
-      } else {
-        reject("Transaction or objectStore is null.");
-      }
+      request.onerror = (event) => {
+        reject(`Failed to get record count: ${(event.target as any)?.error}`);
+      };
     });
   }
 

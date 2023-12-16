@@ -1,9 +1,12 @@
-import IndexedDBWrapper from "../db/index.js";
+import IndexedDBWrapper from "../db/index";
 
 interface IMessage {
-  id?: number;
   data?: any;
-  timestamp?: number;
+  timestamp?: any;
+  id?: number;
+  name?: string;
+  age?: number;
+  email?: string;
   status?: "pending" | "consumed";
 }
 
@@ -11,47 +14,49 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   // 消息存储名称
   private static readonly MESSAGE_STORE_NAME = "messages";
   // 实例
-  static instance: MessageQueueDBWrapper;
+  private static _instance: MessageQueueDBWrapper | null = null;
 
-  constructor(dbName: string, version: number, storeName: string) {
-    super(
-      dbName,
-      version,
-      storeName || MessageQueueDBWrapper.MESSAGE_STORE_NAME
-    );
+  constructor(config) {
+    super(config);
   }
 
   // 获取实例
-  public static getInstance(
-    dbName: string,
-    dbVersion: number,
-    storeName: string
-  ): MessageQueueDBWrapper {
-    if (!window.instance) {
-      this.instance = new MessageQueueDBWrapper(dbName, dbVersion, storeName);
-      window.instance = this.instance;
+  public static getInstance(config: {
+    dbName: string;
+    dbVersion: number;
+    storeName: string;
+  }): MessageQueueDBWrapper {
+    if (!MessageQueueDBWrapper._instance) {
+      MessageQueueDBWrapper._instance = new MessageQueueDBWrapper({
+        dbName: config.dbName,
+        dbVersion: config.dbVersion,
+        storeName: config.storeName,
+      });
     }
-    return window.instance;
+    return MessageQueueDBWrapper._instance;
   }
 
   // 添加消息
   public async enqueue(data: any): Promise<void> {
-    const timestamp = Date.now();
-    const message: IMessage = { ...data, timestamp, status: "pending" };
+    const message: IMessage = {
+      data,
+      timestamp: Date.now(),
+      status: "pending",
+    };
     await this.add(message);
   }
 
   // 获取消息
   public async dequeue(): Promise<IMessage | undefined> {
-    const pendingMessages = await this.query(
-      (message) => message.status === "pending"
-    );
-    if (pendingMessages.length > 0) {
-      const newestPendingMessage = pendingMessages.reduce((newest, current) =>
-        current.timestamp > newest.timestamp ? current : newest
+    const messages = await this.getAll();
+    if (messages.length > 0) {
+      const [newestPendingMessage] = messages.sort(
+        (a, b) => b.timestamp - a.timestamp
       );
-      await this.update(newestPendingMessage.id!, { status: "consumed" });
-      return newestPendingMessage;
+      if (newestPendingMessage.status === "pending") {
+        await this.update(newestPendingMessage.id!, { status: "consumed" });
+        return newestPendingMessage;
+      }
     }
     return undefined;
   }

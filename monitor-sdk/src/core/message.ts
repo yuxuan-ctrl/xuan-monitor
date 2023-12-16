@@ -1,6 +1,6 @@
 import IndexedDBWrapper from "../db/index";
 
-interface IMessage {
+export interface IMessage {
   data?: any;
   timestamp?: any;
   id?: number;

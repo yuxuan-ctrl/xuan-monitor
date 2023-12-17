@@ -2,7 +2,7 @@ import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
 import MessageQueueDBWrapper, { IMessage } from "./message";
 
-interface IPVData {
+export interface IPVData {
   title?: string;
   url?: string;
   userAgent?: string;
@@ -15,7 +15,7 @@ interface IPVData {
   referrer?: string | null;
 }
 
-interface UVData {
+export interface UVData {
   uniqueKey: string;
   timestamp: number;
   userAgent?: string;
@@ -28,8 +28,8 @@ interface UVData {
 }
 
 export default class Monitor {
-  private pvTracker: PageViewTracker;
-  private uvTracker: UvTracker;
+  public pvTracker: PageViewTracker;
+  public uvTracker: UvTracker;
   uvData: UVData;
   pvData: IPVData;
 
@@ -48,7 +48,7 @@ export default class Monitor {
     this.uvTracker.stopRefreshInterval();
   }
 
-  private addEventListeners() {
+  public addEventListeners() {
     window.addEventListener("popstate", this.onPopState.bind(this));
     history.pushState = this.onPageChange.bind(this, "pushState");
     history.replaceState = this.onPageChange.bind(this, "replaceState");
@@ -56,10 +56,8 @@ export default class Monitor {
     window.addEventListener("pageshow", this.onPageShow.bind(this));
   }
 
-  private removeEventListeners() {
+  public removeEventListeners() {
     window.removeEventListener("popstate", this.onPopState);
-    history.pushState = history.originalPushState || history.pushState;
-    history.replaceState = history.originalReplaceState || history.replaceState;
     window.removeEventListener("load", this.onLoad);
     window.removeEventListener("pageshow", this.onPageShow);
   }
@@ -68,16 +66,20 @@ export default class Monitor {
     this.pvData = this.pvTracker.trackPageView(method, ...args);
   }
 
-  private onPopState(event: PopStateEvent) {
+  public onPopState(event: PopStateEvent) {
     this.pvData = this.pvTracker.trackPageView("popstate", event);
+    console.log(
+      "🚀 ~ file: monitor.ts:71 ~ Monitor ~ onPopState ~ this.pvData:",
+      this.pvData
+    );
   }
 
-  private async onLoad(event: Event) {
+  public async onLoad(event: Event) {
     this.uvData = await this.uvTracker.trackUv();
     this.pvData = this.pvTracker.trackPageView("load", event);
   }
 
-  private onPageShow(event: PageTransitionEvent) {
+  public onPageShow(event: PageTransitionEvent) {
     // if (event.persisted) {
     // }
   }

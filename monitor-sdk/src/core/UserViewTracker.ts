@@ -15,9 +15,9 @@ interface UVData {
 }
 
 export default class UvTracker {
-  private uvData: UVData | null = null;
-  private customKey?: string;
-  private refreshIntervalId?: number;
+  public uvData: UVData | null = null;
+  public customKey?: string;
+  public refreshIntervalId?: number;
   monitor: Monitor;
 
   constructor(customKey?: string, monitor?: Monitor) {
@@ -40,7 +40,7 @@ export default class UvTracker {
     const result = await fp.get();
 
     // 使用FingerprintJS生成的组件哈希作为唯一键
-    const uniqueKey = result.components.reduce(
+    const uniqueKey = (result.components as any).reduce(
       (acc, component) => acc + component.value,
       ""
     );
@@ -96,7 +96,7 @@ export default class UvTracker {
   /**
    * 初始化定期刷新UV数据的定时器。
    */
-  public initRefreshInterval(sendMessage: Function) {
+  initRefreshInterval(sendMessage: Function) {
     const refreshIntervalInHours = 1; // 设置为每小时刷新一次
 
     this.refreshIntervalId = window.setInterval(async () => {

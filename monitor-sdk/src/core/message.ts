@@ -8,6 +8,7 @@ export interface IMessage {
   age?: number;
   email?: string;
   status?: "pending" | "consumed";
+  userId?: string;
 }
 
 export default class MessageQueueDBWrapper extends IndexedDBWrapper {

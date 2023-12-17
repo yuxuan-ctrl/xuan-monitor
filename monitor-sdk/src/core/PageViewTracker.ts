@@ -1,4 +1,5 @@
 import MessageQueueDBWrapper, { IMessage } from "./message";
+import Monitor from "./monitor";
 
 interface IPVData {
   title?: string;
@@ -60,10 +61,9 @@ export default class PageViewTracker {
    *
    * @param userId 可选的用户 ID。
    */
-  constructor(userId?: string) {
+  constructor(userId?: string, monitor?: Monitor) {
     this.userId = userId;
     // this.addEventListeners();
-    history.originalReplaceState = history.replaceState;
   }
 
   /**
@@ -94,10 +94,10 @@ export default class PageViewTracker {
     this.isTracking = true;
     switch (method) {
       case "pushState":
-        history.originalPushState.apply(history, args);
+        // history.pushState.apply(history, args);
         break;
       case "replaceState":
-        history.originalReplaceState.apply(history, args);
+        // history.replaceState.apply(history, args);
         break;
       case "popstate":
       case "load":

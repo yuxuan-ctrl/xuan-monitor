@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-18 09:17:00
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-18 09:42:37
+ * @FilePath: \monitor-sdk\examples\vue\src\router.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
 import {
   createRouter,
   createWebHashHistory,
@@ -36,7 +46,7 @@ const routes = [
 
 const router = createRouter({
   routes,
-  history: createWebHashHistory("/"),
+  history: createWebHistory("/"),
 });
 
 export default router;

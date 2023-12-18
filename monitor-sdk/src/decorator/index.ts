@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
-import { addEventListener } from "../utils/utils";
+import { addEventListener } from "../utils";
 
 export function listener(
   event: Array<string> | string,

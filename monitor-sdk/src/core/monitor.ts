@@ -1,6 +1,7 @@
 import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
-import MessageQueueDBWrapper, { IMessage } from "./message";
+import MessageQueueDBWrapper, {IMessage} from "./message";
+import {debounce} from "../utils";
 
 export interface IPVData {
   title?: string;
@@ -32,10 +33,12 @@ export default class Monitor {
   public uvTracker: UvTracker;
   uvData: UVData;
   pvData: IPVData;
+  private _sendMessage: { cancel: () => void; flush: () => any; } & ((...args: any[]) => void);
 
   constructor(userId?: string, customKey?: string) {
     this.pvTracker = new PageViewTracker(userId, this);
     this.uvTracker = new UvTracker(customKey, this);
+    this._sendMessage = debounce(this.sendMessage, 1000);
   }
 
   startTracking() {
@@ -53,6 +56,7 @@ export default class Monitor {
     history.pushState = this.onPageChange.bind(this, "pushState");
     history.replaceState = this.onPageChange.bind(this, "replaceState");
     window.addEventListener("load", this.onLoad.bind(this));
+    window.addEventListener("onbeforeunload", this.onLoad.bind(this));
     window.addEventListener("pageshow", this.onPageShow.bind(this));
   }
 
@@ -64,6 +68,7 @@ export default class Monitor {
 
   private onPageChange(method: string, ...args: any[]) {
     this.pvData = this.pvTracker.trackPageView(method, ...args);
+    this._sendMessage();
   }
 
   public onPopState(event: PopStateEvent) {
@@ -86,7 +91,7 @@ export default class Monitor {
 
   public async sendMessage() {
     const message: IMessage = {
-      data: { ...this.pvData, ...this.uvData },
+      data: {...this.pvData, ...this.uvData},
       timestamp: Date.now(),
       name: "pv_uv_data",
       userId: this.pvTracker.userId,

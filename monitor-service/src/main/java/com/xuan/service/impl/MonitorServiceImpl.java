@@ -71,7 +71,7 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
             eventList.stream().forEach(event -> {
                 String type = event.getType();
                 String uuid = event.getUuid();
-                Integer timestamp = event.getTimestamp();
+//                Integer timestamp = event.getTimestamp();
                 Object errorInfo = event.getErrorInfo();
                 Performance data = event.getData();
                 if (type.equals("action")) {

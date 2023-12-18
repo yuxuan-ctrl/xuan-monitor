@@ -1,10 +1,15 @@
+<!--
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-18 09:17:00
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-18 17:50:11
+ * @FilePath: \monitor-sdk\examples\vue\src\components\sidebar.vue
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+-->
 <template>
-  <el-menu
-    mode="vertical"
-    :default-active="$route.path"
-    router
-    @select="handleSelect"
-  >
+  <el-menu mode="vertical" :default-active="$route.path" @select="handleSelect">
     <el-menu-item index="/" :key="0">
       <el-icon><home /></el-icon>
       <span>Home</span>
@@ -25,8 +30,8 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
-import { ElMenu, ElMenuItem } from "element-plus";
+import {defineComponent} from "vue";
+import {ElMenu, ElMenuItem} from "element-plus";
 
 export default defineComponent({
   name: "Sidebar",
@@ -36,7 +41,8 @@ export default defineComponent({
   },
   methods: {
     handleSelect(key, indexPath) {
-      //   console.log(`Selected menu item: ${key} at indexPath: ${indexPath}`);
+      console.log("🚀 ~ file: sidebar.vue:48 ~ handleSelect ~ key:", key);
+      this.$router.push(key);
     },
   },
 });

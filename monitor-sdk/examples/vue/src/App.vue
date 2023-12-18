@@ -1,9 +1,9 @@
 <!--
  * @Author: yuxuanli
  * @Date: 2023-08-07 09:11:19
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2023-11-16 15:21:34
- * @FilePath: \micro-app-demo\child_apps\vite-vue3\src\App.vue
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-18 17:40:19
+ * @FilePath: \monitor-sdk\examples\vue\src\App.vue
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.

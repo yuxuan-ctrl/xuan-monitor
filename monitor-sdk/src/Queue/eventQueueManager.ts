@@ -4,7 +4,7 @@ import {
   QueueEventType,
   EventConfig,
 } from "../types";
-import { createUUid } from "../utils/utils";
+import { createUUid } from "../utils";
 
 /**
  * @description: 事件队列管理器

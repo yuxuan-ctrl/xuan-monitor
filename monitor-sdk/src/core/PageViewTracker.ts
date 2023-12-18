@@ -1,4 +1,4 @@
-import MessageQueueDBWrapper, { IMessage } from "./message";
+import MessageQueueDBWrapper, {IMessage} from "./message";
 import Monitor from "./monitor";
 
 interface IPVData {
@@ -12,6 +12,7 @@ interface IPVData {
   };
   timestamp?: number;
   referrer?: string | null;
+  stayDuration:number
 }
 
 /**
@@ -47,7 +48,7 @@ export default class PageViewTracker {
     url?: string;
     userAgent?: string;
     platform?: string;
-    screenResolution?: { width: number; height: number };
+    screenResolution?: {width: number; height: number};
     timestamp?: number;
     referrer?: string;
     totalPageViews: number;
@@ -55,7 +56,8 @@ export default class PageViewTracker {
     mostVisitedPageId: string;
     mostVisitedPageViews: number;
   };
-
+  monitor: Monitor;
+  currentPageEntryTime: number;
   /**
    * 构造函数。
    *
@@ -63,6 +65,7 @@ export default class PageViewTracker {
    */
   constructor(userId?: string, monitor?: Monitor) {
     this.userId = userId;
+    this.monitor = monitor;
     // this.addEventListeners();
   }
 
@@ -92,22 +95,30 @@ export default class PageViewTracker {
    */
   public trackPageView(method: string, ...args: any[]) {
     this.isTracking = true;
+    const url = window.location.href;
     switch (method) {
       case "pushState":
-        // history.pushState.apply(history, args);
-        break;
       case "replaceState":
-        // history.replaceState.apply(history, args);
+        this.pvData = this.updatePageViewTime(url);
         break;
       case "popstate":
       case "load":
-        this.pvData = this.updatePageViewTime("current_page");
+        this.pvData = this.updatePageViewTime(url);
+        this.calculateDuration();
         break;
       default:
         throw new Error(`Invalid method: ${method}`);
     }
     this.isTracking = false;
     return this.pvData;
+  }
+
+  private calculateDuration() {
+    if (!this.currentPageEntryTime) {
+      this.currentPageEntryTime = performance.now();
+    }
+    const stayDuration = performance.now() - this.currentPageEntryTime;
+    return stayDuration;
   }
 
   /**
@@ -131,6 +142,8 @@ export default class PageViewTracker {
         ? this.currentPageUrl
         : document.referrer;
 
+    const stayDuration = this.calculateDuration();
+
     const pvData: IPVData = {
       title: document.title,
       url: window.location.href,
@@ -142,6 +155,7 @@ export default class PageViewTracker {
       },
       timestamp: now,
       referrer,
+      stayDuration
     };
     this.pageVisits.set(pageId, pvData);
 

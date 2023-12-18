@@ -1,5 +1,15 @@
-import { useEventListener } from "../lib/vueuse";
-
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-05 14:03:01
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-18 18:12:58
+ * @FilePath: \monitor-sdk\src\utils\utils.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
+import {useEventListener} from "../lib/vueuse";
+import {debounce} from "./debounce";
 /**
  * @description: Json 转 FormData
  * @param {*} data
@@ -36,7 +46,7 @@ export function createUUid(): string {
 }
 
 export function sendBeacon(
-  params: { baseUrl: string },
+  params: {baseUrl: string},
   formData: FormData
 ): Promise<boolean> {
   return new Promise((resolve, reject) => {
@@ -64,4 +74,8 @@ export function log(target, name, decriptor) {
   console.log("🚀 ~ file: utils.ts:63 ~ log ~ target:", target);
 
   return decriptor;
+}
+
+export {
+  debounce
 }

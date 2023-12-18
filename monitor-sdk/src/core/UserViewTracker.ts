@@ -88,8 +88,6 @@ export default class UvTracker {
       ...userInfo,
     };
 
-    // 在这里添加将UV数据发送到服务器或其他处理逻辑
-    console.log("UV data:", this.uvData);
     return this.uvData;
   }
 

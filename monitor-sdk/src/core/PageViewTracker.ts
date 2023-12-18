@@ -1,6 +1,6 @@
-import MessageQueueDBWrapper, {IMessage} from "./message";
+import MessageQueueDBWrapper, { IMessage } from "./message";
 import Monitor from "./monitor";
-
+import { debounce } from "../utils";
 interface IPVData {
   title?: string;
   url?: string;
@@ -12,7 +12,11 @@ interface IPVData {
   };
   timestamp?: number;
   referrer?: string | null;
-  stayDuration:number
+  stayDuration: number;
+  totalPageViews?: number;
+  maxStayDuration?: number; // 单位：毫秒
+  mostVisitedPageId?: number;
+  mostVisitedPageViews?: number;
 }
 
 /**
@@ -44,11 +48,12 @@ export default class PageViewTracker {
    */
   private _userId?: string;
   pvData: {
+    stayDuration: number;
     title?: string;
     url?: string;
     userAgent?: string;
     platform?: string;
-    screenResolution?: {width: number; height: number};
+    screenResolution?: { width: number; height: number };
     timestamp?: number;
     referrer?: string;
     totalPageViews: number;
@@ -95,27 +100,41 @@ export default class PageViewTracker {
    */
   public trackPageView(method: string, ...args: any[]) {
     this.isTracking = true;
+    this.storeCurrentPageEntryTime();
     const url = window.location.href;
     switch (method) {
       case "pushState":
       case "replaceState":
-        this.pvData = this.updatePageViewTime(url);
+        const callback = debounce(this.updatePageViewTime, 1000);
+        this.pvData = callback.call(this, url) as unknown as IPVData;
+        // console.log(
+        //   "🚀 ~ file: PageViewTracker.ts:110 ~ PageViewTracker ~ trackPageView ~ this.pvData:",
+        //   this.pvData
+        // );
         break;
       case "popstate":
       case "load":
-        this.pvData = this.updatePageViewTime(url);
-        this.calculateDuration();
+        // this.pvData = this.updatePageViewTime(url);
         break;
       default:
         throw new Error(`Invalid method: ${method}`);
     }
+    console.log(
+      "🚀 ~ file: PageViewTracker.ts:125 ~ PageViewTracker ~ trackPageView ~ this.pvData:",
+      this.pvData
+    );
+
     this.isTracking = false;
     return this.pvData;
   }
 
+  private storeCurrentPageEntryTime() {
+    this.currentPageEntryTime = performance.now();
+  }
+
   private calculateDuration() {
     if (!this.currentPageEntryTime) {
-      this.currentPageEntryTime = performance.now();
+      return 0;
     }
     const stayDuration = performance.now() - this.currentPageEntryTime;
     return stayDuration;
@@ -129,6 +148,10 @@ export default class PageViewTracker {
   private updatePageViewTime(pageId: string) {
     const now = performance.now();
     const lastVisitInfo = this.pageVisits.get(pageId);
+    console.log(
+      "🚀 ~ file: PageViewTracker.ts:146 ~ PageViewTracker ~ updatePageViewTime ~ this.pageVisits:",
+      this.pageVisits
+    );
 
     if (
       lastVisitInfo !== undefined &&
@@ -155,11 +178,11 @@ export default class PageViewTracker {
       },
       timestamp: now,
       referrer,
-      stayDuration
+      stayDuration,
     };
     this.pageVisits.set(pageId, pvData);
-
-    return this.calculateAndSendPVData(pvData);
+    const result = this.calculateAndSendPVData(pvData);
+    return result;
   }
 
   /**
@@ -169,7 +192,6 @@ export default class PageViewTracker {
    */
   private calculateAndSendPVData(pvData: IPVData) {
     // 根据 pageVisits 中的数据计算 PV，并发送到服务器
-    console.log("Calculating and sending PV data...");
 
     // 这里可以遍历 pageVisits 集合，提取 PV 相关信息，
     // 如：总 PV 数量、各页面 PV 数量、平均停留时间等指标，
@@ -196,12 +218,19 @@ export default class PageViewTracker {
       }
     }
 
-    console.log(
-      `Total page views: ${totalPageViews}`,
-      `Max stay duration: ${maxStayDuration} ms`,
-      `Most visited page: ${mostVisitedPageId}`,
-      `Most visited page views: ${mostVisitedPageViews}`
-    );
+    // console.log(
+    //   `Total page views: ${totalPageViews}`,
+    //   `Max stay duration: ${maxStayDuration} ms`,
+    //   `Most visited page: ${mostVisitedPageId}`,
+    //   `Most visited page views: ${mostVisitedPageViews}`
+    // );
+    // console.log({
+    //   totalPageViews,
+    //   maxStayDuration, // 单位：毫秒
+    //   mostVisitedPageId,
+    //   mostVisitedPageViews,
+    //   ...pvData,
+    // });
 
     return {
       totalPageViews,

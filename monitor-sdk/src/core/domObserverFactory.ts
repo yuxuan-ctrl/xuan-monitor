@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-18 09:17:00
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-19 08:59:53
+ * @FilePath: \monitor-sdk\src\core\domObserverFactory.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
 export default class DOMObserverFactory {
   private static instances: Record<string, DOMObserver> = {};
 
@@ -15,6 +25,16 @@ export default class DOMObserverFactory {
       );
     }
   }
+
+  static createSingletonInstance(
+    identifier: string,
+    config: MutationObserverInit,
+    callback: CallbackFn
+  ): void {
+    if (!this.instances[identifier]) {
+      this.instances[identifier] = new DOMObserver(config, callback);
+    }
+  }
 }
 
 type CallbackFn = (
@@ -28,7 +48,12 @@ class DOMObserver {
   constructor(
     private config?: MutationObserverInit,
     private callback?: CallbackFn
-  ) {}
+  ) {
+    this.observer = new MutationObserver(this.callback || (() => {}));
+    if (this.config) {
+      this.observer.observe(document.body, this.config);
+    }
+  }
 
   start(targetNode: Node): void {
     this.observer.observe(targetNode, this.config);
@@ -38,8 +63,12 @@ class DOMObserver {
     this.observer.disconnect();
   }
 
-  restart(): void {
+  restart(targetNode?: Node): void {
     this.stop();
-    this.start(this.observer.takeRecords()[0]?.target ?? document.body);
+    if (targetNode) {
+      this.start(targetNode);
+    } else {
+      this.start(this.observer.takeRecords()[0]?.target ?? document.body);
+    }
   }
 }

@@ -23,6 +23,9 @@ dependencies:
   pinia:
     specifier: ^2.1.7
     version: 2.1.7(typescript@4.9.5)(vue@3.3.9)
+  reflect-metadata:
+    specifier: ^0.2.1
+    version: 0.2.1
   vue:
     specifier: ^3.3.4
     version: 3.3.9(typescript@4.9.5)
@@ -5512,6 +5515,10 @@ packages:
 
   /react-is@18.2.0:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
+
+  /reflect-metadata@0.2.1:
+    resolution: {integrity: sha512-i5lLI6iw9AU3Uu4szRNPPEkomnkjRTaVt9hy/bn5g/oSzekBSMeLZblcjP74AW0vBabqERLLIrz+gR8QYR54Tw==}
+    dev: false
 
   /regenerate-unicode-properties@10.1.1:
     resolution: {integrity: sha512-X007RyZLsCJVVrjgEFVpLUTZwyOZk3oiL75ZcuYjlIWd6rNJtOjkBwQc5AsRrpbKVkxN6sklw/k/9m2jJYOf8Q==}

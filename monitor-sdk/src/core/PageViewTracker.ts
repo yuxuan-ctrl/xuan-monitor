@@ -1,6 +1,5 @@
-import MessageQueueDBWrapper, { IMessage } from "./message";
+import MessageQueueDBWrapper, {IMessage} from "./message";
 import Monitor from "./monitor";
-import { debounce } from "../utils";
 interface IPVData {
   title?: string;
   url?: string;
@@ -12,10 +11,9 @@ interface IPVData {
   };
   timestamp?: number;
   referrer?: string | null;
-  stayDuration: number;
   totalPageViews?: number;
   maxStayDuration?: number; // 单位：毫秒
-  mostVisitedPageId?: number;
+  mostVisitedPageId?: string;
   mostVisitedPageViews?: number;
 }
 
@@ -26,7 +24,7 @@ export default class PageViewTracker {
   /**
    * 最小的时间间隔（单位：毫秒）。
    */
-  private minTimeInterval = 30 * 1000;
+  private minTimeInterval = 3 * 1000;
 
   /**
    * 访问页面的映射表。
@@ -47,20 +45,7 @@ export default class PageViewTracker {
    * 用户 ID。
    */
   private _userId?: string;
-  pvData: {
-    stayDuration: number;
-    title?: string;
-    url?: string;
-    userAgent?: string;
-    platform?: string;
-    screenResolution?: { width: number; height: number };
-    timestamp?: number;
-    referrer?: string;
-    totalPageViews: number;
-    maxStayDuration: number; // 单位：毫秒
-    mostVisitedPageId: string;
-    mostVisitedPageViews: number;
-  };
+  pvData: IPVData;
   monitor: Monitor;
   currentPageEntryTime: number;
   /**
@@ -98,45 +83,37 @@ export default class PageViewTracker {
    * @param method 跟踪的方法。
    * @param args 方法的参数。
    */
-  public trackPageView(method: string, ...args: any[]) {
+  public async trackPageView(method: string, ...args: any[]) {
     this.isTracking = true;
-    this.storeCurrentPageEntryTime();
     const url = window.location.href;
     switch (method) {
       case "pushState":
       case "replaceState":
-        const callback = debounce(this.updatePageViewTime, 1000);
-        this.pvData = callback.call(this, url) as unknown as IPVData;
-        // console.log(
-        //   "🚀 ~ file: PageViewTracker.ts:110 ~ PageViewTracker ~ trackPageView ~ this.pvData:",
-        //   this.pvData
-        // );
+        this.monitor.pvData = await this.updatePageViewTime(url);
         break;
       case "popstate":
       case "load":
+      this.storeCurrentPageEntryTime();
         // this.pvData = this.updatePageViewTime(url);
         break;
       default:
         throw new Error(`Invalid method: ${method}`);
     }
-    console.log(
-      "🚀 ~ file: PageViewTracker.ts:125 ~ PageViewTracker ~ trackPageView ~ this.pvData:",
-      this.pvData
-    );
 
     this.isTracking = false;
-    return this.pvData;
   }
 
   private storeCurrentPageEntryTime() {
     this.currentPageEntryTime = performance.now();
   }
 
-  private calculateDuration() {
+  public async calculateDuration() {
     if (!this.currentPageEntryTime) {
       return 0;
     }
     const stayDuration = performance.now() - this.currentPageEntryTime;
+    this.monitor.stayDuration = stayDuration;
+    this.storeCurrentPageEntryTime();
     return stayDuration;
   }
 
@@ -145,13 +122,9 @@ export default class PageViewTracker {
    *
    * @param pageId 页面 ID。
    */
-  private updatePageViewTime(pageId: string) {
+  private async updatePageViewTime(pageId: string) {
     const now = performance.now();
     const lastVisitInfo = this.pageVisits.get(pageId);
-    console.log(
-      "🚀 ~ file: PageViewTracker.ts:146 ~ PageViewTracker ~ updatePageViewTime ~ this.pageVisits:",
-      this.pageVisits
-    );
 
     if (
       lastVisitInfo !== undefined &&
@@ -165,7 +138,6 @@ export default class PageViewTracker {
         ? this.currentPageUrl
         : document.referrer;
 
-    const stayDuration = this.calculateDuration();
 
     const pvData: IPVData = {
       title: document.title,
@@ -178,7 +150,6 @@ export default class PageViewTracker {
       },
       timestamp: now,
       referrer,
-      stayDuration,
     };
     this.pageVisits.set(pageId, pvData);
     const result = this.calculateAndSendPVData(pvData);
@@ -198,43 +169,16 @@ export default class PageViewTracker {
     // 并根据需要添加更多的用户行为和指标信息。
 
     // 示例：
-    let totalPageViews = 0;
-    let maxStayDuration = 0;
     let mostVisitedPageId = "";
     let mostVisitedPageViews = 0;
 
     for (const [pageId, pageInfo] of this.pageVisits.entries()) {
-      totalPageViews += 1;
-
-      const stayDuration = performance.now() - pageInfo.timestamp;
-
-      if (stayDuration > maxStayDuration) {
-        maxStayDuration = stayDuration;
-        mostVisitedPageId = pageId;
-      }
-
       if (pageInfo.referrer && pageInfo.referrer === this.currentPageUrl) {
         mostVisitedPageViews += 1;
       }
     }
 
-    // console.log(
-    //   `Total page views: ${totalPageViews}`,
-    //   `Max stay duration: ${maxStayDuration} ms`,
-    //   `Most visited page: ${mostVisitedPageId}`,
-    //   `Most visited page views: ${mostVisitedPageViews}`
-    // );
-    // console.log({
-    //   totalPageViews,
-    //   maxStayDuration, // 单位：毫秒
-    //   mostVisitedPageId,
-    //   mostVisitedPageViews,
-    //   ...pvData,
-    // });
-
     return {
-      totalPageViews,
-      maxStayDuration, // 单位：毫秒
       mostVisitedPageId,
       mostVisitedPageViews,
       ...pvData,

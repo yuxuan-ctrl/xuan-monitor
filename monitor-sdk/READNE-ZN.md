@@ -28,3 +28,12 @@
 #### 实施细节
 
 系统将使用 JavaScript 捕获和发送 PV 数据到服务器进行处理和存储。后台数据库将存储原始数据，报告引擎将根据存储的数据生成报告。报告将以 Markdown 格式保存，并可通过自动化过程导出成 HTML 或 PDF 格式。此外，还可以通过 API 获取报告数据，以便与其他系统集成。
+
+
+#### 何时生产数据到IndexedDB?
+    有几个触发时机：
+    1、页面初始化（load/pageshow）
+    2、路由或者浏览器地址发生变化(pushState/replaceState/hashChange/popState)
+    3、Error captured 捕获到错误的时候
+    4、
+

@@ -1,8 +1,8 @@
 import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
-import MessageQueueDBWrapper, {IMessage} from "./message";
-import {debounce} from "../utils";
-import {listener} from "../decorator";
+import MessageQueueDBWrapper, { IMessage } from "./message";
+import { debounce } from "../utils";
+import { Listener } from "../decorator";
 import "reflect-metadata";
 
 export interface IPVData {
@@ -35,8 +35,16 @@ export default class Monitor {
   public uvData: UVData;
   public pvData: IPVData;
   public stayDuration: number;
-  public originalPushState: (data: any, unused: string, url?: string | URL) => void;
-  public originalReplaceState: (data: any, unused: string, url?: string | URL) => void;
+  public originalPushState: (
+    data: any,
+    unused: string,
+    url?: string | URL
+  ) => void;
+  public originalReplaceState: (
+    data: any,
+    unused: string,
+    url?: string | URL
+  ) => void;
   static instance: Monitor | null = null;
   public Events: Object = {};
 
@@ -74,6 +82,32 @@ export default class Monitor {
   startTracking() {
     this.initializeEventListeners();
     this.uvTracker.initRefreshInterval(this.sendMessage);
+  }
+
+  @Listener("popstate")
+  public async onPopState(event: PopStateEvent) {
+    await this.pvTracker.trackPageView("popstate", event);
+  }
+
+  @Listener(["load", "pageshow"])
+  public async onLoad(event: Event) {
+    this.uvData = await this.uvTracker.trackUv();
+    await this.pvTracker.trackPageView("load", event);
+  }
+
+  @Listener("beforeunload")
+  public onBeforeUnload(event: BeforeUnloadEvent) {
+    // 在用户离开页面之前，计算并发送停留时间
+    this.pvTracker.calculateDuration();
+  }
+
+  @Listener("visibilitychange")
+  public onVisablechange(event: BeforeUnloadEvent) {
+    if (document.visibilityState === "hidden") {
+      this.pvTracker.calculateDuration();
+    } else {
+      this.pvTracker.trackPageView("load", event);
+    }
   }
 
   stopTracking() {
@@ -115,36 +149,10 @@ export default class Monitor {
     this.updateDurationMessage();
   }
 
-  @listener("popstate")
-  public async onPopState(event: PopStateEvent) {
-    await this.pvTracker.trackPageView("popstate", event);
-  }
-
-  @listener(["load", "pageshow"])
-  public async onLoad(event: Event) {
-    this.uvData = await this.uvTracker.trackUv();
-    await this.pvTracker.trackPageView("load", event);
-  }
-
-  @listener("beforeunload")
-  public onBeforeUnload(event: BeforeUnloadEvent) {
-    // 在用户离开页面之前，计算并发送停留时间
-    this.pvTracker.calculateDuration();
-  }
-
-  @listener("visibilitychange")
-  public onVisablechange(event: BeforeUnloadEvent) {
-    if (document.visibilityState === "hidden") {
-      this.pvTracker.calculateDuration();
-    } else {
-      this.pvTracker.trackPageView("load", event);
-    }
-  }
-
   public async sendMessage() {
     if (this.pvData?.url) {
       const message: IMessage = {
-        data: {...this.pvData, ...this.uvData},
+        data: { ...this.pvData, ...this.uvData },
         timestamp: Date.now(),
         name: "pv_uv_data",
         userId: this.pvTracker.userId,

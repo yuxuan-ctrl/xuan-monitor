@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 15:04:54
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2023-12-19 10:19:34
  * @FilePath: \monitor-sdk\src\decorator\index.ts
  * @Description:
@@ -29,10 +29,13 @@ function addEventListener(
 
 type EventConfig = string | string[];
 
-export function listener(config: EventConfig) {
-
-    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-      Reflect.defineMetadata("eventConfig", config, target, propertyKey);  
-      return descriptor;
-    };
+export function Listener(config: EventConfig) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    Reflect.defineMetadata("eventConfig", config, target, propertyKey);
+    return descriptor;
   };
+}

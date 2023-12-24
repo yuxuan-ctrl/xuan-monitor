@@ -1,7 +1,14 @@
 import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
-import MessageQueueDBWrapper, { IMessage } from "./message";
-import { debounce } from "../utils";
+import ErrorTracker from "./ErrorTracker";
+import MessageQueueDBWrapper, { IMessage } from "./Message";
+import {
+  wrapHistory,
+  wrapFetch,
+  wrapSetTimeout,
+  wrapPromise,
+  wrapXMLHttpRequest,
+} from "../utils";
 import { Listener } from "../decorator";
 import "reflect-metadata";
 
@@ -32,6 +39,7 @@ export interface UVData {
 export default class Monitor {
   public pvTracker: PageViewTracker;
   public uvTracker: UvTracker;
+  public errorTracker: ErrorTracker;
   public uvData: UVData;
   public pvData: IPVData;
   public stayDuration: number;
@@ -47,14 +55,15 @@ export default class Monitor {
   ) => void;
   static instance: Monitor | null = null;
   public Events: Object = {};
+  originalFetch: any;
 
   constructor(userId?: string, customKey?: string) {
     this.pvTracker = new PageViewTracker(userId, this);
     this.uvTracker = new UvTracker(customKey, this);
+    this.errorTracker = new ErrorTracker();
   }
 
   initializeEventListeners() {
-    this.addEventListeners();
     const methods = Object.getOwnPropertyNames(Monitor.prototype).filter(
       (methodName) => methodName !== "constructor"
     );
@@ -81,6 +90,7 @@ export default class Monitor {
 
   startTracking() {
     this.initializeEventListeners();
+    this.setGlobalProxy();
     this.uvTracker.initRefreshInterval(this.sendMessage);
   }
 
@@ -110,30 +120,61 @@ export default class Monitor {
     }
   }
 
+  @Listener("error")
+  public async onError(error: Error) {
+    console.log(
+      "🚀 ~ file: monitor.ts:125 ~ Monitor ~ onError ~ error:",
+      error
+    );
+    this.reportError(error);
+  }
+
+  @Listener("unhandledrejection")
+  public async onUnhandlerejection(error: {
+    type: "unhandledrejection";
+    promise: Promise<any>;
+    reason: Error;
+  }) {
+    this.reportError(error.reason);
+  }
+
   stopTracking() {
     this.removeEventListeners();
     this.uvTracker.stopRefreshInterval();
   }
 
-  private addEventListeners() {
-    this.originalPushState = history.pushState;
-    this.originalReplaceState = history.replaceState;
-    const debouncePageChange = debounce((method: string, ...args: any[]) => {
-      this.onPageChange(method, ...args);
-    }, 300);
+  private setGlobalProxy() {
+    wrapHistory(window.history, this.onPageChange.bind(this));
 
-    history.pushState = (...args) => {
-      debouncePageChange.call(this, "pushState", ...args);
-      if (this.originalPushState) {
-        return this.originalPushState.apply(history, args);
-      }
-    };
-    history.replaceState = (...args) => {
-      debouncePageChange.call(this, "replaceState", ...args);
-      if (this.originalReplaceState) {
-        return this.originalReplaceState.apply(history, args);
-      }
-    };
+    // 创建一个新的 fetch 函数
+    if (typeof window.fetch === "function") {
+      const originalFetch = window.fetch;
+      window.fetch = wrapFetch(originalFetch, this.reportError.bind(this));
+    }
+
+    if (typeof window.setTimeout === "function") {
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = wrapSetTimeout(
+        originalSetTimeout,
+        this.reportError.bind(this)
+      ) as any;
+    }
+
+    if (typeof window.Promise === "function") {
+      const OriginalPromise = window.Promise;
+      window.Promise = wrapPromise(
+        OriginalPromise,
+        this.reportError.bind(this)
+      ) as any;
+    }
+
+    if (typeof window.XMLHttpRequest === "function") {
+      const OriginalXMLHttpRequest = window.XMLHttpRequest;
+      window.XMLHttpRequest = wrapXMLHttpRequest(
+        OriginalXMLHttpRequest,
+        this.reportError.bind(this)
+      ) as any;
+    }
   }
 
   public removeEventListeners() {
@@ -145,11 +186,6 @@ export default class Monitor {
   private async onPageChange(method: string, ...args: any[]) {
     await this.pvTracker.calculateDuration();
     await this.pvTracker.trackPageView(method, ...args);
-    this.sendMessage();
-    this.updateDurationMessage();
-  }
-
-  public async sendMessage() {
     if (this.pvData?.url) {
       const message: IMessage = {
         data: { ...this.pvData, ...this.uvData },
@@ -157,12 +193,26 @@ export default class Monitor {
         name: "pv_uv_data",
         userId: this.pvTracker.userId,
       };
-      MessageQueueDBWrapper.getInstance({
-        dbName: "page_view_tracker",
-        dbVersion: 1,
-        storeName: "messages",
-      }).enqueue(message);
+      this.sendMessage(message, "pv_uv_data");
     }
+    this.updateDurationMessage();
+  }
+
+  public async sendMessage(message, storeName) {
+    MessageQueueDBWrapper.getInstance({
+      dbName: "monitorxq",
+      dbVersion: 1,
+      storeName: storeName,
+    }).enqueue(message);
+  }
+
+  public async reportError(error: Error) {
+    const errorInfo = await this.errorTracker.collectError(error);
+    console.log(
+      "🚀 ~ file: monitor.ts:207 ~ Monitor ~ reportError ~ errorInfo:",
+      errorInfo
+    );
+    // this.sendMessage(errorInfo, "error_data");
   }
 
   public updateDurationMessage() {

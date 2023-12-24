@@ -1,5 +1,5 @@
-import MessageQueueDBWrapper, {IMessage} from "./message";
-import Monitor from "./monitor";
+import MessageQueueDBWrapper, { IMessage } from "./Message";
+import Monitor from "./Monitor";
 interface IPVData {
   title?: string;
   url?: string;
@@ -93,7 +93,7 @@ export default class PageViewTracker {
         break;
       case "popstate":
       case "load":
-      this.storeCurrentPageEntryTime();
+        this.storeCurrentPageEntryTime();
         // this.pvData = this.updatePageViewTime(url);
         break;
       default:
@@ -137,7 +137,6 @@ export default class PageViewTracker {
       this.currentPageUrl && !pageId.startsWith("http")
         ? this.currentPageUrl
         : document.referrer;
-
 
     const pvData: IPVData = {
       title: document.title,

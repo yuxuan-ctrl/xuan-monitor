@@ -1,5 +1,5 @@
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
-import Monitor from "./monitor";
+import Monitor from "./Monitor";
 
 interface UVData {
   uniqueKey: string;

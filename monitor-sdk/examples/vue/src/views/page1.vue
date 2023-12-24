@@ -5,10 +5,12 @@
   </div>
 </template>
 <script lang="ts" setup>
-import {reactive, toRefs, onBeforeMount, onMounted} from "vue";
+import { reactive, toRefs, onBeforeMount, onMounted } from "vue";
+
+console.log(fetch("www.a.com"));
 
 const push = () => {
-  history.pushState({test: 111}, "", "http://localhost:22000/page2");
+  history.pushState({ test: 111 }, "", "http://localhost:22000/page2");
 };
 </script>
 <style lang="scss" scoped></style>

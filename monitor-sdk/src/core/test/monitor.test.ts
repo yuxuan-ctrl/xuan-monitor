@@ -1,6 +1,6 @@
-import Monitor from "../monitor";
+import Monitor from "../Monitor";
 
-jest.mock("../message", () => {
+jest.mock("../Message", () => {
   return {
     getInstance: jest.fn(),
     enqueue: jest.fn(),

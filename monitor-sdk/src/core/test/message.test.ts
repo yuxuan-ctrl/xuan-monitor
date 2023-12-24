@@ -1,6 +1,6 @@
 // test/MessageQueueDBWrapper.test.ts
 
-import MessageQueueDBWrapper from "../message";
+import MessageQueueDBWrapper from "../Message";
 import fakeIndexedDB from "fake-indexeddb";
 import fakeIDBKeyRange from "fake-indexeddb/lib/FDBKeyRange";
 import "fake-indexeddb/auto";

@@ -1,8 +1,8 @@
 package com.xuan.handler;
 
-import com.xuan.constant.MessageConstant;
-import com.xuan.exception.BaseException;
-import com.xuan.result.Result;
+import com.xuan.common.constant.MessageConstant;
+import com.xuan.common.exception.BaseException;
+import com.xuan.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;

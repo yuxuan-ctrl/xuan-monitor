@@ -2,16 +2,16 @@ package com.xuan.controller;
 
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.xuan.constant.JwtClaimsConstant;
+import com.xuan.common.constant.JwtClaimsConstant;
 import com.xuan.dao.pojo.dto.PageUserDto;
 import com.xuan.dao.pojo.dto.UserDto;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.dao.pojo.vo.LoginVo;
-import com.xuan.properties.JwtProperties;
-import com.xuan.result.PageResult;
-import com.xuan.result.Result;
+import com.xuan.common.properties.JwtProperties;
+import com.xuan.common.result.PageResult;
+import com.xuan.common.result.Result;
 import com.xuan.service.UserService;
-import com.xuan.utils.JwtUtil;
+import com.xuan.common.utils.JwtUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.BeanUtils;

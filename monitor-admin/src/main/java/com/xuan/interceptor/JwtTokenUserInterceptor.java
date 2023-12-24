@@ -1,9 +1,9 @@
 package com.xuan.interceptor;
 
-import com.xuan.constant.JwtClaimsConstant;
-import com.xuan.context.BaseContext;
-import com.xuan.properties.JwtProperties;
-import com.xuan.utils.JwtUtil;
+import com.xuan.common.constant.JwtClaimsConstant;
+import com.xuan.common.context.BaseContext;
+import com.xuan.common.properties.JwtProperties;
+import com.xuan.common.utils.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

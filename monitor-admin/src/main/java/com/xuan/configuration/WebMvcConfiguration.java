@@ -1,12 +1,12 @@
 /*
- * @Author: yuxuan-ctrl 
+ * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:00
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2023-12-07 10:33:30
  * @FilePath: \xuan-monitor\monitor-admin\src\main\java\com\xuan\configuration\WebMvcConfiguration.java
- * @Description: 
- * 
- * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
 package com.xuan.configuration;
 
@@ -40,7 +40,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
      * @param registry
      */
     protected void addInterceptors(InterceptorRegistry registry) {
-        log.info("开始注册自定义拦截器...");
+//        log.info("开始注册自定义拦截器...");
 
        registry.addInterceptor(jwtTokenUserInterceptor)
                .addPathPatterns("/user/**")

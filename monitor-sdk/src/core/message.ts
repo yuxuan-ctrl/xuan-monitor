@@ -38,18 +38,18 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   }
 
   // 添加消息
-  public async enqueue(data: any): Promise<void> {
+  public async enqueue(data: any, storeName): Promise<void> {
     const message: IMessage = {
       data,
       timestamp: Date.now(),
       status: "pending",
     };
-    await this.add(message);
+    await this.add(message, storeName);
   }
 
   // 获取消息
-  public async dequeue(): Promise<IMessage | undefined> {
-    const messages = await this.getAll();
+  public async dequeue(storeName): Promise<IMessage | undefined> {
+    const messages = await this.getAll(storeName);
     if (messages.length > 0) {
       const newestPendingMessage = messages
         .filter((mes) => {
@@ -57,7 +57,11 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
         })
         .sort((a, b) => a.timestamp - b.timestamp)[0];
       if (newestPendingMessage.status === "pending") {
-        await this.update(newestPendingMessage.id!, { status: "consumed" });
+        await this.update(
+          newestPendingMessage.id!,
+          { status: "consumed" },
+          storeName
+        );
         return newestPendingMessage;
       }
     }

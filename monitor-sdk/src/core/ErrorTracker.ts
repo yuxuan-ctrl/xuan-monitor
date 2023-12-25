@@ -14,27 +14,6 @@ export default class ErrorTracker {
     this.errors = [];
     this.operationSequence = [];
     this.logContext = {};
-
-    // // 注册全局错误处理器
-    // window.onerror = (message, source, lineNo, columnNo, error) => {
-    //   this.collectError({ message, source, lineNo, columnNo, error });
-    // };
-
-    // window.addEventListener("unhandledrejection", (event) => {
-    //   this.collectError(event.reason);
-    // });
-
-    // 添加事件监听器以自动收集用户操作序列
-    // document.addEventListener("click", (event) => {
-    //   this.collectOperation({
-    //     action: "Click",
-    //     data: {
-    //       targetId: event.target.id,
-    //       tagName: event.target.tagName,
-    //       className: event.target.className,
-    //     },
-    //   });
-    // });
   }
 
   async captureScreenshot() {

@@ -3,8 +3,11 @@
 </template>
 <script lang='ts' setup>
 import { reactive, toRefs, onBeforeMount, onMounted } from "vue";
-new Promise((resolve, reject) => {
-  reject({ a: 1 });
+// new Promise((resolve, reject) => {
+//   reject({ a: 1 });
+// });
+onMounted(() => {
+  console.log(a);
 });
 </script>
 <style lang="scss" scoped>

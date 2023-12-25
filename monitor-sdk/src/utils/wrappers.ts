@@ -8,12 +8,9 @@ function wrapFetch(originalFetch, callback) {
         .apply(this, args)
         .then(async (response) => {
           if (!response.ok) {
-            console.log("🚀 ~ file: wrappers.ts:11 ~ .then ~ response:", response)
-            const message = `${response.status} ${response.statusText} `;
-            const error = new Error(message);
+            const message = `${response.status} ${response.statusText} at url:${response.url} `;
+            const error = new Error(message, response);
             callback(error); // 调用回调函数，将错误传递给上层处理
-            // 如果需要，可以在这里返回一个错误对象或自定义的响应对象
-            throw error;
           }
 
           return response; // 返回正常的响应
@@ -22,8 +19,6 @@ function wrapFetch(originalFetch, callback) {
           // 在这里收集错误信息，例如记录到日志或发送到服务器
           console.error("Error in fetch:", error);
           callback(error); // 调用回调函数，将错误传递给上层处理
-
-          // 原封不动地抛出错误
           throw error;
         });
     } catch (err) {
@@ -63,7 +58,6 @@ function wrapPromise(OriginalPromise, callback) {
             // 在这里收集错误信息，例如记录到日志或发送到服务器
             console.error("Error in Promise resolve:", error);
             callback(error); // 调用回调函数，将错误传递给上层处理
-
             // 如果你想让原始的错误继续传播，可以在这里重新抛出错误
             throw error;
           }

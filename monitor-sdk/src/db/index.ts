@@ -31,7 +31,7 @@ export default class IndexedDBWrapper {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
-  public async openDatabase(): Promise<IDBDatabase> {
+  public async openDatabase(storeNames: Array<string>): Promise<IDBDatabase> {
     return new Promise(async (resolve, reject) => {
       try {
         const result = await new Promise<IDBOpenDBRequest>(
@@ -47,15 +47,14 @@ export default class IndexedDBWrapper {
             };
             request.onupgradeneeded = (event) => {
               const db = (event.target as any)?.result as IDBDatabase;
-              if (!db.objectStoreNames.contains(this.config.storeName)) {
-                const objectStore = db.createObjectStore(
-                  this.config.storeName,
-                  {
+              storeNames.forEach((storeName) => {
+                if (!db.objectStoreNames.contains(storeName)) {
+                  const objectStore = db.createObjectStore(storeName, {
                     keyPath: "id",
                     autoIncrement: true,
-                  }
-                );
-              }
+                  });
+                }
+              });
             };
             resolve(request);
           }
@@ -82,15 +81,15 @@ export default class IndexedDBWrapper {
     if (this.db) {
       return Promise.resolve(this.db);
     } else {
-      return this.openDatabase();
+      return this.openDatabase(["DEFAULT_CONFIG.storeName"]);
     }
   }
 
-  public async add(data: IData): Promise<number> {
+  public async add(data: IData, storeName: string): Promise<number> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readwrite");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readwrite");
+      const objectStore = transaction.objectStore(storeName);
 
       const request = objectStore.add(data);
 
@@ -104,11 +103,11 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async get(id: number): Promise<IData | undefined> {
+  public async get(id: number, storeName: string): Promise<IData | undefined> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readonly");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readonly");
+      const objectStore = transaction.objectStore(storeName);
 
       const request = objectStore.get(id);
 
@@ -122,11 +121,15 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async update(id: number, newData: IData): Promise<void> {
+  public async update(
+    id: number,
+    newData: IData,
+    storeName: string
+  ): Promise<void> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readwrite");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readwrite");
+      const objectStore = transaction.objectStore(storeName);
 
       const getRequest = objectStore.get(id);
 
@@ -158,11 +161,11 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async delete(id: number): Promise<void> {
+  public async delete(id: number, storeName: string): Promise<void> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readwrite");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readwrite");
+      const objectStore = transaction.objectStore(storeName);
 
       const request = objectStore.delete(id);
 
@@ -176,11 +179,11 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async getAll(): Promise<IData[]> {
+  public async getAll(storeName: string): Promise<IData[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readonly");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readonly");
+      const objectStore = transaction.objectStore(storeName);
       const data: IData[] = [];
 
       const request = objectStore.openCursor();
@@ -202,11 +205,14 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async query(condition: (data: IData) => boolean): Promise<IData[]> {
+  public async query(
+    condition: (data: IData) => boolean,
+    storeName: string
+  ): Promise<IData[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readonly");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readonly");
+      const objectStore = transaction.objectStore(storeName);
       const data: IData[] = [];
 
       const request = objectStore.openCursor();
@@ -232,11 +238,11 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async clear(): Promise<void> {
+  public async clear(storeName: string): Promise<void> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readwrite");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readwrite");
+      const objectStore = transaction.objectStore(storeName);
 
       const request = objectStore.clear();
 
@@ -250,11 +256,11 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async getCount(): Promise<number> {
+  public async getCount(storeName: string): Promise<number> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.config.storeName, "readonly");
-      const objectStore = transaction.objectStore(this.config.storeName);
+      const transaction = db.transaction(storeName, "readonly");
+      const objectStore = transaction.objectStore(storeName);
 
       const request = objectStore.count();
 

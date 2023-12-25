@@ -9,7 +9,6 @@ let app: AppInstance | null = null;
 // 将渲染操作放入 mount 函数
 function mount() {
   const monitor = new Monitor("lyx", "token");
-  monitor.startTracking();
 
   app = createApp(App);
   app.use(ElementPlus).use(router).mount("#vite-app");

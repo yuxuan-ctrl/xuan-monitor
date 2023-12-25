@@ -8,7 +8,8 @@ function wrapFetch(originalFetch, callback) {
         .apply(this, args)
         .then(async (response) => {
           if (!response.ok) {
-            const message = `${response.status} ${response.statusText}`;
+            console.log("🚀 ~ file: wrappers.ts:11 ~ .then ~ response:", response)
+            const message = `${response.status} ${response.statusText} `;
             const error = new Error(message);
             callback(error); // 调用回调函数，将错误传递给上层处理
             // 如果需要，可以在这里返回一个错误对象或自定义的响应对象

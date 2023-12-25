@@ -1,7 +1,7 @@
 import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
 import ErrorTracker from "./ErrorTracker";
-import MessageQueueDBWrapper, { IMessage } from "./Message";
+import MessageQueueDBWrapper, {IMessage} from "./Message";
 import {
   wrapHistory,
   wrapFetch,
@@ -9,7 +9,7 @@ import {
   wrapPromise,
   wrapXMLHttpRequest,
 } from "../utils";
-import { Listener } from "../decorator";
+import {Listener} from "../decorator";
 import "reflect-metadata";
 
 export interface IPVData {
@@ -188,21 +188,21 @@ export default class Monitor {
     await this.pvTracker.trackPageView(method, ...args);
     if (this.pvData?.url) {
       const message: IMessage = {
-        data: { ...this.pvData, ...this.uvData },
+        data: {...this.pvData, ...this.uvData},
         timestamp: Date.now(),
         name: "pv_uv_data",
         userId: this.pvTracker.userId,
       };
-      this.sendMessage(message, "pv_uv_data");
+      this.sendMessage(message);
     }
     this.updateDurationMessage();
   }
 
-  public async sendMessage(message, storeName) {
+  public async sendMessage(message) {
     MessageQueueDBWrapper.getInstance({
       dbName: "monitorxq",
       dbVersion: 1,
-      storeName: storeName,
+      storeName: "monitor_data",
     }).enqueue(message);
   }
 
@@ -212,7 +212,7 @@ export default class Monitor {
       "🚀 ~ file: monitor.ts:207 ~ Monitor ~ reportError ~ errorInfo:",
       errorInfo
     );
-    // this.sendMessage(errorInfo, "error_data");
+    this.sendMessage(errorInfo);
   }
 
   public updateDurationMessage() {

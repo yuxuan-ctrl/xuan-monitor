@@ -1,7 +1,8 @@
 import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
 import ErrorTracker from "./ErrorTracker";
-import MessageQueueDBWrapper, { IMessage } from "./Message";
+import MessageQueueDBWrapper, {IMessage} from "./Message";
+import {IPVData, UVData} from "../types";
 import {
   wrapHistory,
   wrapFetch,
@@ -9,33 +10,9 @@ import {
   wrapPromise,
   wrapXMLHttpRequest,
 } from "../utils";
-import { Listener } from "../decorator";
+import {Listener} from "../decorator";
 import "reflect-metadata";
 
-export interface IPVData {
-  title?: string;
-  url?: string;
-  userAgent?: string;
-  platform?: string;
-  screenResolution?: {
-    width: number;
-    height: number;
-  };
-  timestamp?: number;
-  referrer?: string | null;
-}
-
-export interface UVData {
-  uniqueKey: string;
-  timestamp: number;
-  userAgent?: string;
-  language?: string;
-  timeZoneOffset?: number;
-  screenResolution?: {
-    width: number;
-    height: number;
-  };
-}
 export default class Monitor {
   public pvTracker: PageViewTracker;
   public uvTracker: UvTracker;
@@ -102,8 +79,6 @@ export default class Monitor {
     });
   }
 
-  startTracking() {}
-
   @Listener("popstate")
   public async onPopState(event: PopStateEvent) {
     await this.pvTracker.trackPageView("popstate", event);
@@ -148,7 +123,7 @@ export default class Monitor {
     this.reportError(error.reason);
   }
 
-  stopTracking() {
+  public stopTracking() {
     this.removeEventListeners();
     this.uvTracker.stopRefreshInterval();
   }
@@ -170,13 +145,13 @@ export default class Monitor {
       ) as any;
     }
 
-    if (typeof window.Promise === "function") {
-      const OriginalPromise = window.Promise;
-      window.Promise = wrapPromise(
-        OriginalPromise,
-        this.reportError.bind(this)
-      ) as any;
-    }
+    // if (typeof window.Promise === "function") {
+    //   const OriginalPromise = window.Promise;
+    //   window.Promise = wrapPromise(
+    //     OriginalPromise,
+    //     this.reportError.bind(this)
+    //   ) as any;
+    // }
 
     if (typeof window.XMLHttpRequest === "function") {
       const OriginalXMLHttpRequest = window.XMLHttpRequest;
@@ -198,7 +173,7 @@ export default class Monitor {
     await this.pvTracker.trackPageView(method, ...args);
     if (this.pvData?.url) {
       const message: IMessage = {
-        data: { ...this.pvData, ...this.uvData },
+        data: {...this.pvData, ...this.uvData},
         timestamp: Date.now(),
         name: "pv_uv_data",
         userId: this.pvTracker.userId,

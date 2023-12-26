@@ -62,16 +62,15 @@ export default class ErrorTracker {
   async collectError(error: ExtendedError | string) {
     let errorInfo;
     if (error instanceof Error) {
+      console.log("🚀 ~ file: ErrorTracker.ts:65 ~ ErrorTracker ~ collectError ~ error:", error.cause)
       errorInfo = {
         type: error.name,
         message: error.message,
         stackTrace: error.stack,
+        cause:error.cause,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         url: window.location.href,
-        fileName: error.fileName || "",
-        lineNumber: error.lineNumber || "",
-        columnNumber: error.columnNumber || "",
         operationSequence: this.operationSequence.slice(),
         logContext: this.logContext,
       };

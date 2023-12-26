@@ -1,8 +1,8 @@
-import { type ConfigEnv, type UserConfigExport, loadEnv } from "vite";
-import path, { resolve } from "path";
+import {type ConfigEnv, type UserConfigExport, loadEnv} from "vite";
+import path, {resolve} from "path";
 import vue from "@vitejs/plugin-vue";
 import AutoImport from "unplugin-auto-import/vite";
-import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
+import {ElementPlusResolver} from "unplugin-vue-components/resolvers";
 import Components from "unplugin-vue-components/vite";
 
 // postCss插件
@@ -11,7 +11,7 @@ import Components from "unplugin-vue-components/vite";
 export default (configEnv: ConfigEnv): UserConfigExport => {
   const viteEnv = loadEnv(configEnv.mode, process.cwd()) as ImportMetaEnv;
 
-  const { VITE_PUBLIC_PATH } = viteEnv;
+  const {VITE_PUBLIC_PATH} = viteEnv;
   return {
     /** 打包时根据实际情况修改 base */
     base: VITE_PUBLIC_PATH,
@@ -35,7 +35,16 @@ export default (configEnv: ConfigEnv): UserConfigExport => {
       /** 端口被占用时，是否直接退出 */
       strictPort: false,
       /** 接口代理 */
-      proxy: {},
+      proxy: {
+        "/api": {
+          target: "http://localhost:5200/",
+          ws: true,
+          /** 是否允许跨域 */
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace("/api", ""),
+        },
+      },
     },
     build: {
       /** 消除打包大小超过 500kb 警告 */

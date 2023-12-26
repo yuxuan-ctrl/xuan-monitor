@@ -1,4 +1,4 @@
-import { debounce } from "./debounce";
+import {debounce} from "./debounce";
 
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
@@ -131,6 +131,7 @@ function wrapHistory(history, callback) {
 function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   function wrappedXMLHttpRequest() {
     const originalRequest = new OriginalXMLHttpRequest();
+    console.log("🚀 ~ file: wrappers.ts:134 ~ wrappedXMLHttpRequest ~ originalRequest:", originalRequest)
 
     // 包裹 open 方法
     const originalOpen = originalRequest.open;
@@ -139,9 +140,25 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         originalOpen.apply(this, args);
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
-        console.error("Error in XMLHttpRequest.open:", error);
         callback(error); // 调用回调函数，将错误传递给上层处理
         throw error;
+      }
+    };
+    //  // 保存原始的 onreadystatechange 函数
+    const originalOnReadyStateChange = originalRequest.onreadystatechange;
+    originalRequest.onreadystatechange = function () {
+      if (originalRequest.readyState === XMLHttpRequest.DONE) {
+        if (originalRequest.status >= 400) {
+          const error = new Error(`HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`);
+          error.name = "XHR ERROR";
+          error.cause = originalRequest
+          callback(error); // 调用回调函数，将错误传递给上层处理
+        }
+
+        // 调用原始的 onreadystatechange 函数
+        if (originalOnReadyStateChange) {
+          originalOnReadyStateChange.apply(this, arguments);
+        }
       }
     };
 
@@ -154,7 +171,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
         console.error("Error in XMLHttpRequest.send:", error);
         callback(error); // 调用回调函数，将错误传递给上层处理
-        throw error;
       }
     };
 

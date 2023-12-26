@@ -8,9 +8,10 @@
   },
   "dependencies": {
     "@vueuse/core": "10.7.0",
+    "axios": "^1.6.2",
+    "element-plus": "^2.4.4",
     "vue": "^3.3.4",
-    "vue-router": "^4.0.11",
-    "element-plus": "^2.4.4"
+    "vue-router": "^4.0.11"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",

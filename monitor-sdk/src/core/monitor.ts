@@ -2,7 +2,8 @@ import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
 import ErrorTracker from "./ErrorTracker";
 import MessageQueueDBWrapper, {IMessage} from "./Message";
-import {IPVData, UVData} from "../types";
+import {IPVData, UVData, IPvUvData} from "../types";
+import {DB_CONFIG} from "../config/dbconfig";
 import {
   wrapHistory,
   wrapFetch,
@@ -51,7 +52,10 @@ export default class Monitor {
       dbVersion: 1,
       storeName: "monitor_data",
     });
-    this.messageWrapper.openDatabase(["pv_uv_data", "error_data"]);
+    this.messageWrapper.openDatabase([
+      DB_CONFIG.TRAFFIC_STORE_NAME,
+      DB_CONFIG.Error_STORE_NAME,
+    ]);
   }
 
   initializeEventListeners() {
@@ -107,10 +111,6 @@ export default class Monitor {
 
   @Listener("error")
   public async onError(error: Error) {
-    console.log(
-      "🚀 ~ file: monitor.ts:125 ~ Monitor ~ onError ~ error:",
-      error
-    );
     this.reportError(error);
   }
 
@@ -173,12 +173,13 @@ export default class Monitor {
     await this.pvTracker.trackPageView(method, ...args);
     if (this.pvData?.url) {
       const message: IMessage = {
-        data: {...this.pvData, ...this.uvData},
+        ...this.pvData,
+        ...this.uvData,
         timestamp: Date.now(),
-        name: "pv_uv_data",
+        name: DB_CONFIG.TRAFFIC_STORE_NAME,
         userId: this.pvTracker.userId,
       };
-      this.sendMessage(message, "pv_uv_data");
+      this.sendMessage(message, DB_CONFIG.TRAFFIC_STORE_NAME);
     }
     this.updateDurationMessage();
   }
@@ -189,10 +190,43 @@ export default class Monitor {
 
   public async reportError(error: Error) {
     const errorInfo = await this.errorTracker.collectError(error);
-    this.sendMessage(errorInfo, "error_data");
+    this.sendMessage(errorInfo, DB_CONFIG.Error_STORE_NAME);
   }
 
-  public updateDurationMessage() {
+  public async updateDurationMessage() {
     console.log(this.stayDuration);
+    const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
+    const {data} = latestPv;
+    const newData = {
+      ...latestPv,
+      data: {
+        ...data,
+        stayDuration: this.stayDuration,
+      },
+    };
+    this.messageWrapper.update(
+      latestPv.id,
+      newData,
+      DB_CONFIG.TRAFFIC_STORE_NAME
+    );
+  }
+
+  public async getLastData(storeName: string): Promise<IPvUvData | undefined> {
+    try {
+      const lastData = await this.messageWrapper.query(
+        (_) => true,
+        storeName,
+        {field: "timestamp", direction: "desc"},
+        1
+      );
+      if (lastData.length > 0) {
+        return lastData[0];
+      } else {
+        return undefined;
+      }
+    } catch (error) {
+      console.error("Error getting last data ID:", error);
+      return undefined;
+    }
   }
 }

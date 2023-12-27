@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-05 14:03:01
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2023-12-27 08:51:31
+ * @FilePath: \monitor-sdk\src\types\index.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
 export interface SDKConfigType {
   appId: string;
   time?: number;
@@ -50,4 +60,29 @@ export interface PageViewData {
   browser: string; // 用户使用的浏览器
   os: string; // 用户使用的操作系统
   pageShowTime: number;
+}
+
+export interface IPVData {
+  title?: string;
+  url?: string;
+  userAgent?: string;
+  platform?: string;
+  screenResolution?: {
+    width: number;
+    height: number;
+  };
+  timestamp?: number;
+  referrer?: string | null;
+}
+
+export interface UVData {
+  uniqueKey: string;
+  timestamp: number;
+  userAgent?: string;
+  language?: string;
+  timeZoneOffset?: number;
+  screenResolution?: {
+    width: number;
+    height: number;
+  };
 }

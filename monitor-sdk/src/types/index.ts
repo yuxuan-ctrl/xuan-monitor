@@ -63,6 +63,7 @@ export interface PageViewData {
 }
 
 export interface IPVData {
+  id:number;
   title?: string;
   url?: string;
   userAgent?: string;
@@ -73,6 +74,23 @@ export interface IPVData {
   };
   timestamp?: number;
   referrer?: string | null;
+}
+
+export interface IPvUvData {
+  id: number;
+  data: {
+    title?: string;
+    url?: string;
+    userAgent?: string;
+    platform?: string;
+    screenResolution?: {
+      width: number;
+      height: number;
+    };
+    referrer?: string | null;
+  };
+  status?:"pending" | "consumed"
+  timestamp?: number;
 }
 
 export interface UVData {

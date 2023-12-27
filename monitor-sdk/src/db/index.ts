@@ -9,17 +9,7 @@ const DEFAULT_CONFIG: IIndexedDBConfig = {
   version: 1,
   storeName: "myObjectStore",
 };
-
-interface IData {
-  timestamp?: any;
-  id?: number;
-  name?: string;
-  age?: number;
-  email?: string;
-  data?: any;
-  status?: "pending" | "consumed";
-  // Add other properties based on your data structure
-}
+import {IPvUvData} from "../types";
 
 interface IDBDatabaseInfo extends IDBDatabase {}
 
@@ -28,7 +18,7 @@ export default class IndexedDBWrapper {
   private db: IDBDatabase | null = null;
 
   constructor(config?: IIndexedDBConfig) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = {...DEFAULT_CONFIG, ...config};
   }
 
   public async openDatabase(storeNames: Array<string>): Promise<IDBDatabase> {
@@ -52,6 +42,10 @@ export default class IndexedDBWrapper {
                   const objectStore = db.createObjectStore(storeName, {
                     keyPath: "id",
                     autoIncrement: true,
+                  });
+                  objectStore.createIndex("id", "id", {unique: false});
+                  objectStore.createIndex("timestamp", "timestamp", {
+                    unique: false,
                   });
                 }
               });
@@ -85,7 +79,7 @@ export default class IndexedDBWrapper {
     }
   }
 
-  public async add(data: IData, storeName: string): Promise<number> {
+  public async add(data: IPvUvData, storeName: string): Promise<number> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, "readwrite");
@@ -103,7 +97,7 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async get(id: number, storeName: string): Promise<IData | undefined> {
+  public async get(id: number, storeName: string): Promise<IPvUvData | undefined> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, "readonly");
@@ -112,7 +106,7 @@ export default class IndexedDBWrapper {
       const request = objectStore.get(id);
 
       request.onsuccess = (event) => {
-        resolve((event.target as any)?.result as IData);
+        resolve((event.target as any)?.result as IPvUvData);
       };
 
       request.onerror = (event) => {
@@ -123,7 +117,7 @@ export default class IndexedDBWrapper {
 
   public async update(
     id: number,
-    newData: IData,
+    newData: IPvUvData,
     storeName: string
   ): Promise<void> {
     const db = await this.ensureDatabaseOpen();
@@ -134,10 +128,10 @@ export default class IndexedDBWrapper {
       const getRequest = objectStore.get(id);
 
       getRequest.onsuccess = (event) => {
-        const existingData = (event.target as any)?.result as IData;
+        const existingData = (event.target as any)?.result as IPvUvData;
 
         if (existingData) {
-          const updatedData = { ...existingData, ...newData };
+          const updatedData = {...existingData, ...newData};
 
           const updateRequest = objectStore.put(updatedData);
 
@@ -179,12 +173,12 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async getAll(storeName: string): Promise<IData[]> {
+  public async getAll(storeName: string): Promise<IPvUvData[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, "readonly");
       const objectStore = transaction.objectStore(storeName);
-      const data: IData[] = [];
+      const data: IPvUvData[] = [];
 
       const request = objectStore.openCursor();
 
@@ -206,24 +200,40 @@ export default class IndexedDBWrapper {
   }
 
   public async query(
-    condition: (data: IData) => boolean,
-    storeName: string
-  ): Promise<IData[]> {
+    condition: (data: IPvUvData) => boolean,
+    storeName: string,
+    order?: {field: keyof IPvUvData; direction: "asc" | "desc"},
+    limit?: number
+  ): Promise<IPvUvData[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, "readonly");
       const objectStore = transaction.objectStore(storeName);
-      const data: IData[] = [];
+      const data: IPvUvData[] = [];
+      let cursorRequest: IDBRequest;
 
-      const request = objectStore.openCursor();
+      if (order && limit) {
+        const index = objectStore.index(order.field);
+        cursorRequest = index.openCursor(
+          null,
+          order.direction === "desc" ? "prev" : "next"
+        );
+      } else {
+        cursorRequest = objectStore.openCursor();
+      }
 
-      request.onsuccess = (event) => {
+      cursorRequest.onsuccess = (event) => {
         const cursor = (event.target as any)?.result as IDBCursorWithValue;
 
         if (cursor) {
-          const currentData = cursor.value as IData;
+          const currentData = cursor.value as IPvUvData;
           if (condition(currentData)) {
             data.push(currentData);
+
+            if (limit && data.length >= limit) {
+              resolve(data);
+              return;
+            }
           }
 
           cursor.continue();
@@ -232,7 +242,7 @@ export default class IndexedDBWrapper {
         }
       };
 
-      request.onerror = (event) => {
+      cursorRequest.onerror = (event) => {
         reject(`Failed to query data: ${(event.target as any)?.error}`);
       };
     });

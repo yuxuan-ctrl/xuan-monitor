@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl
+ * @Date: 2023-12-11 14:37:34
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-01-31 17:08:01
+ * @FilePath: \monitor-sdk\src\core\monitor.ts
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
+ */
 import PageViewTracker from "./PageViewTracker";
 import UvTracker from "./UserViewTracker";
 import ErrorTracker from "./ErrorTracker";
@@ -41,7 +51,6 @@ export default class Monitor {
     this.uvTracker = new UvTracker(customKey, this);
     this.errorTracker = new ErrorTracker();
     this.uvTracker.initRefreshInterval(this.sendMessage);
-    this.initializeEventListeners();
     this.setGlobalProxy();
     this.initializeDatabase();
   }
@@ -56,31 +65,6 @@ export default class Monitor {
       DB_CONFIG.TRAFFIC_STORE_NAME,
       DB_CONFIG.Error_STORE_NAME,
     ]);
-  }
-
-  initializeEventListeners() {
-    const methods = Object.getOwnPropertyNames(Monitor.prototype).filter(
-      (methodName) => methodName !== "constructor"
-    );
-    methods.forEach((methodName) => {
-      const method = Monitor.prototype[methodName].bind(this);
-      const eventConfig = Reflect.getMetadata(
-        "eventConfig",
-        Monitor.prototype,
-        methodName
-      );
-      if (eventConfig && typeof method === "function") {
-        if (Array.isArray(eventConfig)) {
-          eventConfig.forEach((eventName) => {
-            this.Events[eventName] = method;
-            window.addEventListener(eventName, method);
-          });
-        } else {
-          window.addEventListener(eventConfig, method);
-          this.Events[eventConfig] = method;
-        }
-      }
-    });
   }
 
   @Listener("popstate")
@@ -111,7 +95,7 @@ export default class Monitor {
 
   @Listener("error")
   public async onError(error: Error) {
-    this.reportError(error);
+    // this.reportError(error);
   }
 
   @Listener("unhandledrejection")
@@ -120,7 +104,7 @@ export default class Monitor {
     promise: Promise<any>;
     reason: Error;
   }) {
-    this.reportError(error.reason);
+    // this.reportError(error.reason);
   }
 
   public stopTracking() {

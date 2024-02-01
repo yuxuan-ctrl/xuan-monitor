@@ -10,6 +10,7 @@
  */
 export * from "./debounce";
 export * from "./wrappers";
+export * from "./layout";
 /**
  * @description: Json 转 FormData
  * @param {*} data
@@ -57,4 +58,12 @@ export function sendBeacon(
     result && resolve(result);
     !result && reject(result);
   });
+}
+
+
+export function getTime(
+  event?
+): number {
+  let ts = event && event.timeStamp > 0 ? event.timeStamp : performance.now();
+  return Math.max(Math.round(ts - 0), 0);
 }

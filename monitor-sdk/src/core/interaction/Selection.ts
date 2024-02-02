@@ -8,13 +8,16 @@
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import {Listener} from "../../decorator";
+import {Listener,EventManager} from "../../decorator";
 
 export let data = null;
 
 
-export default class SelectTracker {
-  constructor() {}
+export default class SelectTracker extends EventManager {
+  static type = "selectionchange";
+  constructor() {
+    super();
+  }
 
   @Listener("selectionchange")
   handler(root) {

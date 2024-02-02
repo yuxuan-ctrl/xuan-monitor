@@ -1,11 +1,14 @@
-import {Listener} from "../../decorator";
+import {Listener, EventManager} from "../../decorator";
 import {getTime, layout, link, target, text} from "../../utils";
 
-export default class ClipboardTracker {
-  constructor() {}
+export default class ClipboardTracker extends EventManager {
+  static type = "clipboard";
+  constructor() {
+    super();
+  }
   @Listener(["cut", "copy", "paste"])
   handler(event: ClipboardEvent) {
-    console.log("🚀 ~ ClipboardTracker ~ handler ~ event:", event)
+    console.log("🚀 ~ ClipboardTracker ~ handler ~ event:", event);
     let clipboardData = event.clipboardData;
 
     // 创建一个对象来存储不同类型的剪贴板内容
@@ -50,4 +53,5 @@ export default class ClipboardTracker {
       });
     }
   }
+
 }

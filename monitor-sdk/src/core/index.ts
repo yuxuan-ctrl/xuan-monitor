@@ -1,5 +1,11 @@
 import Monitor from "./monitor";
-import Behavior from "./Behavior";
+import  {
+  Click,
+  Input,
+  Resize,
+  Selection,
+  Clipboard,
+  Submit,
+} from "./Behavior";
 
-Behavior.start();
-export {Monitor};
+export {Monitor,Click, Input, Resize, Selection, Clipboard, Submit};

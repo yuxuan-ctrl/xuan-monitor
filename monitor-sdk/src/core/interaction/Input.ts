@@ -10,15 +10,17 @@
  */
 
 
-let timeout: number = null;
 export let state = [];
 
 
-import { get, getTime, layout, link, target ,text} from "../../utils";
-import {Listener} from "../../decorator";
+import { target } from "../../utils";
+import {Listener,EventManager} from "../../decorator";
 
-export default class InputTracker {
-  constructor() {}
+export default class InputTracker extends EventManager {
+  static type = "input";
+  constructor() {
+    super();
+  }
 
   @Listener("input")
   public async handler(event: any) {
@@ -45,5 +47,4 @@ export default class InputTracker {
         // timeout = setTimeout(process, Setting.InputLookAhead, Event.Input);
     }
   }
-
 }

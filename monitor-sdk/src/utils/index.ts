@@ -47,7 +47,7 @@ export function createUUid(): string {
 }
 
 export function sendBeacon(
-  params: { baseUrl: string },
+  params: {baseUrl: string},
   formData: FormData
 ): Promise<boolean> {
   return new Promise((resolve, reject) => {
@@ -60,10 +60,11 @@ export function sendBeacon(
   });
 }
 
-
-export function getTime(
-  event?
-): number {
+export function getTime(event?): number {
   let ts = event && event.timeStamp > 0 ? event.timeStamp : performance.now();
   return Math.max(Math.round(ts - 0), 0);
+}
+
+export function isArray(array: any[]): boolean {
+  return Array.isArray(array) && array.length >0;
 }

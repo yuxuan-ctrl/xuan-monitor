@@ -1,8 +1,11 @@
-import {Listener} from "../../decorator";
+import {Listener,EventManager} from "../../decorator";
 let data = null;
 
-export default class ResizeTracker {
-  constructor() {}
+export default class ResizeTracker extends EventManager {
+  static type = "resize";
+  constructor() {
+    super();
+  }
 
   @Listener("resize")
   handler() {
@@ -21,12 +24,7 @@ export default class ResizeTracker {
     };
     console.log("🚀 ~ ResizeTracker ~ handler ~ data:", data)
   }
+
 }
 
-// export function reset(): void {
-//   data = null;
-// }
 
-// export function stop(): void {
-//   reset();
-// }

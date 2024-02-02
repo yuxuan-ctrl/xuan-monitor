@@ -38,10 +38,10 @@ export function initializeEventListeners(Class) {
       if (Array.isArray(eventConfig)) {
         eventConfig.forEach((eventName) => {
           Events[eventName] = method;
-          window.addEventListener(eventName, method);
+          document.addEventListener(eventName, method);
         });
       } else {
-        window.addEventListener(eventConfig, method);
+        document.addEventListener(eventConfig, method);
         Events[eventConfig] = method;
       }
     }

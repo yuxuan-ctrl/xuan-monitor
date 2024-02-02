@@ -21,10 +21,10 @@ const pageRef =ref();
 
 
 onMounted(() => {
-  document.addEventListener("selectionchange",(val)=>{
-    console.log(val);
+  // document.addEventListener("selectionchange",(val)=>{
+  //   console.log(val);
     
-  })
+  // })
   console.log(fetch("www.a.com"));
 });
 const push = () => {

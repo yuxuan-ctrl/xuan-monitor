@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-01 09:16:27
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-01 18:04:10
+ * @LastEditTime: 2024-02-02 09:12:31
  * @FilePath: \monitor-sdk\src\core\interaction\selection.ts
  * @Description:
  *

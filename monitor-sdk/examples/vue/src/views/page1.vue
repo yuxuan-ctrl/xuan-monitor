@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl 
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-02 15:15:20
+ * @LastEditTime: 2024-02-02 17:07:30
  * @FilePath: \monitor-sdk\examples\vue\src\views\page1.vue
  * @Description: 
  * 
@@ -17,16 +17,13 @@
 </template>
 <script lang="ts" setup>
 import {reactive, toRefs, onBeforeMount, onMounted} from "vue";
-import {Click} from "../../../../src/core";
+import {Click,Resize} from "../../../../src/core";
 
 const pageRef = ref();
 
 onMounted(() => {
-  // document.addEventListener("selectionchange",(val)=>{
-  //   console.log(val);
-
-  // })
   Click.start();
+  Resize.start(window);
 
   console.log(fetch("www.a.com"));
 });

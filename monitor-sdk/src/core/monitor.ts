@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-01-31 17:08:01
+ * @LastEditors: yuxuan-ctrl
+ * @LastEditTime: 2024-02-04 15:11:05
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -64,6 +64,8 @@ export default class Monitor {
     this.messageWrapper.openDatabase([
       DB_CONFIG.TRAFFIC_STORE_NAME,
       DB_CONFIG.Error_STORE_NAME,
+      DB_CONFIG.ACTION_STORE_NAME,
+      DB_CONFIG.RECORD_STORE_NAME,
     ]);
   }
 

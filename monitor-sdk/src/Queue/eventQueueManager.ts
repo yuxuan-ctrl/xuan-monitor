@@ -3,20 +3,20 @@ import {
   BaseEventType,
   QueueEventType,
   EventConfig,
-} from "../types";
-import { createUUid } from "../utils";
+} from '../types';
+import { createUUid } from '../utils';
 
 /**
  * @description: 事件队列管理器
  */
 export class EventQueueManager {
   QUEUE: QueueEventType[] = [];
-  type: EventConfig["type"];
+  type: EventConfig['type'];
   isSingle: Boolean = true;
 
   constructor(config?: EventConfig) {
     this.type = config?.type;
-    this.isSingle = !(this.type && this.type === "mutiple");
+    this.isSingle = !(this.type && this.type === 'mutiple');
     if (this.isSingle) {
       // 单例模式，一个window对象下只能有一个队列管理器
       if (window.eventQueue) {
@@ -57,7 +57,7 @@ export class EventQueueManager {
       timestamp: new Date().getTime(),
       uuid: createUUid(),
       pageUrl: window.location.href,
-      type: "event",
+      type: 'event',
     };
     // 如果传来config，就初始化默认的事件
     if (config) {

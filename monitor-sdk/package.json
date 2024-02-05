@@ -7,7 +7,8 @@
   "scripts": {
     "build": "rollup --environment NODE_ENV:development -c scripts/rollup.base.js",
     "build:tsc": "tsc ./src/index.ts --outDir ./dist  --outfile index.js --module amd --target ES5 --declaration --esModuleInterop --skipLibCheck",
-    "test": "jest"
+    "test": "jest",
+    "prettier:fix":"npx prettier --write ./src/"
   },
   "author": "yuxuanli",
   "license": "ISC",
@@ -19,6 +20,7 @@
     "js-cookie": "^3.0.5",
     "lodash-es": "^4.17.21",
     "pinia": "^2.1.7",
+    "prettier": "^3.2.5",
     "reflect-metadata": "^0.2.1",
     "rrweb": "2.0.0-alpha.4",
     "rrweb-player": "1.0.0-alpha.4",

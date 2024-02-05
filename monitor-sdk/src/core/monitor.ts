@@ -8,21 +8,21 @@
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import PageViewTracker from "./PageViewTracker";
-import UvTracker from "./UserViewTracker";
-import ErrorTracker from "./ErrorTracker";
-import MessageQueueDBWrapper, {IMessage} from "./Message";
-import {IPVData, UVData, IPvUvData} from "../types";
-import {DB_CONFIG} from "../config/dbconfig";
+import PageViewTracker from './PageViewTracker';
+import UvTracker from './UserViewTracker';
+import ErrorTracker from './ErrorTracker';
+import MessageQueueDBWrapper, { IMessage } from './Message';
+import { IPVData, UVData, IPvUvData } from '../types';
+import { DB_CONFIG } from '../config/dbconfig';
 import {
   wrapHistory,
   wrapFetch,
   wrapSetTimeout,
   wrapPromise,
   wrapXMLHttpRequest,
-} from "../utils";
-import {Listener} from "../decorator";
-import "reflect-metadata";
+} from '../utils';
+import { Listener } from '../decorator';
+import 'reflect-metadata';
 
 export default class Monitor {
   public pvTracker: PageViewTracker;
@@ -34,12 +34,12 @@ export default class Monitor {
   public originalPushState: (
     data: any,
     unused: string,
-    url?: string | URL
+    url?: string | URL,
   ) => void;
   public originalReplaceState: (
     data: any,
     unused: string,
-    url?: string | URL
+    url?: string | URL,
   ) => void;
   static instance: Monitor | null = null;
   public Events: Object = {};
@@ -57,9 +57,9 @@ export default class Monitor {
 
   initializeDatabase() {
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
-      dbName: "monitorxq",
+      dbName: 'monitorxq',
       dbVersion: 1,
-      storeName: "monitor_data",
+      storeName: 'monitor_data',
     });
     this.messageWrapper.openDatabase([
       DB_CONFIG.TRAFFIC_STORE_NAME,
@@ -69,40 +69,40 @@ export default class Monitor {
     ]);
   }
 
-  @Listener("popstate")
+  @Listener('popstate')
   public async onPopState(event: PopStateEvent) {
-    await this.pvTracker.trackPageView("popstate", event);
+    await this.pvTracker.trackPageView('popstate', event);
   }
 
-  @Listener(["load", "pageshow"])
+  @Listener(['load', 'pageshow'])
   public async onLoad(event: Event) {
     this.uvData = await this.uvTracker.trackUv();
-    await this.pvTracker.trackPageView("load", event);
+    await this.pvTracker.trackPageView('load', event);
   }
 
-  @Listener("beforeunload")
+  @Listener('beforeunload')
   public onBeforeUnload(event: BeforeUnloadEvent) {
     // 在用户离开页面之前，计算并发送停留时间
     this.pvTracker.calculateDuration();
   }
 
-  @Listener("visibilitychange")
+  @Listener('visibilitychange')
   public onVisablechange(event: BeforeUnloadEvent) {
-    if (document.visibilityState === "hidden") {
+    if (document.visibilityState === 'hidden') {
       this.pvTracker.calculateDuration();
     } else {
-      this.pvTracker.trackPageView("load", event);
+      this.pvTracker.trackPageView('load', event);
     }
   }
 
-  @Listener("error")
+  @Listener('error')
   public async onError(error: Error) {
     // this.reportError(error);
   }
 
-  @Listener("unhandledrejection")
+  @Listener('unhandledrejection')
   public async onUnhandlerejection(error: {
-    type: "unhandledrejection";
+    type: 'unhandledrejection';
     promise: Promise<any>;
     reason: Error;
   }) {
@@ -118,16 +118,16 @@ export default class Monitor {
     wrapHistory(window.history, this.onPageChange.bind(this));
 
     // 创建一个新的 fetch 函数
-    if (typeof window.fetch === "function") {
+    if (typeof window.fetch === 'function') {
       const originalFetch = window.fetch;
       window.fetch = wrapFetch(originalFetch, this.reportError.bind(this));
     }
 
-    if (typeof window.setTimeout === "function") {
+    if (typeof window.setTimeout === 'function') {
       const originalSetTimeout = window.setTimeout;
       window.setTimeout = wrapSetTimeout(
         originalSetTimeout,
-        this.reportError.bind(this)
+        this.reportError.bind(this),
       ) as any;
     }
 
@@ -139,11 +139,11 @@ export default class Monitor {
     //   ) as any;
     // }
 
-    if (typeof window.XMLHttpRequest === "function") {
+    if (typeof window.XMLHttpRequest === 'function') {
       const OriginalXMLHttpRequest = window.XMLHttpRequest;
       window.XMLHttpRequest = wrapXMLHttpRequest(
         OriginalXMLHttpRequest,
-        this.reportError.bind(this)
+        this.reportError.bind(this),
       ) as any;
     }
   }
@@ -182,7 +182,7 @@ export default class Monitor {
   public async updateDurationMessage() {
     console.log(this.stayDuration);
     const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
-    const {data} = latestPv;
+    const { data } = latestPv;
     const newData = {
       ...latestPv,
       data: {
@@ -193,7 +193,7 @@ export default class Monitor {
     this.messageWrapper.update(
       latestPv.id,
       newData,
-      DB_CONFIG.TRAFFIC_STORE_NAME
+      DB_CONFIG.TRAFFIC_STORE_NAME,
     );
   }
 
@@ -202,8 +202,8 @@ export default class Monitor {
       const lastData = await this.messageWrapper.query(
         (_) => true,
         storeName,
-        {field: "timestamp", direction: "desc"},
-        1
+        { field: 'timestamp', direction: 'desc' },
+        1,
       );
       if (lastData.length > 0) {
         return lastData[0];
@@ -211,7 +211,7 @@ export default class Monitor {
         return undefined;
       }
     } catch (error) {
-      console.error("Error getting last data ID:", error);
+      console.error('Error getting last data ID:', error);
       return undefined;
     }
   }

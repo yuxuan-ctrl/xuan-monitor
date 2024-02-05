@@ -1,17 +1,17 @@
-import { Ref } from "vue";
+import { Ref } from 'vue';
 import {
   MaybeRefOrGetter,
   useFetch,
   useWebSocket,
   WebSocketStatus,
-} from "../lib/vueuse";
+} from '../lib/vueuse';
 
 export class Report {
   baseUrl?: String;
   reportUrl?: String;
   method: String;
   headers = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   };
   webSocketData: Ref<any | null>;
   send: (data: string | ArrayBuffer | Blob, useBuffer?: boolean) => boolean;
@@ -44,12 +44,12 @@ export class Report {
       {
         autoReconnect: true,
         heartbeat: {
-          message: "ping",
+          message: 'ping',
           interval: 60000,
           pongTimeout: 60000,
         },
         ...config,
-      }
+      },
     );
     this.webSocketData = data;
     this.send = send;
@@ -68,9 +68,9 @@ export class Report {
 
   async fetchReport(config?) {
     const res = await useFetch(this.reportUrl as MaybeRefOrGetter<string>, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       ...config,
     });

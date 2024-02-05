@@ -1,31 +1,31 @@
-import {Listener, EventManager} from "../../decorator";
-import {getTime, layout, link, target, text} from "../../utils";
+import { Listener, EventManager } from '../../decorator';
+import { getTime, layout, link, target, text } from '../../utils';
 
 export default class ClipboardTracker extends EventManager {
-  static type = "clipboard";
+  static type = 'clipboard';
   constructor() {
     super();
   }
-  @Listener(["cut", "copy", "paste"])
+  @Listener(['cut', 'copy', 'paste'])
   handler(event: ClipboardEvent) {
-    console.log("🚀 ~ ClipboardTracker ~ handler ~ event:", event);
+    console.log('🚀 ~ ClipboardTracker ~ handler ~ event:', event);
     let clipboardData = event.clipboardData;
 
     // 创建一个对象来存储不同类型的剪贴板内容
-    let dataObject: {type: string; content: any; fileName?: string} | null =
+    let dataObject: { type: string; content: any; fileName?: string } | null =
       null;
 
     if (clipboardData) {
       // 获取纯文本内容
-      const plainTextContent = clipboardData.getData("text/plain");
+      const plainTextContent = clipboardData.getData('text/plain');
       if (plainTextContent) {
-        dataObject = {type: "text/plain", content: plainTextContent};
+        dataObject = { type: 'text/plain', content: plainTextContent };
       }
 
       // 获取HTML内容（如果存在）
-      const htmlContent = clipboardData.getData("text/html");
+      const htmlContent = clipboardData.getData('text/html');
       if (htmlContent) {
-        dataObject = {type: "text/html", content: htmlContent};
+        dataObject = { type: 'text/html', content: htmlContent };
       }
 
       // 处理文件类型
@@ -42,7 +42,7 @@ export default class ClipboardTracker extends EventManager {
 
     // 输出事件相关信息
     if (dataObject) {
-      console.log("🚀 ~ ClipboardTracker ~ handler ~ event:", dataObject);
+      console.log('🚀 ~ ClipboardTracker ~ handler ~ event:', dataObject);
       console.log({
         time: getTime(event),
         event: event,
@@ -53,5 +53,4 @@ export default class ClipboardTracker extends EventManager {
       });
     }
   }
-
 }

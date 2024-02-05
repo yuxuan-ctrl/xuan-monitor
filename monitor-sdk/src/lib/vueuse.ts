@@ -13,7 +13,7 @@ import {
   useElementByPoint, //以坐标点响应式操作元素。
   MaybeRefOrGetter,
   WebSocketStatus,
-} from "@vueuse/core";
+} from '@vueuse/core';
 
 export {
   useEventListener,
@@ -30,4 +30,4 @@ export {
   useElementByPoint,
 };
 
-export type {MaybeRefOrGetter, WebSocketStatus};
+export type { MaybeRefOrGetter, WebSocketStatus };

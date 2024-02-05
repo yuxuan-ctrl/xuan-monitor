@@ -9,8 +9,8 @@
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 
-import Monitor from "./Monitor";
-import Record from "./record";
-import {Click, Input, Resize, Selection, Clipboard, Submit} from "./Behavior";
+import Monitor from './Monitor';
+import Record from './record';
+import { Click, Input, Resize, Selection, Clipboard, Submit } from './Behavior';
 
-export {Monitor, Click, Input, Resize, Selection, Clipboard, Submit, Record};
+export { Monitor, Click, Input, Resize, Selection, Clipboard, Submit, Record };

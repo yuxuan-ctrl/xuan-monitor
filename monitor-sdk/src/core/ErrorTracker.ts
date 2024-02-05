@@ -1,4 +1,4 @@
-import html2canvas from "html2canvas";
+import html2canvas from 'html2canvas';
 
 interface ExtendedError extends Error {
   fileName?: string;
@@ -18,7 +18,7 @@ export default class ErrorTracker {
 
   async captureScreenshot() {
     return new Promise((resolve, reject) => {
-      const canvas = document.createElement("canvas");
+      const canvas = document.createElement('canvas');
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
@@ -62,22 +62,25 @@ export default class ErrorTracker {
   async collectError(error: ExtendedError | string) {
     let errorInfo;
     if (error instanceof Error) {
-      console.log("🚀 ~ file: ErrorTracker.ts:65 ~ ErrorTracker ~ collectError ~ error:", error.cause)
+      console.log(
+        '🚀 ~ file: ErrorTracker.ts:65 ~ ErrorTracker ~ collectError ~ error:',
+        error.cause,
+      );
       errorInfo = {
         type: error.name,
         message: error.message,
         stackTrace: error.stack,
-        cause:error.cause,
+        cause: error.cause,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         url: window.location.href,
         operationSequence: this.operationSequence.slice(),
         logContext: this.logContext,
       };
-    } else if (typeof error === "string") {
+    } else if (typeof error === 'string') {
       // 对于字符串类型的错误，我们假设它是网络错误或其他非 JavaScript 错误
       errorInfo = {
-        type: "Non-JavaScript Error",
+        type: 'Non-JavaScript Error',
         message: error,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
@@ -87,7 +90,7 @@ export default class ErrorTracker {
       };
     } else {
       errorInfo = {
-        type: "Unexpected Error",
+        type: 'Unexpected Error',
         message: error,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
@@ -100,7 +103,7 @@ export default class ErrorTracker {
     try {
       errorInfo.screenshot = await this.captureScreenshot();
     } catch (screenshotError) {
-      console.error("Error capturing screenshot:", screenshotError);
+      console.error('Error capturing screenshot:', screenshotError);
     }
 
     return errorInfo;

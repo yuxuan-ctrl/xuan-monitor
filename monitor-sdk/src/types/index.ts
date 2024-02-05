@@ -1,12 +1,12 @@
 /*
- * @Author: yuxuan-ctrl 
+ * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2023-12-27 08:51:31
  * @FilePath: \monitor-sdk\src\types\index.ts
- * @Description: 
- * 
- * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
 export interface SDKConfigType {
   appId: string;
@@ -42,7 +42,7 @@ export interface PerformanceType {
 
 export interface QueueEventType extends BaseEventType, AnyObject {}
 export interface EventConfig {
-  type?: "single" | "mutiple";
+  type?: 'single' | 'mutiple';
 }
 
 export type AnyObject = { [key: string | number | symbol]: any };
@@ -63,7 +63,7 @@ export interface PageViewData {
 }
 
 export interface IPVData {
-  id:number;
+  id: number;
   title?: string;
   url?: string;
   userAgent?: string;
@@ -89,7 +89,7 @@ export interface IPvUvData {
     };
     referrer?: string | null;
   };
-  status?:"pending" | "consumed"
+  status?: 'pending' | 'consumed';
   timestamp?: number;
 }
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,20 +7,20 @@
   </head>
   <body>
     <script type="module" lang="ts">
-      import IndexedDBWrapper from "./index.js";
-      const dbName = "YourDatabaseName";
+      import IndexedDBWrapper from './index.js';
+      const dbName = 'YourDatabaseName';
       const dbVersion = 1;
-      const storeName = "YourObjectStoreName";
+      const storeName = 'YourObjectStoreName';
 
       const indexedDBWrapper = new IndexedDBWrapper(
         dbName,
         dbVersion,
-        storeName
+        storeName,
       );
       const dataToAdd = {
-        name: "Jane Doe",
+        name: 'Jane Doe',
         age: 30,
-        email: "jane@example.com",
+        email: 'jane@example.com',
       };
       const addedId = await indexedDBWrapper.add(dataToAdd);
       const data = await indexedDBWrapper.get(addedId);
@@ -29,7 +29,7 @@
       // 使用 ensureQueryDataByCondition 执行查询
       const queriedData = await indexedDBWrapper.query(condition);
 
-      console.log("Queried Data:", queriedData);
+      console.log('Queried Data:', queriedData);
     </script>
   </body>
 </html>

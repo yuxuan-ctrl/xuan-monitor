@@ -1,18 +1,18 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-04 09:07:38
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-04 17:55:29
  * @FilePath: \monitor-sdk\src\core\record\index.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import * as rrweb from "rrweb";
-import rrwebPlayer, {RRwebPlayerOptions} from "rrweb-player";
-import "rrweb-player/dist/style.css";
-import MessageQueueDBWrapper, {IMessage} from "../Message";
-import {DB_CONFIG} from "../../config/dbconfig";
+import * as rrweb from 'rrweb';
+import rrwebPlayer, { RRwebPlayerOptions } from 'rrweb-player';
+import 'rrweb-player/dist/style.css';
+import MessageQueueDBWrapper, { IMessage } from '../Message';
+import { DB_CONFIG } from '../../config/dbconfig';
 
 interface RecordReplayConfig extends RRwebPlayerOptions {
   startTime?: number | string;
@@ -26,7 +26,7 @@ export default class Record {
 
   constructor() {
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
-      dbName: "monitorxq",
+      dbName: 'monitorxq',
       dbVersion: 1,
       storeName: DB_CONFIG.RECORD_STORE_NAME,
     });
@@ -40,14 +40,17 @@ export default class Record {
         password: true,
         text: true,
       },
-      emit(event,checkout) {
-        console.log("🚀 ~ Record ~ emit ~ event:", event);
+      emit(event, checkout) {
+        console.log('🚀 ~ Record ~ emit ~ event:', event);
         // if(checkout) this.rrwebSessionSet();
 
         // 保存获取到的 event 数据，event里面是序列号后的DOM和鼠标事件等
-        that.messageWrapper.enqueue({...event,session:new Date().getDate()}, DB_CONFIG.RECORD_STORE_NAME);
+        that.messageWrapper.enqueue(
+          { ...event, session: new Date().getDate() },
+          DB_CONFIG.RECORD_STORE_NAME,
+        );
       },
-      checkoutEveryNms: 1000 * 60 * 10
+      checkoutEveryNms: 1000 * 60 * 10,
     });
   }
 
@@ -59,7 +62,7 @@ export default class Record {
     const startTime = config?.startTime || new Date().getTime() - 30000;
     const endTime = config?.endTime || new Date().getTime() + 3000;
     const dataList = await this.getRange(startTime, endTime);
-    console.log("🚀 ~ Record ~ replay ~  dataList:", dataList);
+    console.log('🚀 ~ Record ~ replay ~  dataList:', dataList);
 
     setTimeout(() => {
       const replayInstance = new rrwebPlayer({
@@ -76,7 +79,7 @@ export default class Record {
         },
       });
 
-      replayInstance.addEventListener("finish", (payload) => {
+      replayInstance.addEventListener('finish', (payload) => {
         console.log(payload, 2222);
       });
     }, 100);
@@ -92,7 +95,7 @@ export default class Record {
     const dataList = await this.messageWrapper.query(
       condition,
       DB_CONFIG.RECORD_STORE_NAME,
-      {field: "timestamp", direction: "asc"}
+      { field: 'timestamp', direction: 'asc' },
     );
     return dataList;
   }

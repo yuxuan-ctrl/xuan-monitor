@@ -1,4 +1,4 @@
-import { QueueEventType } from "./index";
+import { QueueEventType } from './index';
 
 declare global {
   interface Window {

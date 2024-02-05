@@ -1,13 +1,13 @@
-import Monitor from "../Monitor";
+import Monitor from '../Monitor';
 
-jest.mock("../Message", () => {
+jest.mock('../Message', () => {
   return {
     getInstance: jest.fn(),
     enqueue: jest.fn(),
   };
 });
 
-describe("Monitor Class test", () => {
+describe('Monitor Class test', () => {
   let monitor: Monitor;
   let pvTrackerMock: any;
   let uvTrackerMock: any;
@@ -21,45 +21,45 @@ describe("Monitor Class test", () => {
       // ...uvTrackerMock 的内容保持不变...
     };
 
-    monitor = new Monitor("test_user_id", "test_custom_key");
+    monitor = new Monitor('test_user_id', 'test_custom_key');
     // monitor.pvTracker = pvTrackerMock;
     // monitor.uvTracker = uvTrackerMock;
 
     // 使用 jest.spyOn 监视 window.history 和 window.addEventListener 的调用
-    jest.spyOn(window.history, "pushState");
-    jest.spyOn(window.history, "replaceState");
-    jest.spyOn(window, "addEventListener");
-    jest.spyOn(window, "removeEventListener");
+    jest.spyOn(window.history, 'pushState');
+    jest.spyOn(window.history, 'replaceState');
+    jest.spyOn(window, 'addEventListener');
+    jest.spyOn(window, 'removeEventListener');
   });
 
-  test("startTracking method", async () => {
+  test('startTracking method', async () => {
     monitor.startTracking();
 
     // 模拟页面路径变化
-    window.history.pushState({}, "", "/new-path");
+    window.history.pushState({}, '', '/new-path');
 
     // 验证 trackPageView 方法是否被正确调用
     expect(pvTrackerMock.trackPageView).toHaveBeenCalledWith(
-      "pushState",
+      'pushState',
       {},
-      "/new-path"
+      '/new-path',
     );
   });
 
-  test("stopTracking method", () => {
+  test('stopTracking method', () => {
     monitor.stopTracking();
 
     expect(window.removeEventListener).toHaveBeenCalledTimes(4);
     expect(uvTrackerMock.stopRefreshInterval).toHaveBeenCalled();
   });
 
-  test("onLoad method", async () => {
-    await monitor.onLoad(new Event("load"));
+  test('onLoad method', async () => {
+    await monitor.onLoad(new Event('load'));
 
     expect(uvTrackerMock.trackUv).toHaveBeenCalled();
     expect(pvTrackerMock.trackPageView).toHaveBeenCalledWith(
-      "load",
-      expect.any(Event)
+      'load',
+      expect.any(Event),
     );
   });
 

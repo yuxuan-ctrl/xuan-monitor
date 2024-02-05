@@ -1,5 +1,5 @@
-import MessageQueueDBWrapper, { IMessage } from "./Message";
-import Monitor from "./Monitor";
+import MessageQueueDBWrapper, { IMessage } from './Message';
+import Monitor from './Monitor';
 interface IPVData {
   title?: string;
   url?: string;
@@ -87,12 +87,12 @@ export default class PageViewTracker {
     this.isTracking = true;
     const url = window.location.href;
     switch (method) {
-      case "pushState":
-      case "replaceState":
+      case 'pushState':
+      case 'replaceState':
         this.monitor.pvData = await this.updatePageViewTime(url);
         break;
-      case "popstate":
-      case "load":
+      case 'popstate':
+      case 'load':
         this.storeCurrentPageEntryTime();
         // this.pvData = this.updatePageViewTime(url);
         break;
@@ -134,7 +134,7 @@ export default class PageViewTracker {
     }
 
     const referrer =
-      this.currentPageUrl && !pageId.startsWith("http")
+      this.currentPageUrl && !pageId.startsWith('http')
         ? this.currentPageUrl
         : document.referrer;
 
@@ -168,7 +168,7 @@ export default class PageViewTracker {
     // 并根据需要添加更多的用户行为和指标信息。
 
     // 示例：
-    let mostVisitedPageId = "";
+    let mostVisitedPageId = '';
     let mostVisitedPageViews = 0;
 
     for (const [pageId, pageInfo] of this.pageVisits.entries()) {

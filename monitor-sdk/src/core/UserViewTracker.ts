@@ -1,5 +1,5 @@
-import FingerprintJS from "@fingerprintjs/fingerprintjs";
-import Monitor from "./Monitor";
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import Monitor from './Monitor';
 
 interface UVData {
   uniqueKey: string;
@@ -42,7 +42,7 @@ export default class UvTracker {
     // 使用FingerprintJS生成的组件哈希作为唯一键
     const uniqueKey = (result.components as any).reduce(
       (acc, component) => acc + component.value,
-      ""
+      '',
     );
 
     return uniqueKey;
@@ -97,10 +97,13 @@ export default class UvTracker {
   initRefreshInterval(sendMessage: Function) {
     const refreshIntervalInHours = 1; // 设置为每小时刷新一次
 
-    this.refreshIntervalId = window.setInterval(async () => {
-      await this.trackUv();
-      sendMessage.call(this.monitor);
-    }, refreshIntervalInHours * 60 * 60 * 1000);
+    this.refreshIntervalId = window.setInterval(
+      async () => {
+        await this.trackUv();
+        sendMessage.call(this.monitor);
+      },
+      refreshIntervalInHours * 60 * 60 * 1000,
+    );
   }
 
   /**

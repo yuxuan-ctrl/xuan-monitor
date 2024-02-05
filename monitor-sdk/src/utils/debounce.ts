@@ -31,24 +31,28 @@ function toNumber(value: any): number {
  * @param {boolean} [options.trailing=true] Specify invoking on the trailing edge of the timeout.
  * @returns {Function} Returns the new debounced function.
  */
-export function debounce(func: DebounceCallback, wait: number, options: {
-  leading?: boolean;
-  maxWait?: number;
-  trailing?: boolean;
-} = {}): {
+export function debounce(
+  func: DebounceCallback,
+  wait: number,
+  options: {
+    leading?: boolean;
+    maxWait?: number;
+    trailing?: boolean;
+  } = {},
+): {
   cancel: () => void;
   flush: () => any;
 } & DebounceCallback {
   let lastArgs,
-      lastThis,
-      maxWait,
-      result,
-      timerId,
-      lastCallTime,
-      lastInvokeTime = 0,
-      leading = false,
-      maxing = false,
-      trailing = true;
+    lastThis,
+    maxWait,
+    result,
+    timerId,
+    lastCallTime,
+    lastInvokeTime = 0,
+    leading = false,
+    maxing = false,
+    trailing = true;
 
   if (typeof func !== 'function') {
     throw new TypeError('Expected a function');
@@ -63,7 +67,7 @@ export function debounce(func: DebounceCallback, wait: number, options: {
 
   function invokeFunc(time: number) {
     const args = lastArgs,
-          thisArg = lastThis;
+      thisArg = lastThis;
 
     lastArgs = lastThis = undefined;
     lastInvokeTime = time;
@@ -82,8 +86,8 @@ export function debounce(func: DebounceCallback, wait: number, options: {
 
   function remainingWait(time: number) {
     const timeSinceLastCall = time - lastCallTime,
-          timeSinceLastInvoke = time - lastInvokeTime,
-          timeWaiting = wait - timeSinceLastCall;
+      timeSinceLastInvoke = time - lastInvokeTime,
+      timeWaiting = wait - timeSinceLastCall;
 
     return maxing
       ? Math.min(timeWaiting, maxWait - timeSinceLastInvoke)
@@ -92,13 +96,17 @@ export function debounce(func: DebounceCallback, wait: number, options: {
 
   function shouldInvoke(time: number) {
     const timeSinceLastCall = time - lastCallTime,
-          timeSinceLastInvoke = time - lastInvokeTime;
+      timeSinceLastInvoke = time - lastInvokeTime;
 
     // Either this is the first call, activity has stopped and we're at the
     // trailing edge, the system time has gone backwards and we're treating
     // it as the trailing edge, or we've hit the `maxWait` limit.
-    return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
-      (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
+    return (
+      lastCallTime === undefined ||
+      timeSinceLastCall >= wait ||
+      timeSinceLastCall < 0 ||
+      (maxing && timeSinceLastInvoke >= maxWait)
+    );
   }
 
   function timerExpired() {
@@ -134,9 +142,9 @@ export function debounce(func: DebounceCallback, wait: number, options: {
     return timerId === undefined ? result : trailingEdge(now());
   }
 
-  const debounced = function(...args: any[]) {
+  const debounced = function (...args: any[]) {
     const time = now(),
-          isInvoking = shouldInvoke(time);
+      isInvoking = shouldInvoke(time);
 
     lastArgs = args;
     lastThis = this;

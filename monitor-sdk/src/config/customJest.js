@@ -1,6 +1,6 @@
-import fakeIndexedDB from "fake-indexeddb";
-import fakeIDBKeyRange from "fake-indexeddb/lib/FDBKeyRange";
-import JSDOMEnvironment from "jest-environment-jsdom";
+import fakeIndexedDB from 'fake-indexeddb';
+import fakeIDBKeyRange from 'fake-indexeddb/lib/FDBKeyRange';
+import JSDOMEnvironment from 'jest-environment-jsdom';
 
 class CustomEnvironment extends JSDOMEnvironment {
   async setup() {

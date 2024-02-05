@@ -1,23 +1,23 @@
 /*
- * @Author: yuxuan-ctrl 
+ * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2023-12-11 14:38:08
  * @FilePath: \monitor-sdk\src\SDK\BaseMonitorSDK.ts
- * @Description: 
- * 
- * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
 
-import { PerformanceType, QueueEventType, SDKConfigType } from "../types";
-import { EventQueueManager } from "../Queue/eventQueueManager";
-import { useFetch } from "@vueuse/core";
+import { PerformanceType, QueueEventType, SDKConfigType } from '../types';
+import { EventQueueManager } from '../Queue/eventQueueManager';
+import { useFetch } from '@vueuse/core';
 
 let SDK: any = null; // EasyAgentSDK 实例对象
 
 const reportWebVitals = (onPerfEntry: any) => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
-    import("web-vitals").then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
       console.log();
       getCLS(onPerfEntry); // 布局偏移量
       getFID(onPerfEntry); // 首次输入延迟时间
@@ -29,8 +29,8 @@ const reportWebVitals = (onPerfEntry: any) => {
 };
 
 export default class BaseMonitorSDK {
-  appId = "";
-  baseUrl = "";
+  appId = '';
+  baseUrl = '';
   timeOnPage = 0;
   config = {};
   onPageShow?: Function = function () {};
@@ -53,8 +53,8 @@ export default class BaseMonitorSDK {
     this.onPageShow = onPageShow;
     this.onPagesHide = onPagesHide;
     this.time = config?.time;
-    history.pushState = this.bindEventListener("pushState");
-    history.replaceState = this.bindEventListener("replaceState");
+    history.pushState = this.bindEventListener('pushState');
+    history.replaceState = this.bindEventListener('replaceState');
     // 初始化监听页面变化
     this.listenPage();
     this.initSchedulers();
@@ -95,9 +95,9 @@ export default class BaseMonitorSDK {
 
     await useFetch(`/${this.baseUrl}/monitor/report`, {
       body: formData,
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
     this.eventQueueManager.clearQueue();
@@ -108,17 +108,17 @@ export default class BaseMonitorSDK {
    */
   listenPage() {
     let pageShowTime = 0;
-    window.addEventListener("pageshow", () => {
+    window.addEventListener('pageshow', () => {
       pageShowTime = performance.now();
       // 页面性能指标上报
       const data = this.getPerformance();
-      console.log("page show");
+      console.log('page show');
       this.performanceReport({ data });
       // 执行 onPageShow
       this.onPageShow();
     });
 
-    window.addEventListener("pagehide", () => {
+    window.addEventListener('pagehide', () => {
       // 记录用户在页面停留时间
       this.timeOnPage = performance.now() - pageShowTime;
       // 刷新队列前执行 onPagesHide
@@ -126,28 +126,28 @@ export default class BaseMonitorSDK {
     });
 
     // 监听Vue路由的replace事件
-    window.addEventListener("replaceState", () => {
+    window.addEventListener('replaceState', () => {
       const data = this.getPvUv();
       this.actionReport({ data });
     });
 
     // 监听Vue的push事件和React的路由切换事件
-    window.addEventListener("pushState", () => {
+    window.addEventListener('pushState', () => {
       const data = this.getPvUv();
       this.actionReport({ data });
     });
 
     // 监听页面错误事件
     window.onerror = function (msg, _url, line, col, error) {
-      console.log("onerror");
+      console.log('onerror');
       console.log(
-        "🚀 ~ file: reportSDK.ts:112 ~ EasyAgentSDK ~ listenPage ~ msg:",
-        msg
+        '🚀 ~ file: reportSDK.ts:112 ~ EasyAgentSDK ~ listenPage ~ msg:',
+        msg,
       );
     };
     // 监听页面错误事件
     window.addEventListener(
-      "error",
+      'error',
       (err) => {
         const errorInfo = {
           errFileName: err.filename,
@@ -157,25 +157,25 @@ export default class BaseMonitorSDK {
           errorInfo,
         }).then(() => this.flushQueue());
       },
-      true
+      true,
     );
 
     // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
     window.addEventListener(
-      "unhandledrejection",
+      'unhandledrejection',
       () => {
-        return console.log("unhandledrejection");
+        return console.log('unhandledrejection');
       },
-      true
+      true,
     );
 
     // 监听页面抛出的异常（Promise抛出异常已经用catch处理，即Promise.reject().catch()）
     window.addEventListener(
-      "rejectionhandled",
+      'rejectionhandled',
       (event) => {
-        console.log("rejection handled"); // 1秒后打印"rejection handled"
+        console.log('rejection handled'); // 1秒后打印"rejection handled"
       },
-      true
+      true,
     );
   }
 
@@ -202,7 +202,7 @@ export default class BaseMonitorSDK {
    */
   async getPvUv() {
     console.log(window.location.href);
-    console.log(performance.getEntriesByType("resource"));
+    console.log(performance.getEntriesByType('resource'));
     // const resourceList = performance
     //   .getEntriesByType("resource")
     //   .map((resource: any) => {
@@ -338,7 +338,7 @@ export default class BaseMonitorSDK {
   async actionReport(config) {
     this.report({
       ...config,
-      type: "action",
+      type: 'action',
     });
   }
 
@@ -346,7 +346,7 @@ export default class BaseMonitorSDK {
   async networkReport(config) {
     this.report({
       ...config,
-      type: "error",
+      type: 'error',
     });
   }
 
@@ -354,7 +354,7 @@ export default class BaseMonitorSDK {
   async performanceReport(config) {
     this.report({
       ...config,
-      type: "performance",
+      type: 'performance',
     });
   }
 
@@ -362,7 +362,7 @@ export default class BaseMonitorSDK {
   async errorReport(config) {
     this.report({
       ...config,
-      type: "error",
+      type: 'error',
     });
   }
 }

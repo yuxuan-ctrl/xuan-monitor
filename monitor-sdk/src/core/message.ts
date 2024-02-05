@@ -1,4 +1,4 @@
-import IndexedDBWrapper from "../db/index";
+import IndexedDBWrapper from '../db/index';
 
 export interface IMessage {
   data?: any;
@@ -7,13 +7,13 @@ export interface IMessage {
   name?: string;
   age?: number;
   email?: string;
-  status?: "pending" | "consumed";
+  status?: 'pending' | 'consumed';
   userId?: string;
 }
 
 export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   // 消息存储名称
-  private static readonly MESSAGE_STORE_NAME = "messages";
+  private static readonly MESSAGE_STORE_NAME = 'messages';
   // 实例
   private static _instance: MessageQueueDBWrapper | null = null;
 
@@ -42,7 +42,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
     const message: IMessage = {
       data,
       timestamp: Date.now(),
-      status: "pending",
+      status: 'pending',
     };
     await this.add(message, storeName);
   }
@@ -53,14 +53,14 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
     if (messages.length > 0) {
       const newestPendingMessage = messages
         .filter((mes) => {
-          return mes.status === "pending";
+          return mes.status === 'pending';
         })
         .sort((a, b) => a.timestamp - b.timestamp)[0];
-      if (newestPendingMessage.status === "pending") {
+      if (newestPendingMessage.status === 'pending') {
         await this.update(
           newestPendingMessage.id!,
-          { status: "consumed" },
-          storeName
+          { status: 'consumed' },
+          storeName,
         );
         return newestPendingMessage;
       }

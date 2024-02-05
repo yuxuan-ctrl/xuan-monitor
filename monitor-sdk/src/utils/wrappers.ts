@@ -1,4 +1,4 @@
-import {debounce} from "./debounce";
+import { debounce } from './debounce';
 
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
@@ -17,7 +17,7 @@ function wrapFetch(originalFetch, callback) {
         })
         .catch((error) => {
           // 在这里收集错误信息，例如记录到日志或发送到服务器
-          console.error("Error in fetch:", error);
+          console.error('Error in fetch:', error);
           callback(error); // 调用回调函数，将错误传递给上层处理
           throw error;
         });
@@ -35,7 +35,7 @@ function wrapSetTimeout(originalSetTimeout, callback) {
         handler.apply(this, args);
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
-        console.error("Error in setTimeout:", error);
+        console.error('Error in setTimeout:', error);
         callback(error); // 调用回调函数，将错误传递给上层处理
         throw error;
       }
@@ -56,7 +56,7 @@ function wrapPromise(OriginalPromise, callback) {
             resolve(value);
           } catch (error) {
             // 在这里收集错误信息，例如记录到日志或发送到服务器
-            console.error("Error in Promise resolve:", error);
+            console.error('Error in Promise resolve:', error);
             callback(error); // 调用回调函数，将错误传递给上层处理
             // 如果你想让原始的错误继续传播，可以在这里重新抛出错误
             throw error;
@@ -68,11 +68,11 @@ function wrapPromise(OriginalPromise, callback) {
             reject(reason);
           } catch (error) {
             // 在这里收集错误信息，例如记录到日志或发送到服务器
-            console.error("Error in Promise reject:", error);
+            console.error('Error in Promise reject:', error);
             callback(error); // 调用回调函数，将错误传递给上层处理
             throw error;
           }
-        }
+        },
       );
     });
   }
@@ -83,7 +83,7 @@ function wrapPromise(OriginalPromise, callback) {
   Object.getOwnPropertyNames(OriginalPromise).forEach((propName) => {
     const descriptor = Object.getOwnPropertyDescriptor(
       OriginalPromise,
-      propName
+      propName,
     );
     if (descriptor) {
       // 尝试复制所有属性，包括只读属性
@@ -91,10 +91,10 @@ function wrapPromise(OriginalPromise, callback) {
     }
   });
   Object.getOwnPropertyNames(OriginalPromise.prototype).forEach((propName) => {
-    if (propName !== "constructor") {
+    if (propName !== 'constructor') {
       const descriptor = Object.getOwnPropertyDescriptor(
         OriginalPromise.prototype,
-        propName
+        propName,
       );
       if (descriptor) {
         Object.defineProperty(wrappedPromise.prototype, propName, descriptor);
@@ -114,14 +114,14 @@ function wrapHistory(history, callback) {
   }, 300);
 
   history.pushState = (...args) => {
-    debouncePageChange.call(this, "pushState", ...args);
+    debouncePageChange.call(this, 'pushState', ...args);
     if (originalPushState) {
       return originalPushState.apply(history, args);
     }
   };
 
   history.replaceState = (...args) => {
-    debouncePageChange.call(this, "replaceState", ...args);
+    debouncePageChange.call(this, 'replaceState', ...args);
     if (originalReplaceState) {
       return originalReplaceState.apply(history, args);
     }
@@ -131,7 +131,10 @@ function wrapHistory(history, callback) {
 function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   function wrappedXMLHttpRequest() {
     const originalRequest = new OriginalXMLHttpRequest();
-    console.log("🚀 ~ file: wrappers.ts:134 ~ wrappedXMLHttpRequest ~ originalRequest:", originalRequest)
+    console.log(
+      '🚀 ~ file: wrappers.ts:134 ~ wrappedXMLHttpRequest ~ originalRequest:',
+      originalRequest,
+    );
 
     // 包裹 open 方法
     const originalOpen = originalRequest.open;
@@ -149,9 +152,11 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     originalRequest.onreadystatechange = function () {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
         if (originalRequest.status >= 400) {
-          const error = new Error(`HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`);
-          error.name = "XHR ERROR";
-          error.cause = originalRequest
+          const error = new Error(
+            `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`,
+          );
+          error.name = 'XHR ERROR';
+          error.cause = originalRequest;
           callback(error); // 调用回调函数，将错误传递给上层处理
         }
 
@@ -169,7 +174,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         originalSend.apply(this, args);
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
-        console.error("Error in XMLHttpRequest.send:", error);
+        console.error('Error in XMLHttpRequest.send:', error);
         callback(error); // 调用回调函数，将错误传递给上层处理
       }
     };
@@ -181,12 +186,12 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   Object.setPrototypeOf(wrappedXMLHttpRequest, OriginalXMLHttpRequest);
   Object.setPrototypeOf(
     wrappedXMLHttpRequest.prototype,
-    OriginalXMLHttpRequest.prototype
+    OriginalXMLHttpRequest.prototype,
   );
   Object.getOwnPropertyNames(OriginalXMLHttpRequest).forEach((propName) => {
     const descriptor = Object.getOwnPropertyDescriptor(
       OriginalXMLHttpRequest,
-      propName
+      propName,
     );
     if (descriptor) {
       // 尝试复制所有属性，包括只读属性
@@ -195,20 +200,20 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   });
   Object.getOwnPropertyNames(OriginalXMLHttpRequest.prototype).forEach(
     (propName) => {
-      if (propName !== "constructor") {
+      if (propName !== 'constructor') {
         const descriptor = Object.getOwnPropertyDescriptor(
           OriginalXMLHttpRequest.prototype,
-          propName
+          propName,
         );
         if (descriptor) {
           Object.defineProperty(
             wrappedXMLHttpRequest.prototype,
             propName,
-            descriptor
+            descriptor,
           );
         }
       }
-    }
+    },
   );
 
   return wrappedXMLHttpRequest;

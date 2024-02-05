@@ -1,5 +1,5 @@
-import { SDKConfigType } from "../types";
-import BaseMonitorSDK from "./BaseMonitorSDK";
+import { SDKConfigType } from '../types';
+import BaseMonitorSDK from './BaseMonitorSDK';
 
 export default class VueMonitorSDK extends BaseMonitorSDK {
   app: any = null;
@@ -15,12 +15,12 @@ export default class VueMonitorSDK extends BaseMonitorSDK {
   }
 
   /**
-     * @description: 监听页面变化
-     */
+   * @description: 监听页面变化
+   */
   listenPageVue() {
     let pageShowTime = 0;
     this.app.config.errorHandler = (err, vm, info) => {
-      console.log("errorHandle", err, vm, info);
+      console.log('errorHandle', err, vm, info);
       this.errorReport({
         err,
       }).then(() => this.flushQueue());
@@ -37,35 +37,35 @@ export default class VueMonitorSDK extends BaseMonitorSDK {
     //   // 执行 onPageShow
     //   this.onPageShow();
     // });
-    window.addEventListener("pagehide", () => {
+    window.addEventListener('pagehide', () => {
       // 记录用户在页面停留时间
       this.timeOnPage = performance.now() - pageShowTime;
       // 刷新队列前执行 onPagesHide
       this.onPagesHide();
     });
     // 监听Vue路由的replace事件
-    window.addEventListener("replaceState", async () => {
+    window.addEventListener('replaceState', async () => {
       const data = await this.getPvUv();
-      this.actionReport({data});
+      this.actionReport({ data });
     });
 
     // 监听Vue的push事件和React的路由切换事件
-    window.addEventListener("pushState", async () => {
+    window.addEventListener('pushState', async () => {
       //   const data = await this.getPvUv();
       //   this.actionReport({ data });
     });
 
     // 监听页面错误事件
     window.onerror = function (msg, _url, line, col, error) {
-      console.log("onerror");
+      console.log('onerror');
       console.log(
-        "🚀 ~ file: reportSDK.ts:112 ~ EasyAgentSDK ~ listenPage ~ msg:",
-        msg
+        '🚀 ~ file: reportSDK.ts:112 ~ EasyAgentSDK ~ listenPage ~ msg:',
+        msg,
       );
     };
     // 监听页面错误事件
     window.addEventListener(
-      "error",
+      'error',
       (err) => {
         const errorInfo = {
           errFileName: err.filename,
@@ -75,23 +75,23 @@ export default class VueMonitorSDK extends BaseMonitorSDK {
           errorInfo,
         }).then(() => this.flushQueue());
       },
-      true
+      true,
     );
     // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
     window.addEventListener(
-      "unhandledrejection",
+      'unhandledrejection',
       () => {
-        return console.log("unhandledrejection");
+        return console.log('unhandledrejection');
       },
-      true
+      true,
     );
     // 监听页面抛出的异常（Promise抛出异常已经用catch处理，即Promise.reject().catch()）
     window.addEventListener(
-      "rejectionhandled",
+      'rejectionhandled',
       (event) => {
-        console.log("rejection handled"); // 1秒后打印"rejection handled"
+        console.log('rejection handled'); // 1秒后打印"rejection handled"
       },
-      true
+      true,
     );
   }
 }

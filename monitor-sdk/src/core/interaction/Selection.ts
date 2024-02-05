@@ -1,30 +1,29 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-01 09:16:27
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-02 09:12:31
  * @FilePath: \monitor-sdk\src\core\interaction\selection.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import {Listener,EventManager} from "../../decorator";
+import { Listener, EventManager } from '../../decorator';
 
 export let data = null;
 
-
 export default class SelectTracker extends EventManager {
-  static type = "selectionchange";
+  static type = 'selectionchange';
   constructor() {
     super();
   }
 
-  @Listener("selectionchange")
+  @Listener('selectionchange')
   handler(root) {
-    console.log("🚀 ~ ResizeTracker ~ handler ~ root:", root)
-    let doc =document;
+    console.log('🚀 ~ ResizeTracker ~ handler ~ root:', root);
+    let doc = document;
     let current = doc.getSelection();
-    console.log("🚀 ~ ResizeTracker ~ handler ~ current:", current)
+    console.log('🚀 ~ ResizeTracker ~ handler ~ current:', current);
 
     // Bail out if we don't have a valid selection
     if (current === null) {
@@ -57,6 +56,6 @@ export default class SelectTracker extends EventManager {
       end: current.focusNode,
       endOffset: current.focusOffset,
     };
-    console.log("🚀 ~ ResizeTracker ~ handler ~ data:", data)
+    console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data);
   }
 }

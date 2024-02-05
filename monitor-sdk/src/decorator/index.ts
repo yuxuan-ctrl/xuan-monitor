@@ -1,14 +1,16 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 15:04:54
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-02 16:33:46
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-05 10:17:13
  * @FilePath: \monitor-sdk\src\decorator\index.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 import { createUUid } from '../utils';
+import MessageQueueDBWrapper, { IMessage } from '../core/Message';
+import { DB_CONFIG } from '../config/dbconfig';
 
 type EventConfig = string | string[];
 
@@ -90,6 +92,11 @@ export class EventManager {
 
   // 修改 start 和 stop 方法调用新的公共方法
   public static start(root?: Element): void {
+    this.messageWrapper = MessageQueueDBWrapper.getInstance({
+      dbName: 'monitorxq',
+      dbVersion: 1,
+      storeName: DB_CONFIG.ACTION_STORE_NAME,
+    });
     this.manageEventListener('add', this, root);
   }
 

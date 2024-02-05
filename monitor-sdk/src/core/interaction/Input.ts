@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-01-31 17:54:23
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-01 08:53:19
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-05 09:27:19
  * @FilePath: \monitor-sdk\src\core\interaction\input.ts
  * @Description:
  *
@@ -13,11 +13,19 @@ export let state = [];
 
 import { target } from '../../utils';
 import { Listener, EventManager } from '../../decorator';
+import MessageQueueDBWrapper, { IMessage } from '../Message';
+import { DB_CONFIG } from '../../config/dbconfig';
 
 export default class InputTracker extends EventManager {
-  static type = 'input';
+  type = 'input';
+  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
+    this.messageWrapper = MessageQueueDBWrapper.getInstance({
+      dbName: 'monitorxq',
+      dbVersion: 1,
+      storeName: DB_CONFIG.ACTION_STORE_NAME,
+    });
   }
 
   @Listener('input')
@@ -33,7 +41,7 @@ export default class InputTracker extends EventManager {
           break;
       }
 
-      let data = { target: input, value: v };
+      let data = { target: input, value: v, type: this.type };
 
       console.log('🚀 ~ ClickTracker ~ handler ~ data:', data);
       // If last entry in the queue is for the same target node as the current one, remove it so we can later swap it with current data.
@@ -44,6 +52,10 @@ export default class InputTracker extends EventManager {
         state.pop();
       }
 
+      this.messageWrapper.enqueue(
+        { ...data, session: new Date().getDate() },
+        DB_CONFIG.ACTION_STORE_NAME
+      );
       // state.push({ time: getTime(event), event: Event.Input, data });
 
       // clearTimeout(timeout);

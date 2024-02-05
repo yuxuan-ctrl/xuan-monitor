@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-01-31 15:35:16
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-05 08:39:10
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-05 11:19:22
  * @FilePath: \monitor-sdk\src\core\interaction\click.ts
  * @Description:
  *
@@ -10,11 +10,19 @@
  */
 import { getTime, layout, link, target, text } from '../../utils';
 import { Listener, EventManager } from '../../decorator';
+import MessageQueueDBWrapper, { IMessage } from '../Message';
+import { DB_CONFIG } from '../../config/dbconfig';
 
 export default class ClickTracker extends EventManager {
-  static type = 'click';
+  type = 'click';
+  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
+    this.messageWrapper = MessageQueueDBWrapper.getInstance({
+      dbName: 'monitorxq',
+      dbVersion: 1,
+      storeName: DB_CONFIG.ACTION_STORE_NAME,
+    });
   }
 
   @Listener('click')
@@ -51,9 +59,10 @@ export default class ClickTracker extends EventManager {
     if (pageCoords.x !== null && pageCoords.y !== null) {
       const eventData = {
         time: getTime(event),
-        event,
+        type: this.type,
+        // event,
         data: {
-          target: targetElement,
+          // target: targetElement,
           x: pageCoords.x,
           y: pageCoords.y,
           ...relativeCoords,
@@ -63,6 +72,12 @@ export default class ClickTracker extends EventManager {
           hash: null,
         },
       };
+      console.log("🚀 ~ ClickTracker ~ handler ~ eventData:", eventData)
+
+      this.messageWrapper.enqueue(
+        { ...eventData, session: new Date().getDate() },
+        DB_CONFIG.ACTION_STORE_NAME
+      );
     }
   }
 }

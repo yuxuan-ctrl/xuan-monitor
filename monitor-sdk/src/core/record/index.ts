@@ -41,7 +41,6 @@ export default class Record {
         text: true,
       },
       emit(event, checkout) {
-        console.log('🚀 ~ Record ~ emit ~ event:', event);
         // if(checkout) this.rrwebSessionSet();
 
         // 保存获取到的 event 数据，event里面是序列号后的DOM和鼠标事件等

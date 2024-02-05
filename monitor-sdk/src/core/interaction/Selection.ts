@@ -9,13 +9,21 @@
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 import { Listener, EventManager } from '../../decorator';
+import MessageQueueDBWrapper, { IMessage } from '../Message';
+import { DB_CONFIG } from '../../config/dbconfig';
 
 export let data = null;
 
 export default class SelectTracker extends EventManager {
-  static type = 'selectionchange';
+  type = 'selectionchange';
+  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
+    this.messageWrapper = MessageQueueDBWrapper.getInstance({
+      dbName: 'monitorxq',
+      dbVersion: 1,
+      storeName: DB_CONFIG.ACTION_STORE_NAME,
+    });
   }
 
   @Listener('selectionchange')
@@ -55,7 +63,12 @@ export default class SelectTracker extends EventManager {
       startOffset: current.anchorOffset,
       end: current.focusNode,
       endOffset: current.focusOffset,
+      type: this.type,
     };
     console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data);
+    this.messageWrapper.enqueue(
+      { ...data, session: new Date().getDate() },
+      DB_CONFIG.ACTION_STORE_NAME
+    );
   }
 }

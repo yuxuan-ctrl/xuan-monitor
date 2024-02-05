@@ -1,11 +1,20 @@
 import { Listener, EventManager } from '../../decorator';
 import { getTime, layout, link, target, text } from '../../utils';
+import MessageQueueDBWrapper, { IMessage } from '../Message';
+import { DB_CONFIG } from '../../config/dbconfig';
 
 export default class ClipboardTracker extends EventManager {
-  static type = 'clipboard';
+  type = 'clipboard';
+  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
+    this.messageWrapper = MessageQueueDBWrapper.getInstance({
+      dbName: 'monitorxq',
+      dbVersion: 1,
+      storeName: DB_CONFIG.ACTION_STORE_NAME,
+    });
   }
+
   @Listener(['cut', 'copy', 'paste'])
   handler(event: ClipboardEvent) {
     console.log('🚀 ~ ClipboardTracker ~ handler ~ event:', event);
@@ -42,15 +51,28 @@ export default class ClipboardTracker extends EventManager {
 
     // 输出事件相关信息
     if (dataObject) {
-      console.log('🚀 ~ ClipboardTracker ~ handler ~ event:', dataObject);
       console.log({
         time: getTime(event),
-        event: event,
+        // event: event,
+        type: this.type,
         data: {
           target: event.target,
           clipboardData: dataObject,
         },
       });
+      this.messageWrapper.enqueue(
+        {
+          time: getTime(event),
+          // event: event,
+          type: this.type,
+          data: {
+            target: event.target,
+            clipboardData: dataObject,
+          },
+          session: new Date().getDate(),
+        },
+        DB_CONFIG.ACTION_STORE_NAME
+      );
     }
   }
 }

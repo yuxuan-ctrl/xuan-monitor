@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-18 09:17:00
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-05 10:24:50
+ * @FilePath: \monitor-sdk\src\core\Message.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ */
 import IndexedDBWrapper from '../db/index';
 
 export interface IMessage {
@@ -39,6 +49,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
 
   // 添加消息
   public async enqueue(data: any, storeName): Promise<void> {
+
     const message: IMessage = {
       data,
       timestamp: Date.now(),

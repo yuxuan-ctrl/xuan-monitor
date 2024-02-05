@@ -64,11 +64,11 @@ export function layout(element: Element): Box {
       box = {
         x: Math.floor(
           rect.left +
-            ('pageXOffset' in window ? window.pageXOffset : de.scrollLeft),
+            ('pageXOffset' in window ? window.pageXOffset : de.scrollLeft)
         ),
         y: Math.floor(
           rect.top +
-            ('pageYOffset' in window ? window.pageYOffset : de.scrollTop),
+            ('pageYOffset' in window ? window.pageYOffset : de.scrollTop)
         ),
         w: Math.floor(rect.width),
         h: Math.floor(rect.height),

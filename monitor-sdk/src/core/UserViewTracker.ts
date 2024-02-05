@@ -42,7 +42,7 @@ export default class UvTracker {
     // 使用FingerprintJS生成的组件哈希作为唯一键
     const uniqueKey = (result.components as any).reduce(
       (acc, component) => acc + component.value,
-      '',
+      ''
     );
 
     return uniqueKey;
@@ -102,7 +102,7 @@ export default class UvTracker {
         await this.trackUv();
         sendMessage.call(this.monitor);
       },
-      refreshIntervalInHours * 60 * 60 * 1000,
+      refreshIntervalInHours * 60 * 60 * 1000
     );
   }
 

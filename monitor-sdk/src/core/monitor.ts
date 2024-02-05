@@ -34,12 +34,12 @@ export default class Monitor {
   public originalPushState: (
     data: any,
     unused: string,
-    url?: string | URL,
+    url?: string | URL
   ) => void;
   public originalReplaceState: (
     data: any,
     unused: string,
-    url?: string | URL,
+    url?: string | URL
   ) => void;
   static instance: Monitor | null = null;
   public Events: Object = {};
@@ -127,7 +127,7 @@ export default class Monitor {
       const originalSetTimeout = window.setTimeout;
       window.setTimeout = wrapSetTimeout(
         originalSetTimeout,
-        this.reportError.bind(this),
+        this.reportError.bind(this)
       ) as any;
     }
 
@@ -143,7 +143,7 @@ export default class Monitor {
       const OriginalXMLHttpRequest = window.XMLHttpRequest;
       window.XMLHttpRequest = wrapXMLHttpRequest(
         OriginalXMLHttpRequest,
-        this.reportError.bind(this),
+        this.reportError.bind(this)
       ) as any;
     }
   }
@@ -193,7 +193,7 @@ export default class Monitor {
     this.messageWrapper.update(
       latestPv.id,
       newData,
-      DB_CONFIG.TRAFFIC_STORE_NAME,
+      DB_CONFIG.TRAFFIC_STORE_NAME
     );
   }
 
@@ -203,7 +203,7 @@ export default class Monitor {
         (_) => true,
         storeName,
         { field: 'timestamp', direction: 'desc' },
-        1,
+        1
       );
       if (lastData.length > 0) {
         return lastData[0];

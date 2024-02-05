@@ -47,7 +47,7 @@ export default class Record {
         // 保存获取到的 event 数据，event里面是序列号后的DOM和鼠标事件等
         that.messageWrapper.enqueue(
           { ...event, session: new Date().getDate() },
-          DB_CONFIG.RECORD_STORE_NAME,
+          DB_CONFIG.RECORD_STORE_NAME
         );
       },
       checkoutEveryNms: 1000 * 60 * 10,
@@ -95,7 +95,7 @@ export default class Record {
     const dataList = await this.messageWrapper.query(
       condition,
       DB_CONFIG.RECORD_STORE_NAME,
-      { field: 'timestamp', direction: 'asc' },
+      { field: 'timestamp', direction: 'asc' }
     );
     return dataList;
   }

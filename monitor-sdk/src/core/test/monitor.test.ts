@@ -42,7 +42,7 @@ describe('Monitor Class test', () => {
     expect(pvTrackerMock.trackPageView).toHaveBeenCalledWith(
       'pushState',
       {},
-      '/new-path',
+      '/new-path'
     );
   });
 
@@ -59,7 +59,7 @@ describe('Monitor Class test', () => {
     expect(uvTrackerMock.trackUv).toHaveBeenCalled();
     expect(pvTrackerMock.trackPageView).toHaveBeenCalledWith(
       'load',
-      expect.any(Event),
+      expect.any(Event)
     );
   });
 

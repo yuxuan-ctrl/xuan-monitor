@@ -64,7 +64,7 @@ export default class ErrorTracker {
     if (error instanceof Error) {
       console.log(
         '🚀 ~ file: ErrorTracker.ts:65 ~ ErrorTracker ~ collectError ~ error:',
-        error.cause,
+        error.cause
       );
       errorInfo = {
         type: error.name,

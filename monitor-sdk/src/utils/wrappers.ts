@@ -72,7 +72,7 @@ function wrapPromise(OriginalPromise, callback) {
             callback(error); // 调用回调函数，将错误传递给上层处理
             throw error;
           }
-        },
+        }
       );
     });
   }
@@ -83,7 +83,7 @@ function wrapPromise(OriginalPromise, callback) {
   Object.getOwnPropertyNames(OriginalPromise).forEach((propName) => {
     const descriptor = Object.getOwnPropertyDescriptor(
       OriginalPromise,
-      propName,
+      propName
     );
     if (descriptor) {
       // 尝试复制所有属性，包括只读属性
@@ -94,7 +94,7 @@ function wrapPromise(OriginalPromise, callback) {
     if (propName !== 'constructor') {
       const descriptor = Object.getOwnPropertyDescriptor(
         OriginalPromise.prototype,
-        propName,
+        propName
       );
       if (descriptor) {
         Object.defineProperty(wrappedPromise.prototype, propName, descriptor);
@@ -133,7 +133,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     const originalRequest = new OriginalXMLHttpRequest();
     console.log(
       '🚀 ~ file: wrappers.ts:134 ~ wrappedXMLHttpRequest ~ originalRequest:',
-      originalRequest,
+      originalRequest
     );
 
     // 包裹 open 方法
@@ -153,7 +153,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
         if (originalRequest.status >= 400) {
           const error = new Error(
-            `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`,
+            `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`
           );
           error.name = 'XHR ERROR';
           error.cause = originalRequest;
@@ -186,12 +186,12 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   Object.setPrototypeOf(wrappedXMLHttpRequest, OriginalXMLHttpRequest);
   Object.setPrototypeOf(
     wrappedXMLHttpRequest.prototype,
-    OriginalXMLHttpRequest.prototype,
+    OriginalXMLHttpRequest.prototype
   );
   Object.getOwnPropertyNames(OriginalXMLHttpRequest).forEach((propName) => {
     const descriptor = Object.getOwnPropertyDescriptor(
       OriginalXMLHttpRequest,
-      propName,
+      propName
     );
     if (descriptor) {
       // 尝试复制所有属性，包括只读属性
@@ -203,17 +203,17 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       if (propName !== 'constructor') {
         const descriptor = Object.getOwnPropertyDescriptor(
           OriginalXMLHttpRequest.prototype,
-          propName,
+          propName
         );
         if (descriptor) {
           Object.defineProperty(
             wrappedXMLHttpRequest.prototype,
             propName,
-            descriptor,
+            descriptor
           );
         }
       }
-    },
+    }
   );
 
   return wrappedXMLHttpRequest;

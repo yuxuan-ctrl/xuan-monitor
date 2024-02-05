@@ -142,7 +142,7 @@ export default class BaseMonitorSDK {
       console.log('onerror');
       console.log(
         '🚀 ~ file: reportSDK.ts:112 ~ EasyAgentSDK ~ listenPage ~ msg:',
-        msg,
+        msg
       );
     };
     // 监听页面错误事件
@@ -157,7 +157,7 @@ export default class BaseMonitorSDK {
           errorInfo,
         }).then(() => this.flushQueue());
       },
-      true,
+      true
     );
 
     // 监听页面抛出的异常（Promise抛出异常未用catch处理，即Promise.reject()）
@@ -166,7 +166,7 @@ export default class BaseMonitorSDK {
       () => {
         return console.log('unhandledrejection');
       },
-      true,
+      true
     );
 
     // 监听页面抛出的异常（Promise抛出异常已经用catch处理，即Promise.reject().catch()）
@@ -175,7 +175,7 @@ export default class BaseMonitorSDK {
       (event) => {
         console.log('rejection handled'); // 1秒后打印"rejection handled"
       },
-      true,
+      true
     );
   }
 

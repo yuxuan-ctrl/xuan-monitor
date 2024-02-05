@@ -22,11 +22,11 @@ export class EventManager {
     action: 'add' | 'remove',
     Class: any,
     root?: Element,
-    eventName?: string,
+    eventName?: string
   ): void {
     const element = root || document;
     const methods = Object.getOwnPropertyNames(Class.prototype).filter(
-      (methodName) => methodName !== 'constructor',
+      (methodName) => methodName !== 'constructor'
     );
 
     methods.forEach((methodName) => {
@@ -34,7 +34,7 @@ export class EventManager {
       const eventConfig = Reflect.getMetadata(
         'eventConfig',
         Class.prototype,
-        methodName,
+        methodName
       );
 
       if (eventConfig && typeof method === 'function') {
@@ -55,10 +55,10 @@ export class EventManager {
     action: 'add' | 'remove',
     eventName: string,
     element: any,
-    method: any,
+    method: any
   ) {
     const registeredEvent = this._registeredEvents.get(
-      eventName + element.eventId,
+      eventName + element.eventId
     );
     if (action === 'add') {
       if (!registeredEvent || registeredEvent.element !== element) {
@@ -70,7 +70,7 @@ export class EventManager {
         this._registeredEvents.delete(eventName + element.eventId);
         element.removeEventListener(
           eventName,
-          registeredEvent.method as EventListenerOrEventListenerObject,
+          registeredEvent.method as EventListenerOrEventListenerObject
         );
       }
     }
@@ -79,7 +79,7 @@ export class EventManager {
   private static _registerEvent(
     eventName: string,
     element: any,
-    method: Function,
+    method: Function
   ): void {
     element.eventId = createUUid();
     this._registeredEvents.set(eventName + element.eventId, {
@@ -102,7 +102,7 @@ export function Listener(config: EventConfig) {
   return function (
     target: any,
     propertyKey: string,
-    descriptor: PropertyDescriptor,
+    descriptor: PropertyDescriptor
   ) {
     Reflect.defineMetadata('eventConfig', config, target, propertyKey);
     return descriptor;

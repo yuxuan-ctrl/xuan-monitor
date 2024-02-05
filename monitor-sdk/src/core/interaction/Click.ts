@@ -37,13 +37,13 @@ export default class ClickTracker extends EventManager {
       eX: layoutRect
         ? Math.max(
             Math.floor(((pageCoords.x - layoutRect.x) / layoutRect.w) * 32132),
-            0,
+            0
           )
         : 0,
       eY: layoutRect
         ? Math.max(
             Math.floor(((pageCoords.y - layoutRect.y) / layoutRect.h) * 32132),
-            0,
+            0
           )
         : 0,
     };

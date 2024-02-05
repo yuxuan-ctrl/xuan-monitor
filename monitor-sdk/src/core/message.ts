@@ -60,7 +60,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
         await this.update(
           newestPendingMessage.id!,
           { status: 'consumed' },
-          storeName,
+          storeName
         );
         return newestPendingMessage;
       }

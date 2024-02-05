@@ -13,7 +13,7 @@ export default class DOMObserverFactory {
 
   static getInstance(
     mode: 'singleton' | 'prototype',
-    identifier: string,
+    identifier: string
   ): DOMObserver | undefined {
     if (mode === 'singleton' && this.instances[identifier]) {
       return this.instances[identifier];
@@ -21,7 +21,7 @@ export default class DOMObserverFactory {
       return new DOMObserver();
     } else {
       throw new Error(
-        "Invalid mode provided, expected 'singleton' or 'prototype'",
+        "Invalid mode provided, expected 'singleton' or 'prototype'"
       );
     }
   }
@@ -29,7 +29,7 @@ export default class DOMObserverFactory {
   static createSingletonInstance(
     identifier: string,
     config: MutationObserverInit,
-    callback: CallbackFn,
+    callback: CallbackFn
   ): void {
     if (!this.instances[identifier]) {
       this.instances[identifier] = new DOMObserver(config, callback);
@@ -39,7 +39,7 @@ export default class DOMObserverFactory {
 
 type CallbackFn = (
   mutationsList: MutationRecord[],
-  observer: MutationObserver,
+  observer: MutationObserver
 ) => void;
 
 class DOMObserver {
@@ -47,7 +47,7 @@ class DOMObserver {
 
   constructor(
     private config?: MutationObserverInit,
-    private callback?: CallbackFn,
+    private callback?: CallbackFn
   ) {
     this.observer = new MutationObserver(this.callback || (() => {}));
     if (this.config) {

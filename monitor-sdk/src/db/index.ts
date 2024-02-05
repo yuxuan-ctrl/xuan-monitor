@@ -28,11 +28,11 @@ export default class IndexedDBWrapper {
           (resolve, reject) => {
             const request = indexedDB.open(
               this.config.dbName,
-              this.config.version,
+              this.config.version
             );
             request.onerror = (event) => {
               reject(
-                `Failed to open database: ${(event.target as any)?.error}`,
+                `Failed to open database: ${(event.target as any)?.error}`
               );
             };
             request.onupgradeneeded = (event) => {
@@ -51,7 +51,7 @@ export default class IndexedDBWrapper {
               });
             };
             resolve(request);
-          },
+          }
         );
 
         result.onsuccess = (event) => {
@@ -99,7 +99,7 @@ export default class IndexedDBWrapper {
 
   public async get(
     id: number,
-    storeName: string,
+    storeName: string
   ): Promise<IPvUvData | undefined> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
@@ -121,7 +121,7 @@ export default class IndexedDBWrapper {
   public async update(
     id: number,
     newData: IPvUvData,
-    storeName: string,
+    storeName: string
   ): Promise<void> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
@@ -152,7 +152,7 @@ export default class IndexedDBWrapper {
 
       getRequest.onerror = (event) => {
         reject(
-          `Failed to get data for update: ${(event.target as any)?.error}`,
+          `Failed to get data for update: ${(event.target as any)?.error}`
         );
       };
     });
@@ -206,7 +206,7 @@ export default class IndexedDBWrapper {
     condition: (data: IPvUvData) => boolean,
     storeName: string,
     order?: { field: keyof IPvUvData; direction: 'asc' | 'desc' },
-    limit?: number,
+    limit?: number
   ): Promise<IPvUvData[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
@@ -219,7 +219,7 @@ export default class IndexedDBWrapper {
         const index = objectStore.index(order.field);
         cursorRequest = index.openCursor(
           null,
-          order.direction === 'desc' ? 'prev' : 'next',
+          order.direction === 'desc' ? 'prev' : 'next'
         );
       } else {
         cursorRequest = objectStore.openCursor();

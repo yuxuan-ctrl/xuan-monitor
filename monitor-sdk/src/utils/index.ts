@@ -41,19 +41,19 @@ export function createUUid(): string {
       const rand = (now + Math.random() * 16) % 16 | 0;
       now = Math.floor(now / 16);
       return (char === 'x' ? rand : (rand & 0x3) | 0x8).toString(16);
-    },
+    }
   );
   return uuid;
 }
 
 export function sendBeacon(
   params: { baseUrl: string },
-  formData: FormData,
+  formData: FormData
 ): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const result = navigator.sendBeacon(
       `/${params.baseUrl}/monitor/report`,
-      formData,
+      formData
     );
     result && resolve(result);
     !result && reject(result);

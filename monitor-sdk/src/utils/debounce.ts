@@ -38,7 +38,7 @@ export function debounce(
     leading?: boolean;
     maxWait?: number;
     trailing?: boolean;
-  } = {},
+  } = {}
 ): {
   cancel: () => void;
   flush: () => any;

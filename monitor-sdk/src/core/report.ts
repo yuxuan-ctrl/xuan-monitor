@@ -49,7 +49,7 @@ export class Report {
           pongTimeout: 60000,
         },
         ...config,
-      },
+      }
     );
     this.webSocketData = data;
     this.send = send;

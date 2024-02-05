@@ -40,7 +40,7 @@ export default class ClickTracker extends EventManager {
       pageCoords.x = Math.round(layoutRect.x + layoutRect.w / 2);
       pageCoords.y = Math.round(layoutRect.y + layoutRect.h / 2);
     }
-
+  
     const relativeCoords = {
       eX: layoutRect
         ? Math.max(

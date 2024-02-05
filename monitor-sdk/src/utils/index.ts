@@ -11,6 +11,8 @@
 export * from './debounce';
 export * from './wrappers';
 export * from './layout';
+export * from './calculate';
+
 /**
  * @description: Json 转 FormData
  * @param {*} data

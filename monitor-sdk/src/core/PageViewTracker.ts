@@ -1,5 +1,6 @@
 import MessageQueueDBWrapper, { IMessage } from './Message';
 import Monitor from './Monitor';
+import{normalizeUrlForPath} from "../utils"
 interface IPVData {
   title?: string;
   url?: string;
@@ -85,7 +86,7 @@ export default class PageViewTracker {
    */
   public async trackPageView(method: string, ...args: any[]) {
     this.isTracking = true;
-    const url = window.location.href;
+    const url = normalizeUrlForPath(window.location.href);
     switch (method) {
       case 'pushState':
       case 'replaceState':
@@ -140,7 +141,7 @@ export default class PageViewTracker {
 
     const pvData: IPVData = {
       title: document.title,
-      url: window.location.href,
+      url: normalizeUrlForPath(window.location.href),
       userAgent: navigator.userAgent,
       platform: navigator.platform,
       screenResolution: {

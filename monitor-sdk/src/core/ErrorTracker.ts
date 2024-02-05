@@ -1,5 +1,7 @@
 import html2canvas from 'html2canvas';
-
+import{normalizeUrlForPath} from "../utils"
+import MessageQueueDBWrapper, { IMessage } from './Message';
+import { DB_CONFIG } from '../config/dbconfig';
 interface ExtendedError extends Error {
   fileName?: string;
   lineNumber?: number;
@@ -10,10 +12,17 @@ export default class ErrorTracker {
   operationSequence: any;
   logContext: any;
   errors: any;
+  messageWrapper: MessageQueueDBWrapper;
+
   constructor() {
     this.errors = [];
     this.operationSequence = [];
     this.logContext = {};
+    this.messageWrapper = MessageQueueDBWrapper.getInstance({
+      dbName: 'monitorxq',
+      dbVersion: 1,
+      storeName: DB_CONFIG.RECORD_STORE_NAME,
+    });
   }
 
   async captureScreenshot() {
@@ -59,13 +68,25 @@ export default class ErrorTracker {
     this.logContext = {};
   }
 
+  async getRange(startTime?, endTime?) {
+    
+    const condition =
+      startTime && endTime
+        ? (item) => {
+            return +item.timestamp > +startTime && +item.timestamp < +endTime && item.data.path === normalizeUrlForPath(window.location.href);
+          }
+        : () => true;
+    const dataList = await this.messageWrapper.query(
+      condition,
+      DB_CONFIG.RECORD_STORE_NAME,
+      { field: 'timestamp', direction: 'asc' }
+    );
+    return dataList;
+  }
+
   async collectError(error: ExtendedError | string) {
     let errorInfo;
     if (error instanceof Error) {
-      console.log(
-        '🚀 ~ file: ErrorTracker.ts:65 ~ ErrorTracker ~ collectError ~ error:',
-        error.cause
-      );
       errorInfo = {
         type: error.name,
         message: error.message,
@@ -101,7 +122,11 @@ export default class ErrorTracker {
     }
 
     try {
-      errorInfo.screenshot = await this.captureScreenshot();
+      const startTime =  new Date().getTime() - 30000;
+      const endTime = new Date().getTime() + 3000;
+      errorInfo.record = await this.getRange(startTime,endTime);
+      console.log(errorInfo.record)
+      // errorInfo.screenshot = await this.captureScreenshot();
     } catch (screenshotError) {
       console.error('Error capturing screenshot:', screenshotError);
     }

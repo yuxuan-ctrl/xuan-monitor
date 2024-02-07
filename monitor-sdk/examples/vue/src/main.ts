@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl 
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-01-31 17:03:42
+ * @LastEditTime: 2024-02-07 13:53:34
  * @FilePath: \monitor-sdk\examples\vue\src\main.ts
  * @Description: 
  * 
@@ -18,7 +18,9 @@ import {Monitor} from "../../../src/core";
 let app: AppInstance | null = null;
 // 将渲染操作放入 mount 函数
 function mount() {
+  // Monitor.start(window);
   const monitor = new Monitor("lyx", "token");
+  monitor.start(window);
 
   app = createApp(App);
   app.use(ElementPlus).use(router).mount("#vite-app");

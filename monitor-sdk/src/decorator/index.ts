@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 15:04:54
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-05 10:17:13
+ * @LastEditTime: 2024-02-07 14:04:03
  * @FilePath: \monitor-sdk\src\decorator\index.ts
  * @Description:
  *
@@ -15,30 +15,32 @@ import { DB_CONFIG } from '../config/dbconfig';
 type EventConfig = string | string[];
 
 export class EventManager {
-  public static _registeredEvents: Map<
+  public _registeredEvents: Map<
     string,
     { element: any; method: Function }
   > = new Map();
+  messageWrapper: MessageQueueDBWrapper;
 
-  private static manageEventListener(
+  private manageEventListener(
     action: 'add' | 'remove',
     Class: any,
     root?: Element,
     eventName?: string
   ): void {
     const element = root || document;
-    const methods = Object.getOwnPropertyNames(Class.prototype).filter(
+    const methods = Object.getOwnPropertyNames(Class).filter(
       (methodName) => methodName !== 'constructor'
     );
-
+      console.log(this);
+      
     methods.forEach((methodName) => {
-      const method = Class.prototype[methodName].bind(this);
+      const method = Class[methodName].bind(this);
       const eventConfig = Reflect.getMetadata(
         'eventConfig',
-        Class.prototype,
+        Class,
         methodName
       );
-
+        console.log(eventConfig)
       if (eventConfig && typeof method === 'function') {
         if (Array.isArray(eventConfig)) {
           eventConfig.forEach((name) => {
@@ -53,7 +55,7 @@ export class EventManager {
     });
   }
 
-  private static _processEvent(
+  private _processEvent(
     action: 'add' | 'remove',
     eventName: string,
     element: any,
@@ -78,7 +80,7 @@ export class EventManager {
     }
   }
 
-  private static _registerEvent(
+  private _registerEvent(
     eventName: string,
     element: any,
     method: Function
@@ -91,17 +93,17 @@ export class EventManager {
   }
 
   // 修改 start 和 stop 方法调用新的公共方法
-  public static start(root?: Element): void {
+  public start(root?: Element): void {
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
       dbName: 'monitorxq',
       dbVersion: 1,
       storeName: DB_CONFIG.ACTION_STORE_NAME,
     });
-    this.manageEventListener('add', this, root);
+    this.manageEventListener('add', this.__proto__, root);
   }
 
-  public static stop(root?: Element): void {
-    this.manageEventListener('remove', this, root);
+  public stop(root?: Element): void {
+    this.manageEventListener('remove', this.__proto__, root);
   }
 }
 

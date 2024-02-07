@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-04 15:11:05
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-07 13:49:08
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -19,12 +19,14 @@ import {
   wrapFetch,
   wrapSetTimeout,
   wrapPromise,
+  objectToFormData,
   wrapXMLHttpRequest,
 } from '../utils';
-import { Listener } from '../decorator';
+import { Listener,EventManager } from '../decorator';
+import Report from './Report';
 import 'reflect-metadata';
 
-export default class Monitor {
+export default class Monitor extends EventManager{
   public pvTracker: PageViewTracker;
   public uvTracker: UvTracker;
   public errorTracker: ErrorTracker;
@@ -45,8 +47,10 @@ export default class Monitor {
   public Events: Object = {};
   originalFetch: any;
   messageWrapper: MessageQueueDBWrapper;
+  reportUtils: Report;
 
   constructor(userId?: string, customKey?: string) {
+    super();
     this.pvTracker = new PageViewTracker(userId, this);
     this.uvTracker = new UvTracker(customKey, this);
     this.errorTracker = new ErrorTracker();
@@ -76,6 +80,7 @@ export default class Monitor {
 
   @Listener(['load', 'pageshow'])
   public async onLoad(event: Event) {
+    console.log(event)
     this.uvData = await this.uvTracker.trackUv();
     await this.pvTracker.trackPageView('load', event);
   }
@@ -88,6 +93,7 @@ export default class Monitor {
 
   @Listener('visibilitychange')
   public onVisablechange(event: BeforeUnloadEvent) {
+    console.log(event)
     if (document.visibilityState === 'hidden') {
       this.pvTracker.calculateDuration();
     } else {
@@ -97,7 +103,9 @@ export default class Monitor {
 
   @Listener('error')
   public async onError(error: Error) {
-    // this.reportError(error);
+    console.log(error)
+    console.log(this)
+    this.reportError(error);
   }
 
   @Listener('unhandledrejection')
@@ -106,6 +114,8 @@ export default class Monitor {
     promise: Promise<any>;
     reason: Error;
   }) {
+    console.log(error)
+    console.log(this)
     // this.reportError(error.reason);
   }
 
@@ -176,7 +186,12 @@ export default class Monitor {
 
   public async reportError(error: Error) {
     const errorInfo = await this.errorTracker.collectError(error);
-    this.sendMessage(errorInfo, DB_CONFIG.Error_STORE_NAME);
+    console.log(errorInfo)
+    Report.sendBeacon(
+      { baseUrl: '/api' },
+      objectToFormData(errorInfo)
+    );
+    // this.sendMessage(errorInfo, DB_CONFIG.Error_STORE_NAME);
   }
 
   public async updateDurationMessage() {

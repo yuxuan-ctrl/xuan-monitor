@@ -30,7 +30,7 @@ public class TestController {
 //        String testUrl = "http://localhost:3000/login";
 //        String testUrl = "http://testxuan.com:3333/login";
         String testUrl = "http://baidu.com";
-        Cookie cookie = new Cookie("BA_HECTOR","test");
+        Cookie cookie = new Cookie("BA_HECTOR", "src/test");
         cookie.setDomain("baidu.com");
         cookie.setMaxAge(43200);
         cookie.setSecure(false);

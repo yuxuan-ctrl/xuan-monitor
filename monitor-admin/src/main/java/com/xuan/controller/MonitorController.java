@@ -1,6 +1,7 @@
 package com.xuan.controller;
 
 import com.xuan.common.result.Result;
+import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.WebpvuvDto;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
@@ -36,6 +37,16 @@ public class MonitorController {
 
         ReportVo reportVo = monitorService.recordMonitorInfo(webpvuvDto);
         return Result.success(reportVo);
+    }
+
+    @PostMapping("/errorReport")
+    @ApiOperation("监控信息上传")
+    public Result<ReportVo> errorReport(@RequestBody ErrorInfoDto errorInfoDto, HttpServletRequest httpRequest) throws Exception{
+        log.info("监控信息：{}",httpRequest);
+        log.info("监控信息：{}",httpRequest.getHeader("Authorization"));
+
+        monitorService.errorHandler(errorInfoDto);
+        return Result.success(null,"上传成功");
     }
 
     @GetMapping("/report/test")

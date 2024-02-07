@@ -1,9 +1,9 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2023-12-18 18:12:58
- * @FilePath: \monitor-sdk\src\utils\utils.ts
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-07 11:30:20
+ * @FilePath: \monitor-sdk\src\utils\index.ts
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
@@ -69,4 +69,29 @@ export function getTime(event?): number {
 
 export function isArray(array: any[]): boolean {
   return Array.isArray(array) && array.length > 0;
+}
+
+export function objectToFormData(obj, form?, namespace?) {
+  const fd = form || new FormData();
+  let formKey;
+
+  for (const property in obj) {
+    if (!obj.hasOwnProperty(property)) continue;
+    
+    if (namespace) {
+      formKey = `${namespace}[${property}]`;
+    } else {
+      formKey = property;
+    }
+
+    // 如果值是对象且不是File类型，则递归处理
+    if (typeof obj[property] === 'object' && !(obj[property] instanceof File)) {
+      objectToFormData(obj[property], fd, formKey);
+    } else {
+      // 否则直接添加到FormData
+      fd.append(formKey, obj[property]);
+    }
+  }
+
+  return fd;
 }

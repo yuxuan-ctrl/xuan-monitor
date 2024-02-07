@@ -10,17 +10,27 @@
  */
 package com.xuan.service.impl;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.constant.JwtClaimsConstant;
 import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.utils.JwtUtil;
+import com.xuan.dao.convertor.ErrorConvertor;
+import com.xuan.dao.mapper.ErrorMapper;
 import com.xuan.dao.mapper.WebpvuvMapper;
+import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.EventList;
 import com.xuan.dao.pojo.dto.Performance;
 import com.xuan.dao.pojo.dto.WebpvuvDto;
+import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
+import com.xuan.service.ESDocumentService;
 import com.xuan.service.MonitorService;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +42,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -51,6 +62,21 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
 
     @Autowired
     public JwtProperties jwtProperties;
+
+    @Autowired
+    public ErrorMapper errorMapper;
+
+    @Autowired
+    public  ErrorConvertor errorConvertor;
+
+    @Autowired
+    private ElasticsearchClient client;
+    private final ESDocumentService documentDemoService;
+
+    public MonitorServiceImpl(ESDocumentService documentDemoService) {
+        this.documentDemoService = documentDemoService;
+    }
+
 
     @Override
     public ReportVo recordMonitorInfo(WebpvuvDto webpvuvDto) {
@@ -100,5 +126,20 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
         }
         ReportVo reportVo = new ReportVo(appId, pageUrl, "2312", webpvuvDto);
         return reportVo;
+    }
+
+    @Override
+    public Void errorHandler(ErrorInfoDto errorInfoDto) throws Exception {
+        BooleanResponse exists = client.indices().exists(e -> e.index("errors"));
+
+        if (!exists.value()) {
+            CreateIndexResponse response = client.indices().create(c -> c.index("errors"));
+        }else{
+            IndexResponse response = documentDemoService.createByJson("errors", errorInfoDto.getUrl(), JSON.toJSONString(errorInfoDto));
+            System.out.println("response.toString() -> " + response.toString());
+            Errors error = errorConvertor.responseToEntity(errorInfoDto);
+            errorMapper.insert(error);
+        }
+        return null;
     }
 }

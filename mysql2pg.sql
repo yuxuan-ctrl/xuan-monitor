@@ -9,6 +9,20 @@ CREATE TABLE "systems" (
   PRIMARY KEY ("id")
 );
 
+CREATE TABLE errors (
+                        id SERIAL PRIMARY KEY, -- 主键，自增序列
+                        es_error_id VARCHAR(36) NOT NULL UNIQUE, -- 对应Elasticsearch中的唯一错误ID
+                        timestamp TIMESTAMP WITH TIME ZONE NOT NULL, -- 错误发生时间
+                        error_message VARCHAR(200) NOT NULL, -- 错误信息
+                        error_type VARCHAR(50) NOT NULL, -- 错误类型
+                        user_id VARCHAR(36), -- 用户ID（可为空）
+                        url VARCHAR(50), --当前浏览器网址（可为空）
+                        user_agent VARCHAR(50), --Agent（可为空）
+    -- 其他业务相关列...
+                        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- 记录创建时间
+                        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW() -- 记录最后更新时间
+);
+
 CREATE TABLE "users" (
   "user_name" varchar(255) NOT NULL,
   "pass_word" varchar(255) NOT NULL,

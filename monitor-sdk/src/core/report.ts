@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-12-11 10:17:23
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-07 14:14:53
+ * @FilePath: \monitor-sdk\src\core\Report.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ */
 import { Ref } from 'vue';
 import {
   MaybeRefOrGetter,
@@ -5,9 +15,9 @@ import {
   useWebSocket,
   WebSocketStatus,
 } from '../lib/vueuse';
-
-export class Report {
-  baseUrl?: String;
+import {sendBeacon} from "../utils"
+export default class Report {
+  baseUrl?: String = '/api';
   reportUrl?: String;
   method: String;
   headers = {
@@ -77,6 +87,20 @@ export class Report {
     return res.json();
   }
 
+  static sendBeacon(
+    params: { baseUrl: string },
+    formData: FormData
+  ): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const result = navigator.sendBeacon(
+        `${params.baseUrl}/monitor/errorReport`,
+        formData
+      );
+      result && resolve(result);
+      !result && reject(result);
+    });
+  }
+  
   async webSocketReport(config) {
     const status = this.send(config);
     return status;

@@ -41,11 +41,10 @@ public class MonitorController {
 
     @PostMapping("/errorReport")
     @ApiOperation("监控信息上传")
-    public Result<ReportVo> errorReport(@RequestBody ErrorInfoDto errorInfoDto, HttpServletRequest httpRequest) throws Exception{
-        log.info("监控信息：{}",httpRequest);
-        log.info("监控信息：{}",httpRequest.getHeader("Authorization"));
+    public Result<ReportVo> errorReport(@RequestBody ErrorInfoDto errorInfoDto) throws Exception{
 
         monitorService.errorHandler(errorInfoDto);
+
         return Result.success(null,"上传成功");
     }
 

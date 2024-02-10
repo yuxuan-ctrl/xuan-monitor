@@ -16,6 +16,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -67,15 +69,18 @@ public class UserController {
 
     @PostMapping("/login")
     @ApiOperation("用戶登录")
-    public Result<LoginVo> login(UserDto userDto){
-        Users users = userService.login(userDto);
-        Map map = new HashMap<>();
-        map.put(JwtClaimsConstant.USER_ID, users.getId());
-        String jwtToken = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getUserTtl(), map);
-        LoginVo loginVo = new LoginVo();
-        BeanUtils.copyProperties(users,loginVo);
-        loginVo.setToken(jwtToken);
-        return Result.success(loginVo);
+    public ResponseEntity<String> login(@RequestBody UserDto userDto){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("");
+//        Users users = userService.login(userDto);
+//        Map map = new HashMap<>();
+//        map.put(JwtClaimsConstant.USER_ID, users.getId());
+//        String jwtToken = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getUserTtl(), map);
+//        LoginVo loginVo = new LoginVo();
+//        BeanUtils.copyProperties(users,loginVo);
+//        loginVo.setToken(jwtToken);
+//        return Result.success(loginVo);
+
     }
 }
 

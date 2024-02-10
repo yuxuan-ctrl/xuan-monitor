@@ -9,9 +9,9 @@ import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ErrorLogs extends ESDocument{
+public class ErrorLogs extends ESDocument {
 
-    private String systemId; // 错误来源系统标识符
+    private String appId; // 错误来源系统标识符
 
     private Instant timestamp; // 错误发生时间
 

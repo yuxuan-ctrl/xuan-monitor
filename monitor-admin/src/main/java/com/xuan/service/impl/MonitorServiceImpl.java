@@ -34,6 +34,7 @@ import com.xuan.service.ESDocumentService;
 import com.xuan.service.MonitorService;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -43,7 +44,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * <p>
@@ -133,12 +137,14 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
         BooleanResponse exists = client.indices().exists(e -> e.index("errors"));
 
         if (!exists.value()) {
-            CreateIndexResponse response = client.indices().create(c -> c.index("errors"));
+            client.indices().create(c -> c.index("errors"));
         }else{
-            IndexResponse response = documentDemoService.createByJson("errors", errorInfoDto.getUrl(), JSON.toJSONString(errorInfoDto));
+            IndexResponse response = documentDemoService.createByJson("errors", UUID.randomUUID().toString(), JSON.toJSONString(errorInfoDto));
             System.out.println("response.toString() -> " + response.toString());
-            Errors error = errorConvertor.responseToEntity(errorInfoDto);
-            errorMapper.insert(error);
+            Errors errors = new Errors();
+            BeanUtils.copyProperties(errorInfoDto,errors);
+            errors.setEsErrorId(response.id());
+            errorMapper.insert(errors);
         }
         return null;
     }

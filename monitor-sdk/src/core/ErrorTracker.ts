@@ -1,5 +1,4 @@
-import html2canvas from 'html2canvas';
-import { normalizeUrlForPath } from '../utils';
+import { normalizeUrlForPath, formatDate } from '../utils';
 import MessageQueueDBWrapper, { IMessage } from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
 interface ExtendedError extends Error {
@@ -22,33 +21,6 @@ export default class ErrorTracker {
       dbName: 'monitorxq',
       dbVersion: 1,
       storeName: DB_CONFIG.RECORD_STORE_NAME,
-    });
-  }
-
-  async captureScreenshot() {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      try {
-        // 使用 HTML2Canvas 库来生成屏幕截图（需要先安装 html2canvas）
-        html2canvas(document.body, {
-          allowTaint: true,
-          useCORS: true,
-          scale: window.devicePixelRatio || 1,
-          width: canvas.width,
-          height: canvas.height,
-        })
-          .then((canvas) => {
-            resolve(canvas.toDataURL());
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      } catch (error) {
-        reject(error);
-      }
     });
   }
 
@@ -79,11 +51,15 @@ export default class ErrorTracker {
             );
           }
         : () => true;
-    const dataList = await this.messageWrapper
-      .query(condition, DB_CONFIG.RECORD_STORE_NAME, {
+    const dataList = await this.messageWrapper.query(
+      condition,
+      DB_CONFIG.RECORD_STORE_NAME,
+      {
         field: 'timestamp',
         direction: 'asc',
-      });
+      }
+    );
+    console.log('🚀 ~ ErrorTracker ~ getRange ~ dataList:', dataList);
     return dataList.map((item) => JSON.stringify(item));
   }
 
@@ -95,9 +71,9 @@ export default class ErrorTracker {
         errorMessage: error.message,
         stackTrace: error.stack,
         cause: error.cause,
-        timestamp: new Date().toISOString(),
+        timestamp: formatDate(new Date()),
         userAgent: navigator.userAgent,
-        url: window.location.href,
+        url: normalizeUrlForPath(window.location.href),
         operationSequence: this.operationSequence.slice(),
         logContext: this.logContext,
       };
@@ -106,9 +82,9 @@ export default class ErrorTracker {
       errorInfo = {
         errorType: 'Non-JavaScript Error',
         errorMessage: error.message,
-        timestamp: new Date().toISOString(),
+        timestamp: formatDate(new Date()),
         userAgent: navigator.userAgent,
-        url: window.location.href,
+        url: normalizeUrlForPath(window.location.href),
         operationSequence: this.operationSequence.slice(),
         logContext: this.logContext,
       };
@@ -116,20 +92,20 @@ export default class ErrorTracker {
       errorInfo = {
         errorType: 'Unexpected Error',
         errorMessage: error.message,
-        timestamp: new Date().toISOString(),
+        timestamp: formatDate(new Date()),
         userAgent: navigator.userAgent,
-        url: window.location.href,
+        url: normalizeUrlForPath(window.location.href),
         operationSequence: this.operationSequence.slice(),
         logContext: this.logContext,
       };
     }
 
     try {
-      const startTime = new Date().getTime() - 30000;
-      const endTime = new Date().getTime() + 3000;
+      const startTime = new Date().getTime() - 1000;
+      const endTime = new Date().getTime() + 1000;
       errorInfo.record = await this.getRange(startTime, endTime);
       console.log(errorInfo.record);
-      // errorInfo.screenshot = await this.captureScreenshot();
+      // errorInfo.screenshot = await this.();
     } catch (screenshotError) {
       console.error('Error capturing screenshot:', screenshotError);
     }

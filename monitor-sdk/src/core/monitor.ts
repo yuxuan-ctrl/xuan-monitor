@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-07 13:49:08
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
@@ -12,7 +12,7 @@ import PageViewTracker from './PageViewTracker';
 import UvTracker from './UserViewTracker';
 import ErrorTracker from './ErrorTracker';
 import MessageQueueDBWrapper, { IMessage } from './Message';
-import { IPVData, UVData, IPvUvData } from '../types';
+import { IPVData, UVData, IPvUvData, MonitorConfig } from '../types';
 import { DB_CONFIG } from '../config/dbconfig';
 import {
   wrapHistory,
@@ -22,11 +22,13 @@ import {
   objectToFormData,
   wrapXMLHttpRequest,
 } from '../utils';
-import { Listener,EventManager } from '../decorator';
+import { Listener, EventManager } from '../decorator';
 import Report from './Report';
 import 'reflect-metadata';
 
-export default class Monitor extends EventManager{
+export default class Monitor extends EventManager {
+  static instance: Monitor | null = null;
+
   public pvTracker: PageViewTracker;
   public uvTracker: UvTracker;
   public errorTracker: ErrorTracker;
@@ -43,16 +45,18 @@ export default class Monitor extends EventManager{
     unused: string,
     url?: string | URL
   ) => void;
-  static instance: Monitor | null = null;
   public Events: Object = {};
   originalFetch: any;
-  messageWrapper: MessageQueueDBWrapper;
   reportUtils: Report;
+  config: MonitorConfig;
+  baseInfo: { appId: string; userId: string };
 
-  constructor(userId?: string, customKey?: string) {
+  constructor(config: MonitorConfig) {
     super();
-    this.pvTracker = new PageViewTracker(userId, this);
-    this.uvTracker = new UvTracker(customKey, this);
+    this.config = config;
+    this.baseInfo = { appId: config.appId, userId: config.userId };
+    this.pvTracker = new PageViewTracker(config?.userId, this);
+    this.uvTracker = new UvTracker(config?.userId, this);
     this.errorTracker = new ErrorTracker();
     this.uvTracker.initRefreshInterval(this.sendMessage);
     this.setGlobalProxy();
@@ -80,7 +84,7 @@ export default class Monitor extends EventManager{
 
   @Listener(['load', 'pageshow'])
   public async onLoad(event: Event) {
-    console.log(event)
+    console.log(event);
     this.uvData = await this.uvTracker.trackUv();
     await this.pvTracker.trackPageView('load', event);
   }
@@ -93,7 +97,7 @@ export default class Monitor extends EventManager{
 
   @Listener('visibilitychange')
   public onVisablechange(event: BeforeUnloadEvent) {
-    console.log(event)
+    console.log(event);
     if (document.visibilityState === 'hidden') {
       this.pvTracker.calculateDuration();
     } else {
@@ -103,8 +107,8 @@ export default class Monitor extends EventManager{
 
   @Listener('error')
   public async onError(error: Error) {
-    console.log(error)
-    console.log(this)
+    console.log(error);
+    console.log(this);
     this.reportError(error);
   }
 
@@ -114,8 +118,8 @@ export default class Monitor extends EventManager{
     promise: Promise<any>;
     reason: Error;
   }) {
-    console.log(error)
-    console.log(this)
+    console.log(error);
+    console.log(this);
     // this.reportError(error.reason);
   }
 
@@ -186,12 +190,24 @@ export default class Monitor extends EventManager{
 
   public async reportError(error: Error) {
     const errorInfo = await this.errorTracker.collectError(error);
-    console.log(errorInfo)
-    Report.sendBeacon(
-      { baseUrl: '/api' },
-      objectToFormData(errorInfo)
-    );
-    // this.sendMessage(errorInfo, DB_CONFIG.Error_STORE_NAME);
+    console.log('🚀 ~ Monitor ~ reportError ~ errorInfo:', errorInfo);
+    // Report.sendBeacon(
+    //   { baseUrl: this.config.baseUrl },
+    //   objectToFormData({ ...errorInfo, ...this.baseInfo })
+    // );
+    fetch(`${this.config.baseUrl}/monitor/errorReport`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(errorInfo),
+      credentials: 'include', // 如果需要携带cookies进行跨域访问，请保留此行
+      // 注意：fetch API 不像 sendBeacon 一样会在页面卸载时保证数据发送，
+      // 如果需要在页面关闭前确保数据发送，可能需要配合其他策略如使用 Beacon 或者同步的 XMLHttpRequest。
+    });
+    // fetch(`${this.config.baseUrl}`, {
+    //   body: { ...errorInfo, ...this.baseInfo },
+    // });
   }
 
   public async updateDurationMessage() {

@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-07 11:30:20
  * @FilePath: \monitor-sdk\src\utils\index.ts
  * @Description:
@@ -77,7 +77,7 @@ export function objectToFormData(obj, form?, namespace?) {
 
   for (const property in obj) {
     if (!obj.hasOwnProperty(property)) continue;
-    
+
     if (namespace) {
       formKey = `${namespace}[${property}]`;
     } else {
@@ -94,4 +94,15 @@ export function objectToFormData(obj, form?, namespace?) {
   }
 
   return fd;
+}
+
+export function formatDate(date) {
+  var year = date.getFullYear();
+  var month = ('0' + (date.getMonth() + 1)).slice(-2);
+  var day = ('0' + date.getDate()).slice(-2);
+  var hours = ('0' + date.getHours()).slice(-2);
+  var minutes = ('0' + date.getMinutes()).slice(-2);
+  var seconds = ('0' + date.getSeconds()).slice(-2);
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }

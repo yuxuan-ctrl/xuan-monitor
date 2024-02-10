@@ -13,7 +13,7 @@ import rrwebPlayer, { RRwebPlayerOptions } from 'rrweb-player';
 import 'rrweb-player/dist/style.css';
 import MessageQueueDBWrapper, { IMessage } from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
-import{normalizeUrlForPath} from "../../utils"
+import { normalizeUrlForPath } from '../../utils';
 
 interface RecordReplayConfig extends RRwebPlayerOptions {
   startTime?: number | string;
@@ -41,11 +41,17 @@ export default class Record {
         password: true,
         text: true,
       },
+      slimDOMOptions: true,
+      blockClass: /^el-/,
       emit(event, checkout) {
         // if(checkout) this.rrwebSessionSet();
         // 保存获取到的 event 数据，event里面是序列号后的DOM和鼠标事件等
         that.messageWrapper.enqueue(
-          { ...event, session: new Date().getDate(),path:normalizeUrlForPath(window.location.href) },
+          {
+            ...event,
+            session: new Date().getDate(),
+            path: normalizeUrlForPath(window.location.href),
+          },
           DB_CONFIG.RECORD_STORE_NAME
         );
       },

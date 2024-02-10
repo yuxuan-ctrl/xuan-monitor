@@ -8,12 +8,11 @@
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
-export interface SDKConfigType {
-  appId: string;
-  time?: number;
+export interface MonitorConfig {
+  appId: string; // 系统ID
+  userId?: string; // 用户ID
   baseUrl: string;
-  onPageShow?: Function;
-  onPagesHide?: Function;
+  reportFrequency?: number; // 上报频率（单位：秒）
 }
 
 export interface BaseEventType {

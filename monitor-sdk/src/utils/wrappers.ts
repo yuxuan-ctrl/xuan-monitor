@@ -155,6 +155,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
           const error = new Error(
             `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`
           );
+          console.log('🚀 ~ wrappedXMLHttpRequest ~ error:', error);
           error.name = 'XHR ERROR';
           error.cause = originalRequest;
           callback(error); // 调用回调函数，将错误传递给上层处理

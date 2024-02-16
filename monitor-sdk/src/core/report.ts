@@ -1,21 +1,24 @@
 /*
- * @Author: yuxuan-ctrl 
+ * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-07 14:14:53
  * @FilePath: \monitor-sdk\src\core\Report.ts
- * @Description: 
- * 
- * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import { Ref } from 'vue';
 import {
-  MaybeRefOrGetter,
-  useFetch,
-  useWebSocket,
-  WebSocketStatus,
-} from '../lib/vueuse';
-import {sendBeacon} from "../utils"
+  Request,
+  WebSocketManager,
+  formatDate,
+  isArray,
+  normalizeUrlForPath,
+  recursiveTimeout,
+} from '../utils';
+import { MonitorConfig } from '../types';
+import MessageQueueDBWrapper from './Message';
+import { DB_CONFIG } from '../config/dbconfig';
 export default class Report {
   baseUrl?: String = '/api';
   reportUrl?: String;
@@ -23,86 +26,115 @@ export default class Report {
   headers = {
     'Content-Type': 'application/json',
   };
-  webSocketData: Ref<any | null>;
-  send: (data: string | ArrayBuffer | Blob, useBuffer?: boolean) => boolean;
-  status: Ref<WebSocketStatus>;
-  useWebSocket: boolean = false;
-  timeInterval: number = 60000;
+  webSocketData: any;
+  status: any;
+  timeInterval: number = 1000;
+  websocketManager: WebSocketManager;
+  messageWrapper: any;
+  config: MonitorConfig;
 
-  constructor(config) {
-    this.useWebSocket = config?.useWebSocket;
-    if (this.useWebSocket) {
-      this.initWebSocket(config);
-    } else {
-      this.initFetch(config);
-    }
+  constructor(config: MonitorConfig) {
+    this.config = config;
+    this.messageWrapper = MessageQueueDBWrapper.getInstance({
+      dbName: 'monitorxq',
+      dbVersion: 1,
+      storeName: DB_CONFIG.RECORD_STORE_NAME,
+    });
   }
 
-  start(data) {
-    setTimeout(() => {
-      // this.useWebSocket
-      //   ? this.send(data)
-      //   : this.fetchReport({
-      //       body: data,
-      //     });
+  start(baseUrl, useWebSocket = false) {
+    this.websocketManager = new WebSocketManager(
+      `ws://${baseUrl}/monitor/report`
+    );
+
+    recursiveTimeout(async () => {
+      const startTime = new Date().getTime() - 30000;
+      const endTime = new Date().getTime() + 30000;
+      const trafficList = await this.messageWrapper.dequeue(
+        DB_CONFIG.TRAFFIC_STORE_NAME
+      );
+      const actionList = await this.messageWrapper.dequeue(
+        DB_CONFIG.ACTION_STORE_NAME
+      );
+      if (isArray(trafficList) || isArray(actionList)) {
+        const reportData = {
+          appId: this.config.appId,
+          timestamp: formatDate(new Date()),
+          eventList: isArray(trafficList)
+            ? trafficList.map((item) => item.data)
+            : [],
+          actionList: isArray(actionList)
+            ? actionList.map((item) => item.data)
+            : [],
+          record: await this.getRange(startTime, endTime),
+        };
+        if (useWebSocket && this.websocketManager) {
+          this.webSocketReport(reportData);
+        } else {
+          this.fetchReport(`${baseUrl}/monitor/report`, reportData);
+        }
+      }
+      // if (isArray(actionList)) {
+      //   const reportData = {
+      //     appId: this.config.appId,
+      //     timestamp: formatDate(new Date()),
+      //     eventList: actionList.map((item) => item.data),
+      //     record: await this.getRange(startTime, endTime),
+      //   };
+      //   if (useWebSocket && this.websocketManager) {
+      //     this.webSocketReport(reportData);
+      //   } else {
+      //     this.fetchReport(`${baseUrl}/monitor/actionReport`, reportData);
+      //   }
+      // }
     }, this.timeInterval);
   }
 
-  private initWebSocket(config) {
-    const { status, data, send } = useWebSocket(
-      `ws://${this.reportUrl as MaybeRefOrGetter<string>}`,
+  async fetchReport(url, data) {
+    const req = new Request();
+    const response = await req.post(url, data);
+  }
+
+  async webSocketReport(data: any) {
+    if (!this.websocketManager) {
+      console.error(
+        'WebSocket is not configured. Use the constructor to initialize it.'
+      );
+      return;
+    }
+
+    try {
+      // 确保 WebSocket 已经连接
+      if (!this.websocketManager.isConnected) {
+        await this.websocketManager.start();
+      }
+
+      // 发送数据
+      this.websocketManager.sendData(data);
+    } catch (error) {
+      console.error('Error while sending data over WebSocket:', error);
+    }
+  }
+
+  async getRange(startTime?, endTime?) {
+    const condition =
+      startTime && endTime
+        ? (item) => {
+            return (
+              +item.timestamp > +startTime &&
+              +item.timestamp < +endTime &&
+              item.data.path === normalizeUrlForPath(window.location.href)
+            );
+          }
+        : () => true;
+    const dataList = await this.messageWrapper.query(
+      condition,
+      DB_CONFIG.RECORD_STORE_NAME,
       {
-        autoReconnect: true,
-        heartbeat: {
-          message: 'ping',
-          interval: 60000,
-          pongTimeout: 60000,
-        },
-        ...config,
+        field: 'timestamp',
+        direction: 'asc',
       }
     );
-    this.webSocketData = data;
-    this.send = send;
-    this.status = status;
-  }
-
-  private initFetch(config) {
-    this.baseUrl = config?.baseUrl;
-    this.reportUrl = config?.reportUrl || `/${this.baseUrl}/monitor/report`;
-    this.method = config?.method;
-    this.headers = {
-      ...this.headers,
-      ...config?.headers,
-    };
-  }
-
-  async fetchReport(config?) {
-    const res = await useFetch(this.reportUrl as MaybeRefOrGetter<string>, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      ...config,
-    });
-    return res.json();
-  }
-
-  static sendBeacon(
-    params: { baseUrl: string },
-    formData: FormData
-  ): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      const result = navigator.sendBeacon(
-        `${params.baseUrl}/monitor/errorReport`,
-        formData
-      );
-      result && resolve(result);
-      !result && reject(result);
-    });
-  }
-  
-  async webSocketReport(config) {
-    const status = this.send(config);
-    return status;
+    return dataList.map((item) => JSON.stringify(item));
   }
 }

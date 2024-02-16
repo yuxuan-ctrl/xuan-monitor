@@ -61,37 +61,6 @@ export interface PageViewData {
   pageShowTime: number;
 }
 
-export interface IPVData {
-  id: number;
-  title?: string;
-  url?: string;
-  userAgent?: string;
-  platform?: string;
-  screenResolution?: {
-    width: number;
-    height: number;
-  };
-  timestamp?: number;
-  referrer?: string | null;
-}
-
-export interface IPvUvData {
-  id: number;
-  data: {
-    title?: string;
-    url?: string;
-    userAgent?: string;
-    platform?: string;
-    screenResolution?: {
-      width: number;
-      height: number;
-    };
-    referrer?: string | null;
-  };
-  status?: 'pending' | 'consumed';
-  timestamp?: number;
-}
-
 export interface UVData {
   uniqueKey: string;
   timestamp: number;

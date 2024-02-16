@@ -12,42 +12,30 @@ package com.xuan.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.xuan.common.constant.JwtClaimsConstant;
 import com.xuan.common.properties.JwtProperties;
-import com.xuan.common.utils.JwtUtil;
-import com.xuan.dao.convertor.ErrorConvertor;
 import com.xuan.dao.mapper.ErrorMapper;
 import com.xuan.dao.mapper.WebpvuvMapper;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
-import com.xuan.dao.pojo.dto.EventList;
-import com.xuan.dao.pojo.dto.Performance;
-import com.xuan.dao.pojo.dto.WebpvuvDto;
+import com.xuan.dao.model.EventList;
+import com.xuan.dao.pojo.dto.EventsDto;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
 import com.xuan.service.ESDocumentService;
 import com.xuan.service.MonitorService;
-import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -70,8 +58,7 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
     @Autowired
     public ErrorMapper errorMapper;
 
-    @Autowired
-    public  ErrorConvertor errorConvertor;
+
 
     @Autowired
     private ElasticsearchClient client;
@@ -83,53 +70,77 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
 
 
     @Override
-    public ReportVo recordMonitorInfo(WebpvuvDto webpvuvDto) {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        HttpServletRequest request = attributes.getRequest();
-        log.info("token:", request.getHeader("Authorization"));
-        String token = request.getHeader("Authorization").split(" ")[1];
-        Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), token);
-        log.info("claims：{}", claims);
-        log.info("监控信息：{}", webpvuvDto);
-        Integer userId = (Integer) claims.get(JwtClaimsConstant.USER_ID);
-        String appId = webpvuvDto.getAppId();
-        String pageUrl = webpvuvDto.getPageUrl();
-        String time = webpvuvDto.getTime();
-        // List<HashMap<String,Object>> eventList = webpvuvDto.getEventList();
-        List<EventList> eventList = webpvuvDto.getEventList();
-        if (!CollectionUtils.isEmpty(eventList)) {
-            eventList.stream().forEach(event -> {
-                String type = event.getType();
-                String uuid = event.getUuid();
-//                Integer timestamp = event.getTimestamp();
-                Object errorInfo = event.getErrorInfo();
-                Performance data = event.getData();
-                if (type.equals("action")) {
-                    QueryWrapper<Webpvuv> wrapper = new QueryWrapper<>();
-                    wrapper.eq("webpvuv.page_url", pageUrl);
-                    Webpvuv item = webpvuvMapper.selectOne(wrapper);
-                    log.info("list：{}", item);
-                    if (ObjectUtils.isEmpty(item)) {
-                        Webpvuv webpvuv = Webpvuv
-                                .builder()
-                                .appId(appId)
-                                .type(type)
-                                .pv(1)
-                                .uv(userId)
-                                .pageUrl(pageUrl)
-                                .build();
-                        webpvuvMapper.insert(webpvuv);
-                    } else {
-                        Webpvuv webpvuv = new Webpvuv();
-                        webpvuv.setPv(item.getPv() + 1);
-                        webpvuvMapper.update(webpvuv, null);
-                    }
-                }
+    public ReportVo recordMonitorInfo(EventsDto eventsDto) throws IOException {
+//        String appId = eventsDto.getAppId();
+//        List<EventList> eventList = eventsDto.getEventList();
+//        List<Map<String, Object>> actionList = eventsDto.getActionList();
+//        BooleanResponse exists = client.indices().exists(e -> e.index("events"));
+//        BooleanResponse actionsExists = client.indices().exists(e -> e.index("actions"));
+//
+//        if (!exists.value()) {
+//            client.indices().create(c -> c.index("events"));
+//        }else{
+//            eventList.stream().forEach(event->{
+//                event.setAppId(appId);
+//                IndexResponse response = null;
+//                try {
+//                    response = documentDemoService.createByJson("events", UUID.randomUUID().toString(), JSON.toJSONString(event));
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//            });
+//
+//        }
+//        if (!actionsExists.value()) {
+//            client.indices().create(c -> c.index("actions"));
+//        }else{
+//            actionList.stream().forEach(action->{
+//                IndexResponse response = null;
+//                try {
+//                    response = documentDemoService.createByJson("actions", UUID.randomUUID().toString(), JSON.toJSONString(action));
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//            });
+//
+//        }
+//        return  null;
+        String appId = eventsDto.getAppId();
+        List<Map<String, Object>> eventList = eventsDto.getEventList();
+        List<Map<String, Object>> actionList = eventsDto.getActionList();
 
-            });
+        // 检查并创建索引（可优化为单个请求检查多个索引）
+        ensureIndexExists("events", "actions");
+
+        // 优化事件列表处理
+        processAndSaveData(appId, (List<? extends Map<String, Object>>) eventList, "events");
+
+        // 添加应用ID到操作列表，并保存数据
+        List<Map<String, Object>> actionsWithAppId = actionList.stream()
+                .peek(action -> action.put("appId", appId))
+                .collect(Collectors.toList());
+        processAndSaveData(appId, actionsWithAppId, "actions");
+
+        return null; // 返回值根据实际业务需求填充
+    }
+
+    private void ensureIndexExists(String... indices) throws IOException {
+        for (String index : indices) {
+            if (!client.indices().exists(e -> e.index(index)).value()) {
+                client.indices().create(c -> c.index(index));
+            }
         }
-        ReportVo reportVo = new ReportVo(appId, pageUrl, "2312", webpvuvDto);
-        return reportVo;
+    }
+
+    private void processAndSaveData(String appId, List<? extends Map<String, Object>> dataList, String indexName) {
+        dataList.forEach(data -> {
+            try {
+                IndexResponse response = documentDemoService.createByJson(indexName, UUID.randomUUID().toString(), JSON.toJSONString(data));
+                // 可能需要对响应进行处理或记录错误
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to save data to index '" + indexName + "'", e);
+            }
+        });
     }
 
     @Override

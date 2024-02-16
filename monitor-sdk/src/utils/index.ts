@@ -12,6 +12,8 @@ export * from './debounce';
 export * from './wrappers';
 export * from './layout';
 export * from './calculate';
+export * from './request';
+export * from './websocket';
 
 /**
  * @description: Json 转 FormData
@@ -105,4 +107,22 @@ export function formatDate(date) {
   var seconds = ('0' + date.getSeconds()).slice(-2);
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+export function recursiveTimeout(callback, delay) {
+  let timeoutId;
+
+  function loop() {
+    timeoutId = setTimeout(() => {
+      callback();
+      loop();
+    }, delay);
+  }
+
+  // 启动定时器并返回清理函数
+  loop();
+
+  return () => {
+    clearTimeout(timeoutId); // 清理定时器
+  };
 }

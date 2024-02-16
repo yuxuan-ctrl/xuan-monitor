@@ -1,3 +1,5 @@
+import { IMessage } from '../core/Message';
+
 interface IIndexedDBConfig {
   dbName?: string;
   version?: number;
@@ -9,10 +11,8 @@ const DEFAULT_CONFIG: IIndexedDBConfig = {
   version: 1,
   storeName: 'myObjectStore',
 };
-import { IPvUvData } from '../types';
 
 interface IDBDatabaseInfo extends IDBDatabase {}
-
 export default class IndexedDBWrapper {
   private config: IIndexedDBConfig;
   private db: IDBDatabase | null = null;
@@ -79,7 +79,7 @@ export default class IndexedDBWrapper {
     }
   }
 
-  public async add(data: IPvUvData, storeName: string): Promise<number> {
+  public async add(data: IMessage, storeName: string): Promise<number> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, 'readwrite');
@@ -100,7 +100,7 @@ export default class IndexedDBWrapper {
   public async get(
     id: number,
     storeName: string
-  ): Promise<IPvUvData | undefined> {
+  ): Promise<IMessage | undefined> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, 'readonly');
@@ -109,7 +109,7 @@ export default class IndexedDBWrapper {
       const request = objectStore.get(id);
 
       request.onsuccess = (event) => {
-        resolve((event.target as any)?.result as IPvUvData);
+        resolve((event.target as any)?.result as IMessage);
       };
 
       request.onerror = (event) => {
@@ -120,7 +120,7 @@ export default class IndexedDBWrapper {
 
   public async update(
     id: number,
-    newData: IPvUvData,
+    newData: IMessage,
     storeName: string
   ): Promise<void> {
     const db = await this.ensureDatabaseOpen();
@@ -131,7 +131,7 @@ export default class IndexedDBWrapper {
       const getRequest = objectStore.get(id);
 
       getRequest.onsuccess = (event) => {
-        const existingData = (event.target as any)?.result as IPvUvData;
+        const existingData = (event.target as any)?.result as IMessage;
 
         if (existingData) {
           const updatedData = { ...existingData, ...newData };
@@ -176,12 +176,12 @@ export default class IndexedDBWrapper {
     });
   }
 
-  public async getAll(storeName: string): Promise<IPvUvData[]> {
+  public async getAll(storeName: string): Promise<IMessage[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, 'readonly');
       const objectStore = transaction.objectStore(storeName);
-      const data: IPvUvData[] = [];
+      const data: IMessage[] = [];
 
       const request = objectStore.openCursor();
 
@@ -203,16 +203,16 @@ export default class IndexedDBWrapper {
   }
 
   public async query(
-    condition: (data: IPvUvData) => boolean,
+    condition: (data: IMessage) => boolean,
     storeName: string,
-    order?: { field: keyof IPvUvData; direction: 'asc' | 'desc' },
+    order?: { field: keyof IMessage; direction: 'asc' | 'desc' },
     limit?: number
-  ): Promise<IPvUvData[]> {
+  ): Promise<IMessage[]> {
     const db = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, 'readonly');
       const objectStore = transaction.objectStore(storeName);
-      const data: IPvUvData[] = [];
+      const data: IMessage[] = [];
       let cursorRequest: IDBRequest;
 
       if (order && limit) {
@@ -229,7 +229,7 @@ export default class IndexedDBWrapper {
         const cursor = (event.target as any)?.result as IDBCursorWithValue;
 
         if (cursor) {
-          const currentData = cursor.value as IPvUvData;
+          const currentData = cursor.value as IMessage;
           if (condition(currentData)) {
             data.push(currentData);
 

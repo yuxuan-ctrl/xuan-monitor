@@ -16,15 +16,15 @@ public class ErrorInfoDto {
     String errorType;
     String errorMessage;
     String stackTrace;
-    String cause;
+//    String cause;
     String userAgent;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     Timestamp timestamp;
     String appId;
     String userId;
     String url;
-    String operationSequence;
-    String logContext;
-    List<String> record;
 
+    //    String operationSequence;
+//    String logContext;
+    List<String> record;
 }

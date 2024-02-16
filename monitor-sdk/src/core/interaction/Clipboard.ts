@@ -48,7 +48,6 @@ export default class ClipboardTracker extends EventManager {
         };
       }
     }
-
     // 输出事件相关信息
     if (dataObject) {
       console.log({
@@ -56,7 +55,7 @@ export default class ClipboardTracker extends EventManager {
         // event: event,
         type: this.type,
         data: {
-          target: event.target,
+          target: JSON.stringify(event.target),
           clipboardData: dataObject,
         },
       });
@@ -66,7 +65,7 @@ export default class ClipboardTracker extends EventManager {
           // event: event,
           type: this.type,
           data: {
-            target: event.target,
+            // target: JSON.stringify(event.target),
             clipboardData: dataObject,
           },
           session: new Date().getDate(),

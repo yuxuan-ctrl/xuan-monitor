@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-01-31 15:35:16
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-05 11:19:22
  * @FilePath: \monitor-sdk\src\core\interaction\click.ts
  * @Description:
@@ -15,7 +15,6 @@ import { DB_CONFIG } from '../../config/dbconfig';
 
 export default class ClickTracker extends EventManager {
   type = 'click';
-  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
@@ -40,7 +39,7 @@ export default class ClickTracker extends EventManager {
       pageCoords.x = Math.round(layoutRect.x + layoutRect.w / 2);
       pageCoords.y = Math.round(layoutRect.y + layoutRect.h / 2);
     }
-  
+
     const relativeCoords = {
       eX: layoutRect
         ? Math.max(
@@ -62,7 +61,7 @@ export default class ClickTracker extends EventManager {
         type: this.type,
         // event,
         data: {
-          // target: targetElement,
+          // target: JSON.stringify(targetElement),
           x: pageCoords.x,
           y: pageCoords.y,
           ...relativeCoords,
@@ -72,7 +71,7 @@ export default class ClickTracker extends EventManager {
           hash: null,
         },
       };
-      console.log("🚀 ~ ClickTracker ~ handler ~ eventData:", eventData)
+      console.log('🚀 ~ ClickTracker ~ handler ~ eventData:', eventData);
 
       this.messageWrapper.enqueue(
         { ...eventData, session: new Date().getDate() },

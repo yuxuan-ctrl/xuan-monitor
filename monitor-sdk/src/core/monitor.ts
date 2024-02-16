@@ -12,7 +12,7 @@ import PageViewTracker from './PageViewTracker';
 import UvTracker from './UserViewTracker';
 import ErrorTracker from './ErrorTracker';
 import MessageQueueDBWrapper, { IMessage } from './Message';
-import { IPVData, UVData, IPvUvData, MonitorConfig } from '../types';
+import { UVData, MonitorConfig } from '../types';
 import { DB_CONFIG } from '../config/dbconfig';
 import {
   wrapHistory,
@@ -33,7 +33,7 @@ export default class Monitor extends EventManager {
   public uvTracker: UvTracker;
   public errorTracker: ErrorTracker;
   public uvData: UVData;
-  public pvData: IPVData;
+  public pvData: IMessage;
   public stayDuration: number;
   public originalPushState: (
     data: any,
@@ -50,10 +50,13 @@ export default class Monitor extends EventManager {
   reportUtils: Report;
   config: MonitorConfig;
   baseInfo: { appId: string; userId: string };
+  report: Report;
 
   constructor(config: MonitorConfig) {
     super();
     this.config = config;
+    this.report = new Report(config);
+    this.report.start('/api');
     this.baseInfo = { appId: config.appId, userId: config.userId };
     this.pvTracker = new PageViewTracker(config?.userId, this);
     this.uvTracker = new UvTracker(config?.userId, this);
@@ -171,10 +174,11 @@ export default class Monitor extends EventManager {
   private async onPageChange(method: string, ...args: any[]) {
     await this.pvTracker.calculateDuration();
     await this.pvTracker.trackPageView(method, ...args);
-    if (this.pvData?.url) {
+    if (this.pvData?.pageUrl) {
       const message: IMessage = {
         ...this.pvData,
         ...this.uvData,
+        ...this.baseInfo,
         timestamp: Date.now(),
         name: DB_CONFIG.TRAFFIC_STORE_NAME,
         userId: this.pvTracker.userId,
@@ -191,23 +195,10 @@ export default class Monitor extends EventManager {
   public async reportError(error: Error) {
     const errorInfo = await this.errorTracker.collectError(error);
     console.log('🚀 ~ Monitor ~ reportError ~ errorInfo:', errorInfo);
-    // Report.sendBeacon(
-    //   { baseUrl: this.config.baseUrl },
-    //   objectToFormData({ ...errorInfo, ...this.baseInfo })
-    // );
-    fetch(`${this.config.baseUrl}/monitor/errorReport`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(errorInfo),
-      credentials: 'include', // 如果需要携带cookies进行跨域访问，请保留此行
-      // 注意：fetch API 不像 sendBeacon 一样会在页面卸载时保证数据发送，
-      // 如果需要在页面关闭前确保数据发送，可能需要配合其他策略如使用 Beacon 或者同步的 XMLHttpRequest。
+    this.report.fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
+      ...errorInfo,
+      ...this.baseInfo,
     });
-    // fetch(`${this.config.baseUrl}`, {
-    //   body: { ...errorInfo, ...this.baseInfo },
-    // });
   }
 
   public async updateDurationMessage() {
@@ -228,7 +219,7 @@ export default class Monitor extends EventManager {
     );
   }
 
-  public async getLastData(storeName: string): Promise<IPvUvData | undefined> {
+  public async getLastData(storeName: string): Promise<IMessage | undefined> {
     try {
       const lastData = await this.messageWrapper.query(
         (_) => true,

@@ -59,7 +59,6 @@ export default class ErrorTracker {
         direction: 'asc',
       }
     );
-    console.log('🚀 ~ ErrorTracker ~ getRange ~ dataList:', dataList);
     return dataList.map((item) => JSON.stringify(item));
   }
 
@@ -70,7 +69,7 @@ export default class ErrorTracker {
         errorType: error.name,
         errorMessage: error.message,
         stackTrace: error.stack,
-        cause: error.cause,
+        cause: error.cause || '',
         timestamp: formatDate(new Date()),
         userAgent: navigator.userAgent,
         url: normalizeUrlForPath(window.location.href),
@@ -101,17 +100,14 @@ export default class ErrorTracker {
     }
 
     try {
-      const startTime = new Date().getTime() - 1000;
-      const endTime = new Date().getTime() + 1000;
+      const startTime = new Date().getTime() - 30000;
+      const endTime = new Date().getTime() + 30000;
       errorInfo.record = await this.getRange(startTime, endTime);
       console.log(errorInfo.record);
-      // errorInfo.screenshot = await this.();
     } catch (screenshotError) {
       console.error('Error capturing screenshot:', screenshotError);
     }
 
     return errorInfo;
-    // this.clearOperationSequence();
-    // this.clearLogContext();
   }
 }

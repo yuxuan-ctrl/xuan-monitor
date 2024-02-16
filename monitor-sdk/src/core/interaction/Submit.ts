@@ -1,12 +1,12 @@
 /*
- * @Author: yuxuan-ctrl 
+ * @Author: yuxuan-ctrl
  * @Date: 2024-02-02 09:18:20
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-05 09:08:41
  * @FilePath: \monitor-sdk\src\core\interaction\submit.ts
- * @Description: 
- * 
- * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 /*
  * @Author: yuxuan-ctrl
@@ -38,13 +38,14 @@ export default class SubmitTracker extends EventManager {
 
   @Listener('submit')
   handler(event) {
-    data = { time: getTime(event), data: { target: target(event) },
-    type: this.type,
-  };
-    console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data);
-    this.messageWrapper.enqueue(
-      { ...data, session: new Date().getDate() },
-      DB_CONFIG.ACTION_STORE_NAME
-    );
+    (data = {
+      time: getTime(event),
+      value: event.target.value,
+      type: this.type,
+    }),
+      this.messageWrapper.enqueue(
+        { ...data, session: new Date().getDate() },
+        DB_CONFIG.ACTION_STORE_NAME
+      );
   }
 }

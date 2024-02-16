@@ -1,22 +1,22 @@
 import MessageQueueDBWrapper, { IMessage } from './Message';
 import Monitor from './Monitor';
-import{normalizeUrlForPath} from "../utils"
-interface IPVData {
-  title?: string;
-  url?: string;
-  userAgent?: string;
-  platform?: string;
-  screenResolution?: {
-    width: number;
-    height: number;
-  };
-  timestamp?: number;
-  referrer?: string | null;
-  totalPageViews?: number;
-  maxStayDuration?: number; // 单位：毫秒
-  mostVisitedPageId?: string;
-  mostVisitedPageViews?: number;
-}
+import { normalizeUrlForPath } from '../utils';
+// interface IPVData {
+//   title?: string;
+//   url?: string;
+//   userAgent?: string;
+//   platform?: string;
+//   screenResolution?: {
+//     width: number;
+//     height: number;
+//   };
+//   timestamp?: number;
+//   referrer?: string | null;
+//   totalPageViews?: number;
+//   maxStayDuration?: number; // 单位：毫秒
+//   mostVisitedPageId?: string;
+//   mostVisitedPageViews?: number;
+// }
 
 /**
  * 页面浏览跟踪器类。
@@ -30,7 +30,7 @@ export default class PageViewTracker {
   /**
    * 访问页面的映射表。
    */
-  private pageVisits = new Map<string, IPVData>();
+  private pageVisits = new Map<string, IMessage>();
 
   /**
    * 是否正在跟踪页面浏览。
@@ -46,7 +46,7 @@ export default class PageViewTracker {
    * 用户 ID。
    */
   private _userId?: string;
-  pvData: IPVData;
+  pvData: IMessage;
   monitor: Monitor;
   currentPageEntryTime: number;
   /**
@@ -139,9 +139,9 @@ export default class PageViewTracker {
         ? this.currentPageUrl
         : document.referrer;
 
-    const pvData: IPVData = {
-      title: document.title,
-      url: normalizeUrlForPath(window.location.href),
+    const pvData: IMessage = {
+      // title: document.title,
+      pageUrl: normalizeUrlForPath(window.location.href),
       userAgent: navigator.userAgent,
       platform: navigator.platform,
       screenResolution: {
@@ -161,7 +161,7 @@ export default class PageViewTracker {
    *
    * @param pvData 页面浏览数据。
    */
-  private calculateAndSendPVData(pvData: IPVData) {
+  private calculateAndSendPVData(pvData: IMessage) {
     // 根据 pageVisits 中的数据计算 PV，并发送到服务器
 
     // 这里可以遍历 pageVisits 集合，提取 PV 相关信息，

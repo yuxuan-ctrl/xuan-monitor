@@ -16,7 +16,6 @@ export let data = null;
 
 export default class SelectTracker extends EventManager {
   type = 'selectionchange';
-  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
     this.messageWrapper = MessageQueueDBWrapper.getInstance({

@@ -11,6 +11,23 @@
 
 import Monitor from './Monitor';
 import Record from './record';
-import { Click, Input, Resize, Selection, Clipboard, Submit } from './Behavior';
+import Behavior, {
+  Click,
+  Input,
+  Resize,
+  Selection,
+  Clipboard,
+  Submit,
+} from './Behavior';
 
-export { Monitor, Click, Input, Resize, Selection, Clipboard, Submit, Record };
+export {
+  Monitor,
+  Click,
+  Input,
+  Resize,
+  Selection,
+  Clipboard,
+  Submit,
+  Record,
+  Behavior,
+};

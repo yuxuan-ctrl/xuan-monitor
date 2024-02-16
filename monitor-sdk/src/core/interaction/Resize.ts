@@ -6,7 +6,6 @@ let data = null;
 
 export default class ResizeTracker extends EventManager {
   type = 'resize';
-  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
@@ -30,7 +29,7 @@ export default class ResizeTracker extends EventManager {
         de && 'clientHeight' in de
           ? Math.min(de.clientHeight, window.innerHeight)
           : window.innerHeight,
-        type: this.type,
+      type: this.type,
     };
     console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data);
     this.messageWrapper.enqueue(

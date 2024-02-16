@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-01-31 17:54:23
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-05 09:27:19
  * @FilePath: \monitor-sdk\src\core\interaction\input.ts
  * @Description:
@@ -18,7 +18,6 @@ import { DB_CONFIG } from '../../config/dbconfig';
 
 export default class InputTracker extends EventManager {
   type = 'input';
-  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
@@ -31,7 +30,6 @@ export default class InputTracker extends EventManager {
   @Listener('input')
   public async handler(event: any) {
     let input = target(event) as HTMLInputElement;
-    // let value = get(input);
     if (input && input.type) {
       let v = input.value;
       switch (input.type) {
@@ -40,8 +38,13 @@ export default class InputTracker extends EventManager {
           v = input.checked ? 'true' : 'false';
           break;
       }
+      console.dirxml('🚀 ~ InputTracker ~ handler ~ data.input:', input);
 
-      let data = { target: input, value: v, type: this.type };
+      let data = {
+        // target: JSON.stringify(input),
+        value: v,
+        type: this.type,
+      };
 
       console.log('🚀 ~ ClickTracker ~ handler ~ data:', data);
       // If last entry in the queue is for the same target node as the current one, remove it so we can later swap it with current data.

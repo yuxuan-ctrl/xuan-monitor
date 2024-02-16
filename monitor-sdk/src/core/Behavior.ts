@@ -1,5 +1,3 @@
-import { EventManager } from '../decorator';
-
 // 将所有交互行为类合并到一个对象中导出，提高代码可读性
 import * as InteractionBehaviors from './interaction';
 
@@ -11,7 +9,7 @@ export default class Behavior {
 
   static start(root?: HTMLElement) {
     Object.values(InteractionBehaviors).forEach((Class) => {
-      EventManager.start(Class, root);
+      new Class().start(root);
     });
   }
 }

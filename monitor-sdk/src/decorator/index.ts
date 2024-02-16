@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 15:04:54
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-07 14:04:03
  * @FilePath: \monitor-sdk\src\decorator\index.ts
  * @Description:
@@ -15,10 +15,8 @@ import { DB_CONFIG } from '../config/dbconfig';
 type EventConfig = string | string[];
 
 export class EventManager {
-  public _registeredEvents: Map<
-    string,
-    { element: any; method: Function }
-  > = new Map();
+  public _registeredEvents: Map<string, { element: any; method: Function }> =
+    new Map();
   messageWrapper: MessageQueueDBWrapper;
 
   private manageEventListener(
@@ -31,16 +29,12 @@ export class EventManager {
     const methods = Object.getOwnPropertyNames(Class).filter(
       (methodName) => methodName !== 'constructor'
     );
-      console.log(this);
-      
+    console.log(this);
+
     methods.forEach((methodName) => {
       const method = Class[methodName].bind(this);
-      const eventConfig = Reflect.getMetadata(
-        'eventConfig',
-        Class,
-        methodName
-      );
-        console.log(eventConfig)
+      const eventConfig = Reflect.getMetadata('eventConfig', Class, methodName);
+      console.log(eventConfig);
       if (eventConfig && typeof method === 'function') {
         if (Array.isArray(eventConfig)) {
           eventConfig.forEach((name) => {

@@ -1,12 +1,12 @@
 /*
- * @Author: yuxuan-ctrl 
+ * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-05 10:24:50
  * @FilePath: \monitor-sdk\src\core\Message.ts
- * @Description: 
- * 
- * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 import IndexedDBWrapper from '../db/index';
 
@@ -19,14 +19,17 @@ export interface IMessage {
   email?: string;
   status?: 'pending' | 'consumed';
   userId?: string;
+  pageUrl?: string;
+  userAgent?: string;
+  platform?: string;
+  screenResolution?: any;
+  referrer?: string;
 }
 
 export default class MessageQueueDBWrapper extends IndexedDBWrapper {
-  // 消息存储名称
-  private static readonly MESSAGE_STORE_NAME = 'messages';
   // 实例
   private static _instance: MessageQueueDBWrapper | null = null;
-
+  private maxMessageCount = 100;
   constructor(config) {
     super(config);
   }
@@ -49,32 +52,37 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
 
   // 添加消息
   public async enqueue(data: any, storeName): Promise<void> {
-
     const message: IMessage = {
       data,
       timestamp: Date.now(),
       status: 'pending',
+      pageUrl: data.pageUrl,
     };
     await this.add(message, storeName);
   }
 
   // 获取消息
-  public async dequeue(storeName): Promise<IMessage | undefined> {
-    const messages = await this.getAll(storeName);
+  public async dequeue(storeName): Promise<IMessage[] | undefined> {
+    const condition = (item) => {
+      return item.status === 'pending';
+    };
+    const messages = await this.query(
+      condition,
+      storeName,
+      {
+        field: 'timestamp',
+        direction: 'asc',
+      },
+      this.maxMessageCount
+    );
     if (messages.length > 0) {
-      const newestPendingMessage = messages
-        .filter((mes) => {
-          return mes.status === 'pending';
-        })
-        .sort((a, b) => a.timestamp - b.timestamp)[0];
-      if (newestPendingMessage.status === 'pending') {
-        await this.update(
-          newestPendingMessage.id!,
-          { status: 'consumed' },
-          storeName
-        );
-        return newestPendingMessage;
-      }
+      messages.forEach(async (mes) => {
+        if (mes.status === 'pending') {
+          await this.update(mes.id!, { status: 'consumed' }, storeName);
+        }
+      });
+
+      return messages;
     }
     return undefined;
   }

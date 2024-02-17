@@ -98,4 +98,7 @@ public interface ESDocumentService {
      */
     BulkResponse bulkDeleteByIds(String idxName, List<String> docIds) throws Exception;
 
+//    <T> List<T> searchTodayData(String idxName, String dateFieldName, Class<T> tClass) throws IOException;
+
+    <T> List<T> searchTodayData(String idxName, String dateFieldName, long fromTimestamp, long toTimestamp, Class<T> tClass) throws IOException;
 }

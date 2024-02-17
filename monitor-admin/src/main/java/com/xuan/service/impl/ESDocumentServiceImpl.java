@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.dao.model.ESDocument;
 import com.xuan.service.ESDocumentService;
@@ -13,9 +14,12 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,6 +31,9 @@ public class ESDocumentServiceImpl implements ESDocumentService {
 
     // 异步客户端
     private final ElasticsearchAsyncClient elasticsearchAsyncClient;
+
+//    private final JsonpMapper mapper; // 假设注入了JsonpMapper实例
+
 
     @Override
     public <T> IndexResponse createByFluentDSL(String idxName, String idxId, T document) throws Exception {
@@ -173,5 +180,36 @@ public class ESDocumentServiceImpl implements ESDocumentService {
                                 .index(idxName)
                                 .id(id))));
         return elasticsearchClient.bulk(br.build());
+    }
+
+    /**
+     * 查询今天某个索引表的所有数据
+     * @param idxName 索引名
+     * @param dateFieldName 日期字段名，假设这个字段是日期类型且存储的是文档创建日期
+     * @param tClass 返回结果的类型
+     * @return 符合条件的文档列表
+     * @throws IOException
+     */
+    @Override
+    public <T> List<T> searchTodayData(String idxName, String dateFieldName, long fromTimestamp, long toTimestamp, Class<T> tClass) throws IOException {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+//        String todayStart = today.atStartOfDay().format(DateTimeFormatter.ISO_INSTANT);
+
+        SearchRequest request = new SearchRequest.Builder()
+                .index(idxName)
+                .query(q -> q
+                        .range(r -> r
+                                        .field(dateFieldName)
+                                        .gte(JsonData.fromJson(String.valueOf(fromTimestamp)))
+                                        .lt(JsonData.fromJson(String.valueOf(toTimestamp)))
+                        )
+                )
+                .build();
+
+        SearchResponse<T> response = elasticsearchClient.search(request, tClass);
+
+        return response.hits().hits().stream()
+                .map(hit -> hit.source())
+                .collect(Collectors.toList());
     }
 }

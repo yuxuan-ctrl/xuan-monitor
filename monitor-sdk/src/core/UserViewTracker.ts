@@ -62,7 +62,6 @@ export default class UvTracker {
         width: window.screen.width,
         height: window.screen.height,
       },
-      // 添加更多可能感兴趣的用户信息字段
     };
 
     return userInfo;

@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -62,52 +63,18 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
 
     @Autowired
     private ElasticsearchClient client;
-    private final ESDocumentService documentDemoService;
+    private final ESDocumentService elasticService;
 
-    public MonitorServiceImpl(ESDocumentService documentDemoService) {
-        this.documentDemoService = documentDemoService;
+    public MonitorServiceImpl(ESDocumentService elasticService) {
+        this.elasticService = elasticService;
     }
 
 
     @Override
     public ReportVo recordMonitorInfo(EventsDto eventsDto) throws IOException {
-//        String appId = eventsDto.getAppId();
-//        List<EventList> eventList = eventsDto.getEventList();
-//        List<Map<String, Object>> actionList = eventsDto.getActionList();
-//        BooleanResponse exists = client.indices().exists(e -> e.index("events"));
-//        BooleanResponse actionsExists = client.indices().exists(e -> e.index("actions"));
-//
-//        if (!exists.value()) {
-//            client.indices().create(c -> c.index("events"));
-//        }else{
-//            eventList.stream().forEach(event->{
-//                event.setAppId(appId);
-//                IndexResponse response = null;
-//                try {
-//                    response = documentDemoService.createByJson("events", UUID.randomUUID().toString(), JSON.toJSONString(event));
-//                } catch (Exception e) {
-//                    throw new RuntimeException(e);
-//                }
-//            });
-//
-//        }
-//        if (!actionsExists.value()) {
-//            client.indices().create(c -> c.index("actions"));
-//        }else{
-//            actionList.stream().forEach(action->{
-//                IndexResponse response = null;
-//                try {
-//                    response = documentDemoService.createByJson("actions", UUID.randomUUID().toString(), JSON.toJSONString(action));
-//                } catch (Exception e) {
-//                    throw new RuntimeException(e);
-//                }
-//            });
-//
-//        }
-//        return  null;
         String appId = eventsDto.getAppId();
-        List<Map<String, Object>> eventList = eventsDto.getEventList();
         List<Map<String, Object>> actionList = eventsDto.getActionList();
+        List<Map<String, Object>> eventList = eventsDto.getEventList();
 
         // 检查并创建索引（可优化为单个请求检查多个索引）
         ensureIndexExists("events", "actions");
@@ -134,8 +101,9 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
 
     private void processAndSaveData(String appId, List<? extends Map<String, Object>> dataList, String indexName) {
         dataList.forEach(data -> {
+            data.put("createTime", LocalDateTime.now());
             try {
-                IndexResponse response = documentDemoService.createByJson(indexName, UUID.randomUUID().toString(), JSON.toJSONString(data));
+                IndexResponse response = elasticService.createByJson(indexName, UUID.randomUUID().toString(), JSON.toJSONString(data));
                 // 可能需要对响应进行处理或记录错误
             } catch (Exception e) {
                 throw new RuntimeException("Failed to save data to index '" + indexName + "'", e);
@@ -150,7 +118,7 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
         if (!exists.value()) {
             client.indices().create(c -> c.index("errors"));
         }else{
-            IndexResponse response = documentDemoService.createByJson("errors", UUID.randomUUID().toString(), JSON.toJSONString(errorInfoDto));
+            IndexResponse response = elasticService.createByJson("errors", UUID.randomUUID().toString(), JSON.toJSONString(errorInfoDto));
             System.out.println("response.toString() -> " + response.toString());
             Errors errors = new Errors();
             BeanUtils.copyProperties(errorInfoDto,errors);

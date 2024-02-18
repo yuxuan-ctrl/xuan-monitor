@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.xuan.dao.model.EventList;
 
 import java.io.IOException;
 import java.util.List;
@@ -101,4 +102,8 @@ public interface ESDocumentService {
 //    <T> List<T> searchTodayData(String idxName, String dateFieldName, Class<T> tClass) throws IOException;
 
     <T> List<T> searchTodayData(String idxName, String dateFieldName, long fromTimestamp, long toTimestamp, Class<T> tClass) throws IOException;
+    <T> List<T> queryAll(String idxName, String dateFieldName, Class<T> tClass) throws IOException;
+
+
+    <T> List<T> queryPastHours(String events, String timestamp, Class<T> eventListClass) throws IOException;
 }

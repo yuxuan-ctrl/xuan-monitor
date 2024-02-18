@@ -8,7 +8,9 @@ import com.xuan.dao.pojo.entity.DailyTrafficAnalytics;
 import com.xuan.service.ESDocumentService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -23,10 +25,6 @@ import java.util.stream.Collectors;
 @Component
 public class TrafficAnalyticsAggregationTask {
 
-
-//    @Autowired
-//    private DailyTrafficAnalytics dailyTrafficAnalytics;
-
     @Autowired
     private ESDocumentService esDocumentService;
 
@@ -36,13 +34,11 @@ public class TrafficAnalyticsAggregationTask {
     @Autowired
     private DailyTrafficAnalyticsMapper dailyTrafficAnalyticsMapper;
 
-    @Scheduled(fixedRate = 300000) // 每天凌晨1点执行
+
     public void aggregateYesterdayData() throws IOException {
-        long yesterdayStartInMillis = LocalDate.now().minusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        long todayStartInMillis = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        List<EventList> eventList = esDocumentService.searchTodayData("events", "timestamp",yesterdayStartInMillis,todayStartInMillis, EventList.class);
+        List<EventList> eventList = esDocumentService.queryPastHours("events", "timestamp", EventList.class);
         System.out.println("response.toString() -> " + eventList);
-        LocalDate date = LocalDate.ofInstant(eventList.get(0).getTimestamp().toInstant(), ZoneId.systemDefault()).minusDays(1); // 假设timestamp是前一天的
+        LocalDate date = LocalDate.ofInstant(eventList.get(eventList.size()-1).getTimestamp().toInstant(), ZoneId.systemDefault()).minusDays(1); // 假设timestamp是前一天的
 
         Map<String, Long> platformDistribution = eventList.stream()
                 .collect(Collectors.groupingBy(EventList::getPlatform, Collectors.counting()));

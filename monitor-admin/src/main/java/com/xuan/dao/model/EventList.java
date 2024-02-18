@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Map;
 
 @Data
@@ -57,4 +58,6 @@ public class EventList {
 
     @JsonProperty("stayDuration")
     private double stayDuration;
+
+    private Date createTime;
 }

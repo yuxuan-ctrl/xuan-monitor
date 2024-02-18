@@ -3,6 +3,8 @@ package com.xuan.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -10,12 +12,16 @@ import com.xuan.dao.model.ESDocument;
 import com.xuan.service.ESDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -31,6 +37,9 @@ public class ESDocumentServiceImpl implements ESDocumentService {
 
     // 异步客户端
     private final ElasticsearchAsyncClient elasticsearchAsyncClient;
+
+    @Value("${xuan.task.hoursBack:24}") // 默认值为24小时
+    private int hoursBack;
 
 //    private final JsonpMapper mapper; // 假设注入了JsonpMapper实例
 
@@ -202,6 +211,46 @@ public class ESDocumentServiceImpl implements ESDocumentService {
                                         .field(dateFieldName)
                                         .gte(JsonData.fromJson(String.valueOf(fromTimestamp)))
                                         .lt(JsonData.fromJson(String.valueOf(toTimestamp)))
+                        )
+                )
+                .build();
+
+        SearchResponse<T> response = elasticsearchClient.search(request, tClass);
+
+        return response.hits().hits().stream()
+                .map(hit -> hit.source())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public <T> List<T> queryAll(String idxName, String dateFieldName ,Class<T> tClass) throws IOException {
+
+        SearchRequest request = new SearchRequest.Builder()
+                .index(idxName)
+                .query(q -> q
+                        .range(r -> r
+                                .field(dateFieldName)
+                        )
+                )
+                .build();
+
+        SearchResponse<T> response = elasticsearchClient.search(request, tClass);
+
+        return response.hits().hits().stream()
+                .map(hit -> hit.source())
+                .collect(Collectors.toList());
+    }
+
+    public <T> List<T> queryPastHours(String idxName, String dateFieldName, Class<T> tClass) throws IOException {
+        Instant now = Instant.now();
+        Instant pastTime = now.minus(hoursBack, ChronoUnit.HOURS);
+        SearchRequest request = new SearchRequest.Builder()
+                .index(idxName)
+                .query(q -> q
+                        .range(r -> r
+                                .field(dateFieldName)
+                                .gte(JsonData.fromJson(String.valueOf(pastTime.toEpochMilli())))
+                                .lte(JsonData.fromJson(String.valueOf(now.toEpochMilli())))
                         )
                 )
                 .build();

@@ -74,19 +74,6 @@ export default class Report {
           this.fetchReport(`${baseUrl}/monitor/report`, reportData);
         }
       }
-      // if (isArray(actionList)) {
-      //   const reportData = {
-      //     appId: this.config.appId,
-      //     timestamp: formatDate(new Date()),
-      //     eventList: actionList.map((item) => item.data),
-      //     record: await this.getRange(startTime, endTime),
-      //   };
-      //   if (useWebSocket && this.websocketManager) {
-      //     this.webSocketReport(reportData);
-      //   } else {
-      //     this.fetchReport(`${baseUrl}/monitor/actionReport`, reportData);
-      //   }
-      // }
     }, this.timeInterval);
   }
 

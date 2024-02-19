@@ -2,27 +2,21 @@ package com.xuan.controller;
 
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.xuan.common.constant.JwtClaimsConstant;
-import com.xuan.dao.pojo.dto.PageUserDto;
-import com.xuan.dao.pojo.dto.UserDto;
+import com.xuan.dao.pojo.dto.PageUserDTO;
+import com.xuan.dao.pojo.dto.UserDTO;
 import com.xuan.dao.pojo.entity.Users;
-import com.xuan.dao.pojo.vo.LoginVo;
 import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.result.Result;
 import com.xuan.service.UserService;
-import com.xuan.common.utils.JwtUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -42,9 +36,10 @@ public class UserController {
 
     @Autowired
     public JwtProperties jwtProperties;
-    @ApiOperation("用户分页查询")
+
+    @ApiOperation(value = "用户分页查询",tags = "getUserPage")
     @GetMapping("/getUserPage")
-    public Result<IPage<Users>> getUserPage(PageUserDto pageUserDto){
+    public Result<IPage<Users>> getUserPage(PageUserDTO pageUserDto){
         IPage<Users> res = userService.selectPage(pageUserDto);
         return Result.success(res);
     }
@@ -62,14 +57,14 @@ public class UserController {
 
     @GetMapping("/getPageData")
     @ApiOperation("手写分页查询用户列表")
-    public Result<PageResult> getPageData(PageUserDto pageUserDto){
-        PageResult pageResult  = userService.getPageData(pageUserDto);
+    public Result<PageResult<Users>> getPageData(PageUserDTO pageUserDto){
+        PageResult<Users> pageResult  = userService.getPageData(pageUserDto);
         return Result.success(pageResult);
     }
 
     @PostMapping("/login")
     @ApiOperation("用戶登录")
-    public ResponseEntity<String> login(@RequestBody UserDto userDto){
+    public ResponseEntity<String> login(@RequestBody UserDTO userDto){
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("");
 //        Users users = userService.login(userDto);

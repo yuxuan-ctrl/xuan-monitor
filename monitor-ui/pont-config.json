@@ -1,0 +1,12 @@
+{
+  "originUrl": "http://localhost:5200/v3/api-docs",
+  "templatePath": "./pontTemplate",
+  "outDir": "./pont/api",
+  "originType": "SwaggerV3",
+  "mocks": {
+    "enable": true,
+    "basePath": "",
+    "port": 8192
+  },
+  "templateType": "fetch"
+}

@@ -13,11 +13,14 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PageResult implements Serializable {
+public class PageResult<T> implements Serializable {
 
     private long total; //总记录数
 
-    private List records; //当前页数据集合
+    private List<T> records; //当前页数据集合
 
-    private  long size;// 當前多少一頁
+    private  long pageSize;// 當前多少一頁
+
+    private  long pageIndex;// 當前多少一頁
+
 }

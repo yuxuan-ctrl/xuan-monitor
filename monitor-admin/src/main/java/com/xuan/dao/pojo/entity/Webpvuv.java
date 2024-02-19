@@ -19,7 +19,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value="Webpvuv对象", description="")
+@ApiModel(value="Webpvuv", description="")
 public class Webpvuv extends Model<Webpvuv> {
 
     private static final long serialVersionUID = 1L;

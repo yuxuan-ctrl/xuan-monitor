@@ -3,11 +3,10 @@ package com.xuan.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.xuan.common.result.PageResult;
 import com.xuan.dao.model.ESDocument;
 import com.xuan.service.ESDocumentService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -146,6 +144,7 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         return response.found() ? response.source() : null;
     }
 
+
     /**
      * 根据索引名称和文档id查询ObjectNode
      * @param idxName 索引名
@@ -241,6 +240,31 @@ public class ESDocumentServiceImpl implements ESDocumentService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public <T> PageResult<T> queryByPage(String idxName, String dateFieldName, Class<T> tClass, int pageIndex, int pageSize) throws IOException {
+        // 计算分页偏移量（从0开始计数）
+        int from = pageIndex * pageSize;
+
+        SearchRequest request = new SearchRequest.Builder()
+                .index(idxName)
+                .query(q -> q
+                        .range(r -> r.field(dateFieldName)
+                                .from(String.valueOf(from)))
+                )
+//                .from(from)
+                .size(pageSize)
+                .build();
+
+        SearchResponse<T> response = elasticsearchClient.search(request, tClass);
+
+        long total = response.hits().total().value();
+        List<T> records = response.hits().hits().stream()
+                .map(hit -> hit.source())
+                .collect(Collectors.toList());
+
+        return new PageResult<T>(total, records,pageSize ,pageIndex);
+    }
+
     public <T> List<T> queryPastHours(String idxName, String dateFieldName, Class<T> tClass) throws IOException {
         Instant now = Instant.now();
         Instant pastTime = now.minus(hoursBack, ChronoUnit.HOURS);
@@ -260,5 +284,13 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         return response.hits().hits().stream()
                 .map(hit -> hit.source())
                 .collect(Collectors.toList());
+    }
+
+    public void ensureIndexExists(String... indices) throws IOException {
+        for (String index : indices) {
+            if (!elasticsearchClient.indices().exists(e -> e.index(index)).value()) {
+                elasticsearchClient.indices().create(c -> c.index(index));
+            }
+        }
     }
 }

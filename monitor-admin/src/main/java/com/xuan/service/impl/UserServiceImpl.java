@@ -9,8 +9,8 @@ import com.xuan.common.exception.PasswordEditFailedException;
 import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.result.PageResult;
 import com.xuan.dao.mapper.UserMapper;
-import com.xuan.dao.pojo.dto.PageUserDto;
-import com.xuan.dao.pojo.dto.UserDto;
+import com.xuan.dao.pojo.dto.PageUserDTO;
+import com.xuan.dao.pojo.dto.UserDTO;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
     JwtProperties jwtProperties;
 
     @Override
-    public IPage<Users> selectPage(PageUserDto pageUserDto) {
+    public IPage<Users> selectPage(PageUserDTO pageUserDto) {
         log.info("用戶傳來的DTO：{}", pageUserDto);
         Page<Users> page = new Page<Users>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
         IPage<Users> userPage = userMapper.selectPage(page, this.getQueryMapper(pageUserDto));
@@ -46,10 +46,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
     }
 
     @Override
-    public PageResult getPageData(PageUserDto pageUserDto) {
-        Page<PageUserDto> page = new Page<PageUserDto>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
+    public PageResult<Users> getPageData(PageUserDTO pageUserDto) {
+        Page<PageUserDTO> page = new Page<PageUserDTO>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
         IPage<Users> userPage = userMapper.getPageData(page, pageUserDto);
-        return new PageResult(userPage.getTotal(), userPage.getRecords(), userPage.getSize());
+
+        return new PageResult<Users>(userPage.getTotal(), userPage.getRecords(), userPage.getSize(),userPage.getCurrent());
     }
 
     @Override
@@ -63,7 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
     }
 
     @Override
-    public Users login(UserDto userDto) {
+    public Users login(UserDTO userDto) {
         String userName = userDto.getUserName();
         String password = userDto.getPassWord();
 
@@ -83,7 +84,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
         return users;
     }
 
-    private QueryWrapper getQueryMapper(PageUserDto pageUserDto) {
+    private QueryWrapper getQueryMapper(PageUserDTO pageUserDto) {
         QueryWrapper<Users> userQueryWrapper = new QueryWrapper<Users>();
         if (pageUserDto.getId() != 0) {
             userQueryWrapper.eq("id", pageUserDto.getId());

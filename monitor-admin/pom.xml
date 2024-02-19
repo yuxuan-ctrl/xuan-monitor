@@ -195,5 +195,10 @@
             <version>1.4.2.Final</version> <!-- 应与 mapstruct 版本一致 -->
             <scope>provided</scope> <!-- 在编译时使用，运行时不需要 -->
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.13.0</version>
+        </dependency>
     </dependencies>
 </project>

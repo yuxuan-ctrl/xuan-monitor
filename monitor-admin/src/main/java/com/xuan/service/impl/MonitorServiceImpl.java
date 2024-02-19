@@ -19,8 +19,7 @@ import com.xuan.common.properties.JwtProperties;
 import com.xuan.dao.mapper.ErrorMapper;
 import com.xuan.dao.mapper.WebpvuvMapper;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
-import com.xuan.dao.model.EventList;
-import com.xuan.dao.pojo.dto.EventsDto;
+import com.xuan.dao.pojo.dto.EventsDTO;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
@@ -71,13 +70,13 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
 
 
     @Override
-    public ReportVo recordMonitorInfo(EventsDto eventsDto) throws IOException {
+    public ReportVo recordMonitorInfo(EventsDTO eventsDto) throws IOException {
         String appId = eventsDto.getAppId();
         List<Map<String, Object>> actionList = eventsDto.getActionList();
         List<Map<String, Object>> eventList = eventsDto.getEventList();
 
         // 检查并创建索引（可优化为单个请求检查多个索引）
-        ensureIndexExists("events", "actions");
+        elasticService.ensureIndexExists("events", "actions");
 
         // 优化事件列表处理
         processAndSaveData(appId, (List<? extends Map<String, Object>>) eventList, "events");
@@ -89,14 +88,6 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
         processAndSaveData(appId, actionsWithAppId, "actions");
 
         return null; // 返回值根据实际业务需求填充
-    }
-
-    private void ensureIndexExists(String... indices) throws IOException {
-        for (String index : indices) {
-            if (!client.indices().exists(e -> e.index(index)).value()) {
-                client.indices().create(c -> c.index(index));
-            }
-        }
     }
 
     private void processAndSaveData(String appId, List<? extends Map<String, Object>> dataList, String indexName) {
@@ -114,10 +105,10 @@ public class MonitorServiceImpl extends ServiceImpl<WebpvuvMapper, Webpvuv> impl
     @Override
     public Void errorHandler(ErrorInfoDto errorInfoDto) throws Exception {
         BooleanResponse exists = client.indices().exists(e -> e.index("errors"));
-
         if (!exists.value()) {
             client.indices().create(c -> c.index("errors"));
         }else{
+            errorInfoDto.setCreateTime(LocalDateTime.now());
             IndexResponse response = elasticService.createByJson("errors", UUID.randomUUID().toString(), JSON.toJSONString(errorInfoDto));
             System.out.println("response.toString() -> " + response.toString());
             Errors errors = new Errors();

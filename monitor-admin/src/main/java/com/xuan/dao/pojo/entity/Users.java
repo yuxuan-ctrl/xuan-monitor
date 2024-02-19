@@ -18,7 +18,7 @@ import java.util.Date;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value="User对象", description="")
+@ApiModel(value="Users", description="")
 public class Users extends Model<Users> {
 
     private static final long serialVersionUID = 1L;

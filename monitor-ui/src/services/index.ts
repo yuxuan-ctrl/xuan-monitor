@@ -1,8 +1,4 @@
-import axios from "axios";
+import * as defs from './baseClass';
+import './mods/';
 
-const serviceInstance = axios.create({
-  baseURL: "/api",
-  timeout: 6000,
-});
-
-export default serviceInstance;
+(window as any).defs = defs;

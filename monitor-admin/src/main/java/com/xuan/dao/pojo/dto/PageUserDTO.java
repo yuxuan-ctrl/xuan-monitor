@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class PageUserDto implements Serializable {
+public class PageUserDTO implements Serializable {
     private  int pageSize;
     private  int pageIndex;
     private  String userName ;

@@ -2,7 +2,6 @@ package com.xuan.dao.pojo.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xuan.dao.model.EventList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +14,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class ActionDto {
+public class ActionDTO {
     @JsonProperty("appId")
     String appId;
 

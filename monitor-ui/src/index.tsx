@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-06-06 09:44:21
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2023-06-14 09:35:01
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-19 16:52:53
  * @FilePath: \monitor-ui\src\index.tsx
  * @Description:
  *
@@ -10,14 +10,11 @@
  */
 import ReactDOM from "react-dom";
 import "./index.css";
+import "@/services";
 // import reportWebVitals from "./reportWebVitals";
 import App from "./App";
-import EasyAgentSDK from "@/utils/reportSDK";
 
-new EasyAgentSDK({
-  appId: "test",
-  baseUrl: "/api",
-});
+
 // 18
 // const root = ReactDOM.createRoot(document.getElementById('root'));
 // root.render(

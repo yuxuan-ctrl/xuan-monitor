@@ -1,9 +1,8 @@
 package com.xuan.controller;
 
 import com.xuan.common.result.Result;
-import com.xuan.dao.pojo.dto.ActionDto;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
-import com.xuan.dao.pojo.dto.EventsDto;
+import com.xuan.dao.pojo.dto.EventsDTO;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
 import com.xuan.service.MonitorService;
@@ -28,7 +27,7 @@ public class MonitorController {
 
     @PostMapping("/report")
     @ApiOperation("监控信息上传")
-    public Result<ReportVo> report(@RequestBody EventsDto eventsDto, HttpServletRequest httpRequest) throws Exception{
+    public Result<ReportVo> report(@RequestBody EventsDTO eventsDto, HttpServletRequest httpRequest) throws Exception{
         log.info("监控信息：{}",httpRequest);
         log.info("监控信息：{}",httpRequest.getHeader("Authorization"));
 
@@ -47,7 +46,7 @@ public class MonitorController {
 
     @GetMapping("/report/test")
     @ApiOperation("监控信息上传测试")
-    public Result<Webpvuv> testreport(EventsDto eventsDto) throws Exception{
+    public Result<Webpvuv> testreport(EventsDTO eventsDto) throws Exception{
         log.info("监控信息：{}", eventsDto);
         Webpvuv webpvuvVo = new Webpvuv();
         return Result.success(webpvuvVo);

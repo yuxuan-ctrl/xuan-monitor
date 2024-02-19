@@ -41,8 +41,8 @@ export default class Record {
         password: true,
         text: true,
       },
-      slimDOMOptions: true,
-      blockClass: /^el-/,
+      // slimDOMOptions: true,
+      // blockClass: /^el-/,
       emit(event, checkout) {
         // if(checkout) this.rrwebSessionSet();
         // 保存获取到的 event 数据，event里面是序列号后的DOM和鼠标事件等
@@ -65,10 +65,13 @@ export default class Record {
   // }
 
   async replay(dom, config?: RecordReplayConfig) {
-    const startTime = config?.startTime || new Date().getTime() - 30000;
+    const startTime = config?.startTime || new Date().getTime() - 300000;
     const endTime = config?.endTime || new Date().getTime() + 3000;
     const dataList = await this.getRange(startTime, endTime);
-    console.log('🚀 ~ Record ~ replay ~  dataList:', dataList);
+    console.log(
+      '🚀 ~ Record ~ replay ~  dataList:',
+      dataList.map((item) => item.data)
+    );
 
     setTimeout(() => {
       const replayInstance = new rrwebPlayer({

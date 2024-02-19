@@ -249,9 +249,11 @@ public class ESDocumentServiceImpl implements ESDocumentService {
                 .index(idxName)
                 .query(q -> q
                         .range(r -> r.field(dateFieldName)
-                                .from(String.valueOf(from)))
+                                .from(String.valueOf(from))
+                                )
                 )
 //                .from(from)
+                .from(from)
                 .size(pageSize)
                 .build();
 

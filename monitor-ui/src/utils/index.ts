@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-04 09:07:38
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-19 18:25:44
  * @FilePath: \monitor-ui\src\utils\index.ts
  * @Description:
@@ -9,7 +9,7 @@
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 import * as rrweb from "rrweb";
-import rrwebPlayer, {RRwebPlayerOptions} from "rrweb-player";
+import rrwebPlayer, { RRwebPlayerOptions } from "rrweb-player";
 import "rrweb-player/dist/style.css";
 
 interface RecordReplayConfig extends RRwebPlayerOptions {
@@ -27,8 +27,8 @@ export default class Record {
   // }
 
   async replay(dom, dataList, config?: RecordReplayConfig) {
-  
     const parseData = dataList.map((item) => JSON.parse(item));
+    console.log("🚀 ~ Record ~ replay ~  dataList:", parseData);
     console.log(
       "🚀 ~ Record ~ replay ~  dataList:",
       parseData.map((item) => item.data)

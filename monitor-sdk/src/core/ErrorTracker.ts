@@ -100,8 +100,8 @@ export default class ErrorTracker {
     }
 
     try {
-      const startTime = new Date().getTime() - 30000;
-      const endTime = new Date().getTime() + 30000;
+      const startTime = new Date().getTime() - 100000;
+      const endTime = new Date().getTime() + 100000;
       errorInfo.record = await this.getRange(startTime, endTime);
       console.log(errorInfo.record);
     } catch (screenshotError) {

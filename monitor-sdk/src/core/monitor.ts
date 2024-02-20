@@ -18,8 +18,6 @@ import {
   wrapHistory,
   wrapFetch,
   wrapSetTimeout,
-  wrapPromise,
-  objectToFormData,
   wrapXMLHttpRequest,
 } from '../utils';
 import { Listener, EventManager } from '../decorator';

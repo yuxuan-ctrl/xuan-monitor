@@ -1,22 +1,6 @@
-import MessageQueueDBWrapper, { IMessage } from './Message';
+import { IMessage } from './Message';
 import Monitor from './Monitor';
-import { normalizeUrlForPath } from '../utils';
-// interface IPVData {
-//   title?: string;
-//   url?: string;
-//   userAgent?: string;
-//   platform?: string;
-//   screenResolution?: {
-//     width: number;
-//     height: number;
-//   };
-//   timestamp?: number;
-//   referrer?: string | null;
-//   totalPageViews?: number;
-//   maxStayDuration?: number; // 单位：毫秒
-//   mostVisitedPageId?: string;
-//   mostVisitedPageViews?: number;
-// }
+import { normalizeUrlForPath, collectWebVitals } from '../utils';
 
 /**
  * 页面浏览跟踪器类。
@@ -57,7 +41,6 @@ export default class PageViewTracker {
   constructor(userId?: string, monitor?: Monitor) {
     this.userId = userId;
     this.monitor = monitor;
-    // this.addEventListeners();
   }
 
   /**
@@ -124,6 +107,9 @@ export default class PageViewTracker {
    * @param pageId 页面 ID。
    */
   private async updatePageViewTime(pageId: string) {
+    // const { fcp, lcp } = await collectWebVitals();
+    console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ lcp:", lcp)
+    console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ fcp:", fcp)
     const now = performance.now();
     const lastVisitInfo = this.pageVisits.get(pageId);
 

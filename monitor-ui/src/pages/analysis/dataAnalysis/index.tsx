@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-06-09 09:18:11
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-19 09:58:09
+ * @LastEditTime: 2024-02-20 15:00:07
  * @FilePath: \monitor-ui\src\pages\analysis\dataAnalysis\index.tsx
  * @Description:
  *
@@ -12,7 +12,7 @@
 import {Typography} from "antd";
 import "./index.less";
 import BarChart from "@/components/charts/barchart/_base";
-import AnalysisList from "./list";
+// import AnalysisList from "../../errors/list";
 const {Title} = Typography;
 const dataAnalysis = () => {
   return (
@@ -24,7 +24,7 @@ const dataAnalysis = () => {
           </Title>
         </section>
         <div className="an-container-body">
-          <AnalysisList />
+          {/* <AnalysisList /> */}
           {/* <div className="info">
             <div className="box">
               <Title level={3}>PV：</Title>

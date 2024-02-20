@@ -1,8 +1,18 @@
 /*
+ * @Author: yuxuan-ctrl 
+ * @Date: 2023-06-06 15:20:45
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 15:17:36
+ * @FilePath: \monitor-ui\src\components\Layout\index.tsx
+ * @Description: 
+ * 
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ */
+/*
  * @Author: yuxuan-ctrl
  * @Date: 2023-06-06 15:20:45
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2023-06-12 14:41:27
+ * @LastEditTime: 2024-02-20 15:16:00
  * @FilePath: \monitor-ui\src\components\Layout\index.tsx
  * @Description:
  *
@@ -50,7 +60,7 @@ const App = (props) => {
       };
       if (route.children && route.children!.length)
         menu.children = convert(route.children as RouteObject[]);
-      route.meta && route.meta.title && result.push(menu);
+      route.meta && route.meta.title  && !route.meta?.notShow && result.push(menu);
     });
     return result;
   };

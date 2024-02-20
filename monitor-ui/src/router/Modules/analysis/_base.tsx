@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-06-09 09:21:40
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2023-06-09 10:19:13
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 14:58:49
  * @FilePath: \monitor-ui\src\router\Modules\analysis\_base.tsx
  * @Description:
  *
@@ -29,6 +29,18 @@ const analysisRouter: Array<RouteObject> = [
           requiresAuth: true,
           title: "数据分析",
           key: "dataAnalysis",
+          icon: "",
+        },
+      },
+      {
+        path: "/errors/list",
+        element: lazyLoad(
+          React.lazy(() => import("@/pages/errors/list"))
+        ),
+        meta: {
+          requiresAuth: true,
+          title: "错误列表",
+          key: "errorsList",
           icon: "",
         },
       },

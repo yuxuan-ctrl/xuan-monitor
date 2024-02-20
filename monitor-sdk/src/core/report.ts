@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-07 14:14:53
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 11:13:33
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -28,13 +28,16 @@ export default class Report {
   };
   webSocketData: any;
   status: any;
-  timeInterval: number = 1000;
+  timeInterval: number;
+  dataRetentionHours: number;
   websocketManager: WebSocketManager;
   messageWrapper: any;
   config: MonitorConfig;
 
   constructor(config: MonitorConfig) {
     this.config = config;
+    this.timeInterval = config?.reportFrequency || 1800000;
+    this.dataRetentionHours = config?.dataRetentionHours || 1;
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
       dbName: 'monitorxq',
       dbVersion: 1,
@@ -46,7 +49,7 @@ export default class Report {
     this.websocketManager = new WebSocketManager(
       `ws://${baseUrl}/monitor/report`
     );
-
+    this.clearIndex();
     recursiveTimeout(async () => {
       const startTime = new Date().getTime() - 30000;
       const endTime = new Date().getTime() + 30000;
@@ -74,6 +77,20 @@ export default class Report {
           this.fetchReport(`${baseUrl}/monitor/report`, reportData);
         }
       }
+    }, this.timeInterval);
+  }
+
+  clearIndex() {
+    recursiveTimeout(async () => {
+      await this.messageWrapper.batchDeleteBeforeDate(
+        [
+          DB_CONFIG.RECORD_STORE_NAME,
+          DB_CONFIG.ACTION_STORE_NAME,
+          DB_CONFIG.Error_STORE_NAME,
+          DB_CONFIG.TRAFFIC_STORE_NAME,
+        ],
+        this.dataRetentionHours
+      );
     }, this.timeInterval);
   }
 

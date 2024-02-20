@@ -5,7 +5,6 @@ import { DB_CONFIG } from '../../config/dbconfig';
 
 export default class ClipboardTracker extends EventManager {
   type = 'clipboard';
-  messageWrapper: MessageQueueDBWrapper;
   constructor() {
     super();
     this.messageWrapper = MessageQueueDBWrapper.getInstance({

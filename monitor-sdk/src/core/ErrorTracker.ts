@@ -1,10 +1,22 @@
 import { normalizeUrlForPath, formatDate } from '../utils';
 import MessageQueueDBWrapper, { IMessage } from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
-interface ExtendedError extends Error {
-  fileName?: string;
-  lineNumber?: number;
-  columnNumber?: number;
+import HttpError from '../model/HttpError';
+interface ErrorInfo {
+  errorType: string;
+  errorMessage: string;
+  stackTrace?: string;
+  cause?: string;
+  timestamp: string;
+  userAgent: string;
+  url: string;
+  operationSequence: any[];
+  logContext: any;
+  method?: string;
+  requestUrl?: string;
+  data?: any;
+  status?: number;
+  record?: any; // 根据实际情况定义record的类型
 }
 
 export default class ErrorTracker {
@@ -62,52 +74,40 @@ export default class ErrorTracker {
     return dataList.map((item) => JSON.stringify(item));
   }
 
-  async collectError(error: ExtendedError | string) {
-    let errorInfo;
-    if (error instanceof Error) {
-      errorInfo = {
-        errorType: error.name,
-        errorMessage: error.message,
-        stackTrace: error.stack,
-        cause: error.cause || '',
-        timestamp: formatDate(new Date()),
-        userAgent: navigator.userAgent,
-        url: normalizeUrlForPath(window.location.href),
-        operationSequence: this.operationSequence.slice(),
-        logContext: this.logContext,
-      };
-    } else if (typeof error === 'string') {
-      // 对于字符串类型的错误，我们假设它是网络错误或其他非 JavaScript 错误
-      errorInfo = {
-        errorType: 'Non-JavaScript Error',
-        errorMessage: error.message,
-        timestamp: formatDate(new Date()),
-        userAgent: navigator.userAgent,
-        url: normalizeUrlForPath(window.location.href),
-        operationSequence: this.operationSequence.slice(),
-        logContext: this.logContext,
-      };
-    } else {
-      errorInfo = {
-        errorType: 'Unexpected Error',
-        errorMessage: error.message,
-        timestamp: formatDate(new Date()),
-        userAgent: navigator.userAgent,
-        url: normalizeUrlForPath(window.location.href),
-        operationSequence: this.operationSequence.slice(),
-        logContext: this.logContext,
-      };
+  async collectError(error: Error | string | HttpError) {
+    let errorInfo = this.getCommonErrorInfo(error);
+
+    if (error instanceof HttpError) {
+      errorInfo.errorType = 'XHR ERROR';
+      errorInfo.method = error.method;
+      errorInfo.requestUrl = error.requestUrl;
+      errorInfo.data = error.data;
+      errorInfo.status = error.status;
     }
 
     try {
-      const startTime = new Date().getTime() - 100000;
-      const endTime = new Date().getTime() + 100000;
+      const startTime = new Date().getTime() - 120000;
+      const endTime = new Date().getTime() + 300000;
       errorInfo.record = await this.getRange(startTime, endTime);
       console.log(errorInfo.record);
     } catch (screenshotError) {
       console.error('Error capturing screenshot:', screenshotError);
     }
 
-    return errorInfo;
+    return errorInfo as ErrorInfo; // 如果ErrorInfo是一个接口或类型，请确保它包含了所有可能的属性
+  }
+
+  private getCommonErrorInfo(error: Error | string): Partial<ErrorInfo> {
+    return {
+      errorType: (error instanceof Error) ? error.name : 'Non-JavaScript Error',
+      errorMessage: (error instanceof Error) ? error.message : error,
+      stackTrace: (error instanceof Error) ? error.stack : undefined,
+      cause: (error instanceof Error && error.cause) as string || '',
+      timestamp: formatDate(new Date()),
+      userAgent: navigator.userAgent,
+      url: normalizeUrlForPath(window.location.href),
+      operationSequence: this.operationSequence.slice(),
+      logContext: this.logContext,
+    };
   }
 }

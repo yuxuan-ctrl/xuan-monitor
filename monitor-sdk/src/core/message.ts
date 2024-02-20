@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-05 10:24:50
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 09:41:06
  * @FilePath: \monitor-sdk\src\core\Message.ts
  * @Description:
  *
@@ -85,5 +85,49 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
       return messages;
     }
     return undefined;
+  }
+
+  public async batchDeleteBeforeDate(
+    storeNameList: string[],
+    hoursAgo: number
+  ): Promise<void> {
+    const db = await this.ensureDatabaseOpen();
+    for (const storeName of storeNameList) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, 'readwrite');
+        const objectStore = transaction.objectStore(storeName);
+        // 获取当前时间戳，并计算7天前的时间戳
+        const todayTimestamp = Date.now();
+        const thresholdTimestamp = todayTimestamp - hoursAgo * 60 * 60 * 1000;
+
+        // 创建一个索引（如果还没有的话），用于根据日期字段进行查询
+        const index = objectStore.index('timestamp');
+
+        // 执行一个范围查询以获取所有小于阈值时间戳的记录
+        const range = IDBKeyRange.upperBound(thresholdTimestamp);
+        const cursorRequest = index.openCursor(range);
+
+        cursorRequest.onsuccess = (event) => {
+          const cursor = (event.target as any)?.result;
+          if (cursor) {
+            const item = cursor.value;
+            if (item.status === 'consumed') {
+              // 删除符合条件的记录
+              cursor.delete();
+            }
+            cursor.continue(); // 移动到下一个记录
+          }
+        };
+
+        cursorRequest.onerror = (event) => {
+          reject(
+            `Failed to batch delete data from store ${storeName}: ${(event.target as any)?.error}`
+          );
+        };
+      });
+    }
+
+    // 所有store处理完毕后才resolve
+    return Promise.resolve();
   }
 }

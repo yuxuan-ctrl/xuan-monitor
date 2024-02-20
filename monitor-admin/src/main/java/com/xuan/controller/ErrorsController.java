@@ -1,10 +1,12 @@
 package com.xuan.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.result.Result;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.PageDTO;
 import com.xuan.dao.pojo.entity.Errors;
+import com.xuan.dao.pojo.entity.Users;
 import com.xuan.service.ErrorsService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -26,10 +28,16 @@ public class ErrorsController {
     public ErrorsService errorsService;
 
     @GetMapping("/getPageData")
-    @ApiOperation("监控信息上传测试")
-    public Result<PageResult<ErrorInfoDto>> getPageData(@RequestParam int pageIndex,
-                                                        @RequestParam int pageSize) throws IOException {
-        PageResult<ErrorInfoDto> pageData = errorsService.getPageData(pageIndex,pageSize);
-        return Result.success(pageData);
+    @ApiOperation("错误列表获取")
+    public Result<IPage<Errors>> getPageData(@RequestParam int pageIndex, @RequestParam int pageSize) throws IOException {
+        IPage<Errors> res = errorsService.selectPage(pageIndex,pageSize);
+        return Result.success(res);
+    }
+
+    @GetMapping("/getDetails")
+    @ApiOperation("错误详情获取")
+    public Result<ErrorInfoDto> getDetails(@RequestParam String id) throws IOException {
+        ErrorInfoDto detail = errorsService.getDetails(id);
+        return Result.success(detail);
     }
 }

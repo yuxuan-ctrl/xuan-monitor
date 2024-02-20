@@ -41,6 +41,32 @@ declare namespace defs {
     userId?: string;
   }
 
+  export class Errors {
+    /** appId */
+    appId?: string;
+
+    /** createTime */
+    createTime?: string;
+
+    /** errorMessage */
+    errorMessage?: string;
+
+    /** errorType */
+    errorType?: string;
+
+    /** esErrorId */
+    esErrorId?: string;
+
+    /** timestamp */
+    timestamp?: defs.Timestamp;
+
+    /** url */
+    url?: string;
+
+    /** userId */
+    userId?: string;
+  }
+
   export class EventsDTO {
     /** actionList */
     actionList?: Array<object>;
@@ -204,7 +230,28 @@ declare namespace API {
    */
   export namespace errors {
     /**
-     * 监控信息上传测试
+     * 错误详情获取
+     * /errors/getDetails
+     */
+    export namespace getDetails {
+      export class Params {
+        /** id */
+        id: string;
+      }
+
+      export type Response = defs.Result<defs.ErrorInfoDto>;
+      export const path = '/errors/getDetails';
+
+      export const init: Response;
+
+      export function request(
+        params?: Params,
+        options?: any,
+      ): Promise<Response>;
+    }
+
+    /**
+     * 错误列表获取
      * /errors/getPageData
      */
     export namespace getPageData {
@@ -215,7 +262,7 @@ declare namespace API {
         pageSize: number;
       }
 
-      export type Response = defs.Result<defs.PageResult<defs.ErrorInfoDto>>;
+      export type Response = defs.Result<defs.IPage<defs.Errors>>;
       export const path = '/errors/getPageData';
 
       export const init: Response;

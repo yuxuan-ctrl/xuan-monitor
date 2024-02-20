@@ -1,11 +1,14 @@
 package com.xuan.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.result.PageResult;
+import com.xuan.common.result.Result;
 import com.xuan.dao.mapper.ErrorMapper;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.PageDTO;
+import com.xuan.dao.pojo.dto.PageUserDTO;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.service.ESDocumentService;
@@ -24,15 +27,19 @@ public class ErrorsServiceImpl extends ServiceImpl<ErrorMapper, Errors> implemen
     @Autowired
     public ESDocumentService esDocumentService;
 
+    @Autowired
+    public ErrorMapper errorMapper;
+
     @Override
-    public IPage<Users> selectPage(ErrorInfoDto errorInfoDto) {
-        return null;
+    public IPage<Errors> selectPage(int pageIndex,int pageSize) {
+        Page<Errors> page = new Page<Errors>(pageIndex, pageSize);
+        IPage<Errors> errorsIPage = errorMapper.selectPage(page, null);
+        return errorsIPage;
     }
 
     @Override
-    public PageResult<ErrorInfoDto> getPageData(int pageIndex,int pageSize) throws IOException {
-        PageResult<ErrorInfoDto> pageData = esDocumentService.queryByPage("errors", "createTime", ErrorInfoDto.class, pageIndex, pageSize);
-        return pageData;
+    public ErrorInfoDto getDetails(String id) throws IOException {
+        return esDocumentService.getById("errors",id,ErrorInfoDto.class);
     }
 
     @Override

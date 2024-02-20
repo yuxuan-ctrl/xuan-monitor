@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2023-12-27 08:51:31
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 11:06:57
  * @FilePath: \monitor-sdk\src\types\index.ts
  * @Description:
  *
@@ -13,6 +13,7 @@ export interface MonitorConfig {
   userId?: string; // 用户ID
   baseUrl: string;
   reportFrequency?: number; // 上报频率（单位：秒）
+  dataRetentionHours?: number;
 }
 
 export interface BaseEventType {

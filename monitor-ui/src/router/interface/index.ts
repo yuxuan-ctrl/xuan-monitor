@@ -4,6 +4,7 @@ export interface MetaProps {
   requiresAuth?: boolean;
   title: string;
   key?: string;
+  notShow?:boolean;
 }
 
 export interface RouteObject {

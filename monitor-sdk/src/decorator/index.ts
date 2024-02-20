@@ -93,11 +93,11 @@ export class EventManager {
       dbVersion: 1,
       storeName: DB_CONFIG.ACTION_STORE_NAME,
     });
-    this.manageEventListener('add', this.__proto__, root);
+    this.manageEventListener('add', Object.getPrototypeOf(this), root);
   }
 
   public stop(root?: Element): void {
-    this.manageEventListener('remove', this.__proto__, root);
+    this.manageEventListener('remove', Object.getPrototypeOf(this), root);
   }
 }
 

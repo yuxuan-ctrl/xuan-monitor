@@ -1,0 +1,69 @@
+// 定义全局颜色和字体
+@primary-color: #ffffff;
+@font-size-base: 14px;
+
+.analysisList-container {
+  padding: 24px;
+  background-color: #f5f7fa;
+
+  .ant-table {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    
+    th,
+    td {
+      padding: 16px 24px;
+      border-bottom: 1px solid #e9e9e9;
+      text-align: left;
+      font-size: @font-size-base;
+      color: rgba(0, 0, 0, 0.85);
+
+      &.errorType,
+      &.timestamp {
+        width: 20%;
+      }
+      
+      &.url,
+      &.appId,
+      &.userId {
+        width: 15%;
+      }
+    }
+
+    thead tr th {
+      background-color: #fff;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+      position: relative;
+
+      &::before {
+        content: "";
+        display: block;
+        height: 2px;
+        background-color: @primary-color;
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+      }
+    }
+    
+    tbody tr:hover {
+      background-color: #ebf5ff;
+    }
+  }
+
+  .ant-pagination {
+    margin-top: 24px;
+    text-align: right;
+
+    .ant-pagination-item {
+      border-color: #e9e9e9;
+      &.ant-pagination-item-active {
+        border-color: @primary-color;
+        background-color: @primary-color;
+        color: #fff;
+      }
+    }
+  }
+}

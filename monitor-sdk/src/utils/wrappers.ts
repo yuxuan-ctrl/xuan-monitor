@@ -1,4 +1,5 @@
 import { debounce } from './debounce';
+import HttpError from '../model/HttpError';
 
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
@@ -129,6 +130,10 @@ function wrapHistory(history, callback) {
 }
 
 function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
+  let method = null;
+  let requestUrl = null;
+  let data = null;
+
   function wrappedXMLHttpRequest() {
     const originalRequest = new OriginalXMLHttpRequest();
     console.log(
@@ -140,6 +145,8 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     const originalOpen = originalRequest.open;
     originalRequest.open = function (...args) {
       try {
+        method = args[0];
+        requestUrl = args[1];
         originalOpen.apply(this, args);
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
@@ -152,12 +159,14 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     originalRequest.onreadystatechange = function () {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
         if (originalRequest.status >= 400) {
-          const error = new Error(
-            `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`
+          const error = new HttpError(
+            originalRequest.status,
+            method,
+            requestUrl,
+            data,
+            `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`,
+            originalRequest
           );
-          console.log('🚀 ~ wrappedXMLHttpRequest ~ error:', error);
-          error.name = 'XHR ERROR';
-          error.cause = originalRequest;
           callback(error); // 调用回调函数，将错误传递给上层处理
         }
 
@@ -172,6 +181,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     const originalSend = originalRequest.send;
     originalRequest.send = function (...args) {
       try {
+        data = args[0];
         originalSend.apply(this, args);
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
@@ -180,6 +190,9 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       }
     };
 
+    method = null;
+    requestUrl = null;
+    data = null;
     return originalRequest;
   }
 

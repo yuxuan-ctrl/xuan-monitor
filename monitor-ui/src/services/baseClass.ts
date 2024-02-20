@@ -36,6 +36,32 @@ export class ErrorInfoDto {
   userId = '';
 }
 
+export class Errors {
+  /** appId */
+  appId = '';
+
+  /** createTime */
+  createTime = '';
+
+  /** errorMessage */
+  errorMessage = '';
+
+  /** errorType */
+  errorType = '';
+
+  /** esErrorId */
+  esErrorId = '';
+
+  /** timestamp */
+  timestamp = new Timestamp();
+
+  /** url */
+  url = '';
+
+  /** userId */
+  userId = '';
+}
+
 export class EventsDTO {
   /** actionList */
   actionList = [];
@@ -103,7 +129,7 @@ export class Result {
   code = undefined;
 
   /** data */
-  data = new IPage();
+  data = new ErrorInfoDto();
 
   /** msg */
   msg = '';

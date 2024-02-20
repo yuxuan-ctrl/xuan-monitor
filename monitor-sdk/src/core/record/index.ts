@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-04 09:07:38
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-04 17:55:29
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 11:19:26
  * @FilePath: \monitor-sdk\src\core\record\index.ts
  * @Description:
  *
@@ -10,7 +10,7 @@
  */
 import * as rrweb from 'rrweb';
 import rrwebPlayer, { RRwebPlayerOptions } from 'rrweb-player';
-import 'rrweb-player/dist/style.css';
+// import 'rrweb-player/dist/style.css';
 import MessageQueueDBWrapper, { IMessage } from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 import { normalizeUrlForPath } from '../../utils';

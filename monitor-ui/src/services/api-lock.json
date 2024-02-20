@@ -6,7 +6,49 @@
         "name": "errors",
         "interfaces": [
           {
-            "description": "监控信息上传测试",
+            "description": "错误详情获取",
+            "name": "getDetails",
+            "method": "get",
+            "path": "/errors/getDetails",
+            "response": {
+              "typeArgs": [
+                {
+                  "typeArgs": [],
+                  "typeName": "ErrorInfoDto",
+                  "isDefsType": true,
+                  "templateIndex": -1,
+                  "compileTemplateKeyword": "#/definitions/",
+                  "enum": [],
+                  "typeProperties": []
+                }
+              ],
+              "typeName": "Result",
+              "isDefsType": true,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "parameters": [
+              {
+                "description": "id",
+                "required": true,
+                "in": "query",
+                "name": "id",
+                "dataType": {
+                  "typeArgs": [],
+                  "typeName": "string",
+                  "isDefsType": false,
+                  "templateIndex": -1,
+                  "compileTemplateKeyword": "#/definitions/",
+                  "enum": [],
+                  "typeProperties": []
+                }
+              }
+            ]
+          },
+          {
+            "description": "错误列表获取",
             "name": "getPageData",
             "method": "get",
             "path": "/errors/getPageData",
@@ -16,7 +58,7 @@
                   "typeArgs": [
                     {
                       "typeArgs": [],
-                      "typeName": "ErrorInfoDto",
+                      "typeName": "Errors",
                       "isDefsType": true,
                       "templateIndex": -1,
                       "compileTemplateKeyword": "#/definitions/",
@@ -24,7 +66,7 @@
                       "typeProperties": []
                     }
                   ],
-                  "typeName": "PageResult",
+                  "typeName": "IPage",
                   "isDefsType": true,
                   "templateIndex": -1,
                   "compileTemplateKeyword": "#/definitions/",
@@ -874,6 +916,116 @@
         ]
       },
       {
+        "name": "Errors",
+        "templateArgs": [],
+        "properties": [
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "string",
+              "isDefsType": false,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "appId",
+            "required": false
+          },
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "string",
+              "isDefsType": false,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "createTime",
+            "required": false
+          },
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "string",
+              "isDefsType": false,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "errorMessage",
+            "required": false
+          },
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "string",
+              "isDefsType": false,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "errorType",
+            "required": false
+          },
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "string",
+              "isDefsType": false,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "esErrorId",
+            "required": false
+          },
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "Timestamp",
+              "isDefsType": true,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "timestamp",
+            "required": false
+          },
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "string",
+              "isDefsType": false,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "url",
+            "required": false
+          },
+          {
+            "dataType": {
+              "typeArgs": [],
+              "typeName": "string",
+              "isDefsType": false,
+              "templateIndex": -1,
+              "compileTemplateKeyword": "#/definitions/",
+              "enum": [],
+              "typeProperties": []
+            },
+            "name": "userId",
+            "required": false
+          }
+        ]
+      },
+      {
         "name": "EventsDTO",
         "templateArgs": [],
         "properties": [
@@ -979,7 +1131,7 @@
         "templateArgs": [
           {
             "typeArgs": [],
-            "typeName": "Users",
+            "typeName": "Errors",
             "isDefsType": true,
             "templateIndex": -1,
             "compileTemplateKeyword": "#/definitions/",
@@ -1019,7 +1171,7 @@
               "typeArgs": [
                 {
                   "typeArgs": [],
-                  "typeName": "Users",
+                  "typeName": "Errors",
                   "isDefsType": true,
                   "templateIndex": -1,
                   "compileTemplateKeyword": "#/definitions/",
@@ -1070,7 +1222,7 @@
         "templateArgs": [
           {
             "typeArgs": [],
-            "typeName": "ErrorInfoDto",
+            "typeName": "Users",
             "isDefsType": true,
             "templateIndex": -1,
             "compileTemplateKeyword": "#/definitions/",
@@ -1110,7 +1262,7 @@
               "typeArgs": [
                 {
                   "typeArgs": [],
-                  "typeName": "ErrorInfoDto",
+                  "typeName": "Users",
                   "isDefsType": true,
                   "templateIndex": -1,
                   "compileTemplateKeyword": "#/definitions/",
@@ -1205,18 +1357,8 @@
         "name": "Result",
         "templateArgs": [
           {
-            "typeArgs": [
-              {
-                "typeArgs": [],
-                "typeName": "Users",
-                "isDefsType": true,
-                "templateIndex": -1,
-                "compileTemplateKeyword": "#/definitions/",
-                "enum": [],
-                "typeProperties": []
-              }
-            ],
-            "typeName": "IPage",
+            "typeArgs": [],
+            "typeName": "ErrorInfoDto",
             "isDefsType": true,
             "templateIndex": -1,
             "compileTemplateKeyword": "#/definitions/",
@@ -1240,18 +1382,8 @@
           },
           {
             "dataType": {
-              "typeArgs": [
-                {
-                  "typeArgs": [],
-                  "typeName": "Users",
-                  "isDefsType": true,
-                  "templateIndex": -1,
-                  "compileTemplateKeyword": "#/definitions/",
-                  "enum": [],
-                  "typeProperties": []
-                }
-              ],
-              "typeName": "IPage",
+              "typeArgs": [],
+              "typeName": "ErrorInfoDto",
               "isDefsType": true,
               "templateIndex": -1,
               "compileTemplateKeyword": "#/definitions/",

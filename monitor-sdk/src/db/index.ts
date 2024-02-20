@@ -47,6 +47,7 @@ export default class IndexedDBWrapper {
                   objectStore.createIndex('timestamp', 'timestamp', {
                     unique: false,
                   });
+                  
                 }
               });
             };

@@ -1,9 +1,9 @@
 /*
  * @Author: yuxuanli
  * @Date: 2023-07-17 08:48:41
- * @LastEditors: yuxuanli
- * @LastEditTime: 2023-07-18 17:13:43
- * @FilePath: \xuanui\scripts\rollup.config.base.js
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 14:03:33
+ * @FilePath: \monitor-sdk\scripts\rollup.base.js
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
@@ -30,7 +30,7 @@ export default [
     input,
     output: [
       {
-        dir: `dist/${pkgName}.js`,
+        dir: `dist/`,
         format: "es",
         name: pkgName,
       },
@@ -77,9 +77,9 @@ export default [
   {
     input,
     output: [
-      { file: `dist/${pkgName}.d.cts` },
-      { file: `dist/${pkgName}.d.mts` },
-      { file: `dist/${pkgName}.d.ts` }, // for node10 compatibility
+      { file: `dist/index.d.cts` },
+      { file: `dist/index.d.mts` },
+      { file: `dist/index.d.ts` }, // for node10 compatibility
     ],
     plugins: [pluginDts],
   },

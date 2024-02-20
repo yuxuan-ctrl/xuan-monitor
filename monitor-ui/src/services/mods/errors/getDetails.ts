@@ -1,28 +1,26 @@
 /**
- * @desc 错误列表获取
+ * @desc 错误详情获取
  */
 
 import * as defs from '../../baseClass';
 import { request as requestMethod } from '@/axios';
 export interface Params {
-  /** pageIndex */
-  pageIndex: number;
-  /** pageSize */
-  pageSize: number;
+  /** id */
+  id: string;
 }
 
 export const init = new defs.Result();
-export const path = '/errors/getPageData';
+export const path = '/errors/getDetails';
 const getParams = function (params, options?) {
   return true
     ? {
-        url: `/errors/getPageData`,
+        url: `/errors/getDetails`,
         method: 'GET',
         params: params || {},
         ...options,
       }
     : {
-        url: `/errors/getPageData`,
+        url: `/errors/getDetails`,
         method: 'GET',
         data: params || {},
         ...options,

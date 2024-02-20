@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-01-31 17:54:23
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-05 09:27:19
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-20 11:23:42
  * @FilePath: \monitor-sdk\src\core\interaction\input.ts
  * @Description:
  *
@@ -41,9 +41,10 @@ export default class InputTracker extends EventManager {
       console.dirxml('🚀 ~ InputTracker ~ handler ~ data.input:', input);
 
       let data = {
-        // target: JSON.stringify(input),
+        target: JSON.stringify(input),
         value: v,
         type: this.type,
+        
       };
 
       console.log('🚀 ~ ClickTracker ~ handler ~ data:', data);

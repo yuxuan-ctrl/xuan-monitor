@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-07 13:49:08
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-21 09:42:00
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -11,8 +11,8 @@
 import PageViewTracker from './PageViewTracker';
 import UvTracker from './UserViewTracker';
 import ErrorTracker from './ErrorTracker';
-import MessageQueueDBWrapper, { IMessage } from './Message';
-import { UVData, MonitorConfig } from '../types';
+import MessageQueueDBWrapper from './Message';
+import { UVData, MonitorConfig,AnalysisData, IMessage } from '../types';
 import { DB_CONFIG } from '../config/dbconfig';
 import {
   wrapHistory,
@@ -31,7 +31,7 @@ export default class Monitor extends EventManager {
   public uvTracker: UvTracker;
   public errorTracker: ErrorTracker;
   public uvData: UVData;
-  public pvData: IMessage;
+  public pvData: AnalysisData;
   public stayDuration: number;
   public originalPushState: (
     data: any,
@@ -85,7 +85,6 @@ export default class Monitor extends EventManager {
 
   @Listener(['load', 'pageshow'])
   public async onLoad(event: Event) {
-    console.log(event);
     this.uvData = await this.uvTracker.trackUv();
     await this.pvTracker.trackPageView('load', event);
   }
@@ -98,7 +97,6 @@ export default class Monitor extends EventManager {
 
   @Listener('visibilitychange')
   public onVisablechange(event: BeforeUnloadEvent) {
-    console.log(event);
     if (document.visibilityState === 'hidden') {
       this.pvTracker.calculateDuration();
     } else {
@@ -108,8 +106,6 @@ export default class Monitor extends EventManager {
 
   @Listener('error')
   public async onError(error: Error) {
-    console.log(error);
-    console.log(this);
     this.reportError(error);
   }
 
@@ -119,8 +115,6 @@ export default class Monitor extends EventManager {
     promise: Promise<any>;
     reason: Error;
   }) {
-    console.log(error);
-    console.log(this);
     // this.reportError(error.reason);
   }
 
@@ -169,11 +163,11 @@ export default class Monitor extends EventManager {
     });
   }
 
-  private async onPageChange(method: string, ...args: any[]) {
+  private async onPageChange(method: string, ...args: any[]) {    
     await this.pvTracker.calculateDuration();
     await this.pvTracker.trackPageView(method, ...args);
     if (this.pvData?.pageUrl) {
-      const message: IMessage = {
+      const message: AnalysisData = {
         ...this.pvData,
         ...this.uvData,
         ...this.baseInfo,
@@ -192,7 +186,6 @@ export default class Monitor extends EventManager {
 
   public async reportError(error: Error) {
     const errorInfo = await this.errorTracker.collectError(error);
-    console.log('🚀 ~ Monitor ~ reportError ~ errorInfo:', errorInfo);
     this.report.fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
       ...errorInfo,
       ...this.baseInfo,
@@ -202,6 +195,7 @@ export default class Monitor extends EventManager {
   public async updateDurationMessage() {
     console.log(this.stayDuration);
     const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
+    console.log("🚀 ~ Monitor ~ updateDurationMessage ~ latestPv:", latestPv)
     const { data } = latestPv;
     const newData = {
       ...latestPv,
@@ -231,7 +225,6 @@ export default class Monitor extends EventManager {
         return undefined;
       }
     } catch (error) {
-      console.error('Error getting last data ID:', error);
       return undefined;
     }
   }

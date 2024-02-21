@@ -1,4 +1,4 @@
-import { IMessage } from '../core/Message';
+import { IMessage } from '../types';
 
 interface IIndexedDBConfig {
   dbName?: string;
@@ -217,7 +217,7 @@ export default class IndexedDBWrapper {
       let cursorRequest: IDBRequest;
 
       if (order && limit) {
-        const index = objectStore.index(order.field);
+        const index = objectStore.index(order.field as string);
         cursorRequest = index.openCursor(
           null,
           order.direction === 'desc' ? 'prev' : 'next'

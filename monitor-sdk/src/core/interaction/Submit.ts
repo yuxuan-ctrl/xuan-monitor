@@ -10,7 +10,7 @@
  */
 import { Listener, EventManager } from '../../decorator';
 import { getTime, target } from '../../utils';
-import MessageQueueDBWrapper, { IMessage } from '../Message';
+import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 export let data = null;
 

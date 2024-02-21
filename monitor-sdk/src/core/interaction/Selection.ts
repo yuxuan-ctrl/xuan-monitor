@@ -9,7 +9,7 @@
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 import { Listener, EventManager } from '../../decorator';
-import MessageQueueDBWrapper, { IMessage } from '../Message';
+import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 
 export let data = null;
@@ -27,10 +27,8 @@ export default class SelectTracker extends EventManager {
 
   @Listener('selectionchange')
   handler(root) {
-    console.log('🚀 ~ ResizeTracker ~ handler ~ root:', root);
     let doc = document;
     let current = doc.getSelection();
-    console.log('🚀 ~ ResizeTracker ~ handler ~ current:', current);
 
     // Bail out if we don't have a valid selection
     if (current === null) {

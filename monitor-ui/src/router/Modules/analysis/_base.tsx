@@ -31,19 +31,7 @@ const analysisRouter: Array<RouteObject> = [
           key: "dataAnalysis",
           icon: "",
         },
-      },
-      {
-        path: "/errors/list",
-        element: lazyLoad(
-          React.lazy(() => import("@/pages/errors/list"))
-        ),
-        meta: {
-          requiresAuth: true,
-          title: "错误列表",
-          key: "errorsList",
-          icon: "",
-        },
-      },
+      }
     ],
   },
 ];

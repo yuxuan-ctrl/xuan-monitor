@@ -1,5 +1,5 @@
 import { normalizeUrlForPath, formatDate } from '../utils';
-import MessageQueueDBWrapper, { IMessage } from './Message';
+import MessageQueueDBWrapper from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
 import HttpError from '../model/HttpError';
 interface ErrorInfo {
@@ -89,9 +89,7 @@ export default class ErrorTracker {
       const startTime = new Date().getTime() - 120000;
       const endTime = new Date().getTime() + 300000;
       errorInfo.record = await this.getRange(startTime, endTime);
-      console.log(errorInfo.record);
     } catch (screenshotError) {
-      console.error('Error capturing screenshot:', screenshotError);
     }
 
     return errorInfo as ErrorInfo; // 如果ErrorInfo是一个接口或类型，请确保它包含了所有可能的属性

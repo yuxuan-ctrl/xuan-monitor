@@ -1,0 +1,9 @@
+{
+  "outDir": "./pontx",
+  "origins": [
+    {
+      "name": "Monitor",
+      "url": "http://localhost:5200/v3/api-docs"
+    }
+  ]
+}

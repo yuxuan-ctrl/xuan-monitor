@@ -2,29 +2,14 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-20 09:41:06
+ * @LastEditTime: 2024-02-21 14:24:42
  * @FilePath: \monitor-sdk\src\core\Message.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
+import { IMessage } from '../types';
 import IndexedDBWrapper from '../db/index';
-
-export interface IMessage {
-  data?: any;
-  timestamp?: any;
-  id?: number;
-  name?: string;
-  age?: number;
-  email?: string;
-  status?: 'pending' | 'consumed';
-  userId?: string;
-  pageUrl?: string;
-  userAgent?: string;
-  platform?: string;
-  screenResolution?: any;
-  referrer?: string;
-}
 
 export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   // 实例
@@ -52,7 +37,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
 
   // 添加消息
   public async enqueue(data: any, storeName): Promise<void> {
-    const message: IMessage = {
+    const message:IMessage = {
       data,
       timestamp: Date.now(),
       status: 'pending',

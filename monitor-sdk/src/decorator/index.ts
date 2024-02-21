@@ -9,7 +9,7 @@
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 import { createUUid } from '../utils';
-import MessageQueueDBWrapper, { IMessage } from '../core/Message';
+import MessageQueueDBWrapper from '../core/Message';
 import { DB_CONFIG } from '../config/dbconfig';
 
 type EventConfig = string | string[];
@@ -29,12 +29,10 @@ export class EventManager {
     const methods = Object.getOwnPropertyNames(Class).filter(
       (methodName) => methodName !== 'constructor'
     );
-    console.log(this);
 
     methods.forEach((methodName) => {
       const method = Class[methodName].bind(this);
       const eventConfig = Reflect.getMetadata('eventConfig', Class, methodName);
-      console.log(eventConfig);
       if (eventConfig && typeof method === 'function') {
         if (Array.isArray(eventConfig)) {
           eventConfig.forEach((name) => {

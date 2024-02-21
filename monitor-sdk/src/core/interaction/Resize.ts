@@ -1,5 +1,5 @@
 import { Listener, EventManager } from '../../decorator';
-import MessageQueueDBWrapper, { IMessage } from '../Message';
+import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 
 let data = null;

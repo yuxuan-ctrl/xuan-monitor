@@ -2,8 +2,8 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-20 11:06:57
- * @FilePath: \monitor-sdk\src\types\index.ts
+ * @LastEditTime: 2024-02-21 14:29:01
+ * @FilePath: \monitor-sdk\src\types\index.d.ts
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
@@ -25,19 +25,6 @@ export interface BaseEventType {
   pageUrl: string;
   /**事件类型 */
   type: string;
-}
-
-export interface PerformanceType {
-  dnst: number;
-  tcpt: number;
-  wit: number;
-  domt: number;
-  lodt: number;
-  radt: number;
-  rdit: number;
-  uodt: number;
-  reqt: number;
-  andt: number;
 }
 
 export interface QueueEventType extends BaseEventType, AnyObject {}
@@ -73,3 +60,36 @@ export interface UVData {
     height: number;
   };
 }
+
+export interface IMessage {
+  id?: number;
+  data?: any;
+  timestamp?: any;
+  status?: 'pending' | 'consumed';
+  pageUrl?: string;
+}
+
+export interface AnalysisData{
+  name?: string;
+  age?: number;
+  email?: string;
+  userId?: string;
+  userAgent?: string;
+  platform?: string;
+  pageUrl?: string;
+  screenResolution?: any;
+  referrer?: string;
+  metrics?:object;
+  timestamp?: any;
+  slowResources?:Record<string, PerformanceResources[]>
+}
+ export interface PerformanceResources{
+    name: string;
+    startTime: number;
+    duration: number;
+    transferSize: number;
+    decodedBodySize: number;
+    responseStart: number;
+    responseEnd: number;
+    initiatorType: string;
+ }

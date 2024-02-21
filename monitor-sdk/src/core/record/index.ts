@@ -11,7 +11,7 @@
 import * as rrweb from 'rrweb';
 import rrwebPlayer, { RRwebPlayerOptions } from 'rrweb-player';
 // import 'rrweb-player/dist/style.css';
-import MessageQueueDBWrapper, { IMessage } from '../Message';
+import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 import { normalizeUrlForPath } from '../../utils';
 

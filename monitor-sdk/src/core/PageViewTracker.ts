@@ -1,7 +1,13 @@
-import { IMessage } from './Message';
+import { AnalysisData, IMessage } from '../types';
 import Monitor from './Monitor';
-import { normalizeUrlForPath, collectWebVitals } from '../utils';
+import { normalizeUrlForPath, collectWebVitals,collectSlowResources } from '../utils';
 
+interface metricType {
+  value: number;
+  rating: string;
+  navigationType: string;
+  name?: string;
+}
 /**
  * 页面浏览跟踪器类。
  */
@@ -14,7 +20,7 @@ export default class PageViewTracker {
   /**
    * 访问页面的映射表。
    */
-  private pageVisits = new Map<string, IMessage>();
+  private pageVisits = new Map<string, AnalysisData>();
 
   /**
    * 是否正在跟踪页面浏览。
@@ -107,9 +113,17 @@ export default class PageViewTracker {
    * @param pageId 页面 ID。
    */
   private async updatePageViewTime(pageId: string) {
-    // const { fcp, lcp } = await collectWebVitals();
-    console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ lcp:", lcp)
-    console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ fcp:", fcp)
+    const { fcp, lcp, ttfb, cls, fid } = await collectWebVitals(3000);
+    const slowResources  = await collectSlowResources(3000);
+    const metrics = {};
+    [fcp, lcp, ttfb, fid, cls].forEach((metric: metricType) => {
+      if (!metric) return;
+      metrics[metric.name] = {
+        value: metric.value,
+        rating: metric.rating,
+        navigationType: metric.navigationType,
+      };
+    });
     const now = performance.now();
     const lastVisitInfo = this.pageVisits.get(pageId);
 
@@ -125,7 +139,7 @@ export default class PageViewTracker {
         ? this.currentPageUrl
         : document.referrer;
 
-    const pvData: IMessage = {
+    const pvData: AnalysisData = {
       // title: document.title,
       pageUrl: normalizeUrlForPath(window.location.href),
       userAgent: navigator.userAgent,
@@ -135,8 +149,11 @@ export default class PageViewTracker {
         height: window.screen.height,
       },
       timestamp: now,
+      metrics,
+      slowResources,
       referrer,
     };
+    console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ pvData:", pvData)
     this.pageVisits.set(pageId, pvData);
     const result = this.calculateAndSendPVData(pvData);
     return result;

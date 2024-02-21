@@ -11,8 +11,6 @@
 // import {useState} from "react";
 import {Typography} from "antd";
 import "./index.less";
-import BarChart from "@/components/charts/barchart/_base";
-// import AnalysisList from "../../errors/list";
 const {Title} = Typography;
 const dataAnalysis = () => {
   return (

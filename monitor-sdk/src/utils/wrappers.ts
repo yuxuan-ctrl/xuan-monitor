@@ -18,7 +18,6 @@ function wrapFetch(originalFetch, callback) {
         })
         .catch((error) => {
           // 在这里收集错误信息，例如记录到日志或发送到服务器
-          console.error('Error in fetch:', error);
           callback(error); // 调用回调函数，将错误传递给上层处理
           throw error;
         });
@@ -36,7 +35,6 @@ function wrapSetTimeout(originalSetTimeout, callback) {
         handler.apply(this, args);
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
-        console.error('Error in setTimeout:', error);
         callback(error); // 调用回调函数，将错误传递给上层处理
         throw error;
       }
@@ -57,7 +55,6 @@ function wrapPromise(OriginalPromise, callback) {
             resolve(value);
           } catch (error) {
             // 在这里收集错误信息，例如记录到日志或发送到服务器
-            console.error('Error in Promise resolve:', error);
             callback(error); // 调用回调函数，将错误传递给上层处理
             // 如果你想让原始的错误继续传播，可以在这里重新抛出错误
             throw error;
@@ -69,7 +66,6 @@ function wrapPromise(OriginalPromise, callback) {
             reject(reason);
           } catch (error) {
             // 在这里收集错误信息，例如记录到日志或发送到服务器
-            console.error('Error in Promise reject:', error);
             callback(error); // 调用回调函数，将错误传递给上层处理
             throw error;
           }
@@ -136,10 +132,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
 
   function wrappedXMLHttpRequest() {
     const originalRequest = new OriginalXMLHttpRequest();
-    console.log(
-      '🚀 ~ file: wrappers.ts:134 ~ wrappedXMLHttpRequest ~ originalRequest:',
-      originalRequest
-    );
 
     // 包裹 open 方法
     const originalOpen = originalRequest.open;
@@ -185,7 +177,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         originalSend.apply(this, args);
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
-        console.error('Error in XMLHttpRequest.send:', error);
         callback(error); // 调用回调函数，将错误传递给上层处理
       }
     };

@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("public.daily_traffic_analytics") // 表名应为实际数据库中的表名，这里假设是'public.daily_traffic_analytics'
-public class DailyTrafficAnalytics {
+@TableName("public.metrics") // 表名应为实际数据库中的表名，这里假设是'public.metrics"'
+public class Metrics {
 
     @TableId(value = "id", type = IdType.AUTO)
     private String id; // 假设id字段类型为Long，由于是 SERIAL PRIMARY KEY，所以使用@Id和@TableId注解，并设置type=IdType.AUTO

@@ -6,8 +6,10 @@ import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
 import com.xuan.dao.model.EventList;
+import com.xuan.dao.pojo.dto.MetricsDTO;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -107,8 +109,7 @@ public interface ESDocumentService {
 
 
     <T> PageResult<T> queryByPage(String idxName, String dateFieldName, Class<T> tClass, int pageIndex, int pageSize) throws IOException;
-
-    <T> List<T> queryPastHours(String events, String timestamp, Class<T> eventListClass) throws IOException;
-
     void ensureIndexExists(String... indices) throws IOException;
+    <T> List<T> queryPastHours(String idxName, String dateFieldName, Class<T> tClass, MetricsDTO metricsDTO) throws IOException;
+
 }

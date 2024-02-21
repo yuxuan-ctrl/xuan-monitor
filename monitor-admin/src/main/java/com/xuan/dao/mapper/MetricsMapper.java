@@ -1,7 +1,7 @@
 package com.xuan.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.xuan.dao.pojo.entity.DailyTrafficAnalytics;
+import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-06-24
  */
 @Mapper
-public interface DailyTrafficAnalyticsMapper extends BaseMapper<DailyTrafficAnalytics> {
+public interface MetricsMapper extends BaseMapper<Metrics> {
 
 }

@@ -2,9 +2,9 @@ package com.xuan.task;
 
 import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xuan.dao.mapper.DailyTrafficAnalyticsMapper;
+import com.xuan.dao.mapper.MetricsMapper;
 import com.xuan.dao.model.EventList;
-import com.xuan.dao.pojo.entity.DailyTrafficAnalytics;
+import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.service.ESDocumentService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ public class TrafficAnalyticsAggregationTask {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private DailyTrafficAnalyticsMapper dailyTrafficAnalyticsMapper;
+    private MetricsMapper MetricsMapper;
 
 
     public void aggregateYesterdayData() throws IOException {
@@ -63,7 +63,7 @@ public class TrafficAnalyticsAggregationTask {
             System.out.println("mostVisitedPageInfo = " + mostVisitedPageInfo);
 
 //        // 聚合昨天的数据
-            DailyTrafficAnalytics dailyStats = DailyTrafficAnalytics.builder()
+            Metrics dailyStats = Metrics.builder()
                     .id(UUID.randomUUID().toString())
                     .mostVisitedPageViews(mostVisitedPageInfo.getValue())
                     .mostVisitedPageId(mostVisitedPageInfo.getKey())
@@ -75,7 +75,7 @@ public class TrafficAnalyticsAggregationTask {
                     .createTime(LocalDateTime.now())
                     .build();
 
-            dailyTrafficAnalyticsMapper.insert(dailyStats);
+            MetricsMapper.insert(dailyStats);
         }
     }
 

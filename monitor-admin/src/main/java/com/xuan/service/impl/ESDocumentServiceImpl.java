@@ -3,11 +3,15 @@ package com.xuan.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.util.ObjectBuilder;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
 import com.xuan.dao.model.ESDocument;
+import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.service.ESDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -267,26 +271,32 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         return new PageResult<T>(total, records,pageSize ,pageIndex);
     }
 
-    public <T> List<T> queryPastHours(String idxName, String dateFieldName, Class<T> tClass) throws IOException {
-        Instant now = Instant.now();
-        Instant pastTime = now.minus(hoursBack, ChronoUnit.HOURS);
-        SearchRequest request = new SearchRequest.Builder()
+    private <T> SearchRequest createSearchRequest(String idxName, String dateFieldName, Instant startTime, Instant endTime,String userId) {
+        BoolQuery.Builder boolBuilder = new BoolQuery.Builder;
+        boolBuilder.must(r -> r.range(r2 -> r2.field(dateFieldName).gte(JsonData.fromJson(String.valueOf(startTime.toEpochMilli()))).lte(JsonData.fromJson(String.valueOf(endTime.toEpochMilli())))));
+        if (userId != null && !userId.isEmpty()) { // 当 userId 非空时添加过滤条件
+            boolBuilder.filter(f -> f.term(builder -> builder
+                    .field("userId")
+                    .value(userId))); // 添加基于 userId 的过滤条件
+        }
+        return new SearchRequest.Builder()
                 .index(idxName)
-                .query(q -> q
-                        .range(r -> r
-                                .field(dateFieldName)
-                                .gte(JsonData.fromJson(String.valueOf(pastTime.toEpochMilli())))
-                                .lte(JsonData.fromJson(String.valueOf(now.toEpochMilli())))
-                        )
-                )
+                .query(q -> (ObjectBuilder<Query>) boolBuilder.build())
                 .build();
+    }
 
+    public <T> List<T> queryPastHours(String idxName, String dateFieldName, Class<T> tClass, MetricsDTO metricsDTO) throws IOException {
+        Instant startTime = metricsDTO.getStartTimeOrDefault(Instant.now().minus(hoursBack, ChronoUnit.HOURS));
+        Instant endTime = metricsDTO.getEndTimeOrDefault(Instant.now());
+
+        SearchRequest request = createSearchRequest(idxName, dateFieldName, startTime, endTime, metricsDTO.getUserId());
         SearchResponse<T> response = elasticsearchClient.search(request, tClass);
 
         return response.hits().hits().stream()
                 .map(hit -> hit.source())
                 .collect(Collectors.toList());
     }
+
 
     public void ensureIndexExists(String... indices) throws IOException {
         for (String index : indices) {

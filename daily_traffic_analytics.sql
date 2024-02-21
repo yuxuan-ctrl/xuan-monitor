@@ -1,42 +1,22 @@
-/*
- Navicat Premium Data Transfer
+CREATE TABLE daily_traffic_analytics (
+                                         id VARCHAR(255) PRIMARY KEY,
+                                         date DATE NOT NULL,
+                                         most_visited_page_id VARCHAR(255) NOT NULL,
+                                         most_visited_page_views BIGINT NOT NULL,
+                                         total_stay_duration DOUBLE PRECISION NOT NULL,
+                                         average_stay_duration DOUBLE PRECISION NOT NULL,
+                                         total_page_views BIGINT NOT NULL,
+                                         unique_visitors INTEGER NOT NULL,
+                                         create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
- Source Server         : localhost
- Source Server Type    : PostgreSQL
- Source Server Version : 160000
- Source Host           : localhost:5432
- Source Catalog        : monitor
- Source Schema         : public
-
- Target Server Type    : PostgreSQL
- Target Server Version : 160000
- File Encoding         : 65001
-
- Date: 17/02/2024 23:42:21
-*/
-
-
--- ----------------------------
--- Table structure for daily_traffic_analytics
--- ----------------------------
-DROP TABLE IF EXISTS "public"."daily_traffic_analytics";
-CREATE TABLE "public"."daily_traffic_analytics" (
-  "id" "pg_catalog"."varchar" COLLATE "pg_catalog"."default" NOT NULL,
-  "user_id" "pg_catalog"."varchar" COLLATE "pg_catalog"."default" NOT NULL,
-  "date" "pg_catalog"."date" NOT NULL,
-  "most_visited_page_id" "pg_catalog"."varchar" COLLATE "pg_catalog"."default",
-  "most_visited_page_views" "pg_catalog"."int8",
-  "total_stay_duration" "pg_catalog"."float8",
-  "average_stay_duration" "pg_catalog"."float8",
-  "total_page_views" "pg_catalog"."int8",
-  "unique_page_views" "pg_catalog"."int4",
-  "platform_distribution" "pg_catalog"."varchar" COLLATE "pg_catalog"."default",
-  "screen_resolution_distribution" "pg_catalog"."varchar" COLLATE "pg_catalog"."default",
-  "create_time" "pg_catalog"."timestamp" NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
-;
-
--- ----------------------------
--- Primary Key structure for table daily_traffic_analytics
--- ----------------------------
-ALTER TABLE "public"."daily_traffic_analytics" ADD CONSTRAINT "daily_traffic_analytics_pkey" PRIMARY KEY ("id");
+-- 为列添加注释
+COMMENT ON COLUMN daily_traffic_analytics.id IS 'Unique identifier, generated automatically';
+COMMENT ON COLUMN daily_traffic_analytics.date IS 'The date of the analytics data';
+COMMENT ON COLUMN daily_traffic_analytics.most_visited_page_id IS 'The ID of the page with the most visits on that day';
+COMMENT ON COLUMN daily_traffic_analytics.most_visited_page_views IS 'Number of views for the most visited page on that day';
+COMMENT ON COLUMN daily_traffic_analytics.total_stay_duration IS 'Total time spent by all users on the site';
+COMMENT ON COLUMN daily_traffic_analytics.average_stay_duration IS 'Average time spent per visit by each user';
+COMMENT ON COLUMN daily_traffic_analytics.total_page_views IS 'Total number of page views on that day';
+COMMENT ON COLUMN daily_traffic_analytics.unique_visitors IS 'Number of distinct visitors to the site on that day';
+COMMENT ON COLUMN daily_traffic_analytics.create_time IS 'Timestamp indicating when this record was created';

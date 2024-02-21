@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -42,19 +43,20 @@ public class TrafficAnalyticsAggregationTask {
         if(!eventList.isEmpty()){
             LocalDate date = LocalDate.ofInstant(eventList.get(eventList.size()-1).getTimestamp().toInstant(), ZoneId.systemDefault()).minusDays(1); // 假设timestamp是前一天的
 
-            Map<String, Long> platformDistribution = eventList.stream()
-                    .collect(Collectors.groupingBy(EventList::getPlatform, Collectors.counting()));
-
-            Map<String, Integer> screenResolutionDistribution = eventList.stream()
-                    .map(event -> event.getScreenResolution())
-                    .flatMap(resolution -> resolution.entrySet().stream())
-                    .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.summingInt(Map.Entry::getValue)));
+//            Map<String, Long> platformDistribution = eventList.stream()
+//                    .collect(Collectors.groupingBy(EventList::getPlatform, Collectors.counting()));
+//
+//            Map<String, Integer> screenResolutionDistribution = eventList.stream()
+//                    .map(event -> event.getScreenResolution())
+//                    .flatMap(resolution -> resolution.entrySet().stream())
+//                    .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.summingInt(Map.Entry::getValue)));
 
             long totalPageViews = eventList.size();
-            long uniquePageViews = eventList.stream().map(EventList::getUniqueKey).distinct().count();
+            Set<String> allUsers = eventList.stream().map(EventList::getUserId).collect(Collectors.toSet());
+            long uniqueVisitors = eventList.stream().map(EventList::getUserId).distinct().count();
 
             double totalStayDuration = eventList.stream().mapToDouble(EventList::getStayDuration).sum();
-            double averageStayDuration = totalStayDuration / Math.max(totalPageViews, 1);
+            double averageStayDuration = totalStayDuration / Math.max(allUsers.size(), 1);
 
             Map.Entry<String, Long> mostVisitedPageInfo = getMostVisitedPageInfo(eventList);
 
@@ -63,17 +65,14 @@ public class TrafficAnalyticsAggregationTask {
 //        // 聚合昨天的数据
             DailyTrafficAnalytics dailyStats = DailyTrafficAnalytics.builder()
                     .id(UUID.randomUUID().toString())
-                    .userId(eventList.get(0).getUserId())
                     .mostVisitedPageViews(mostVisitedPageInfo.getValue())
                     .mostVisitedPageId(mostVisitedPageInfo.getKey())
                     .averageStayDuration(averageStayDuration)
                     .date(date)
-                    .platformDistribution(objectMapper.writeValueAsString(platformDistribution))
                     .totalPageViews(totalPageViews)
                     .totalStayDuration(totalStayDuration)
-                    .uniquePageViews((int) uniquePageViews)
+                    .uniqueVisitors((int) uniqueVisitors)
                     .createTime(LocalDateTime.now())
-                    .screenResolutionDistribution(objectMapper.writeValueAsString(screenResolutionDistribution))
                     .build();
 
             dailyTrafficAnalyticsMapper.insert(dailyStats);

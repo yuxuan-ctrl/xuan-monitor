@@ -21,7 +21,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/errors")
-@Api(tags = "错误接口")
+@Api(value = "错误管理",tags = "ErrorsController")
 @Slf4j
 public class ErrorsController {
     @Autowired

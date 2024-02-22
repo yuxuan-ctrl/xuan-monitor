@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/monitor")
-@Api(tags = "监控接口")
+@Api(value = "监控上报",tags = "MonitorController")
 @Slf4j
 
 

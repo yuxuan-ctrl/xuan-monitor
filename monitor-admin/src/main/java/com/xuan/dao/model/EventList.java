@@ -1,12 +1,14 @@
 package com.xuan.dao.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xuan.dao.pojo.entity.Metrics;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -60,4 +62,9 @@ public class EventList {
     private double stayDuration;
 
     private Date createTime;
+
+    private Map<String, Object> metrics;
+
+    private Map<String, List<Map<String, Object>>> slowResources;
+
 }

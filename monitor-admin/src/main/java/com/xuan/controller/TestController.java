@@ -1,5 +1,6 @@
 package com.xuan.controller;
 
+import io.swagger.annotations.Api;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @RestController
+@Api(value = "测试接口",tags = "testController")
 public class TestController {
     @GetMapping("/redirectTo")
     void testRedirect(HttpServletResponse response) throws IOException {

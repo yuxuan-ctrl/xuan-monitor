@@ -43,3 +43,5 @@ build/
 /logs
 /auth-server
 .mocks/
+
+monitor-ui-1

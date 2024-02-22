@@ -19,7 +19,7 @@ import java.time.Instant;
 
 @RestController
 @RequestMapping("/Metrics")
-@Api(tags = "指标接口")
+@Api(value = "指标管理",tags = "EventsController")
 @Slf4j
 public class EventsController {
     @Autowired

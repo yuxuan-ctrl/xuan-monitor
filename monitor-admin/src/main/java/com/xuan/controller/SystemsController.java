@@ -1,6 +1,7 @@
 package com.xuan.controller;
 
 
+import io.swagger.annotations.Api;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/systems")
+@Api(value = "系统管理",tags = "SystemsController")
 public class SystemsController {
 
 }

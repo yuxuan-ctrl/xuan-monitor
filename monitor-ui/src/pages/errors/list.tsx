@@ -32,7 +32,7 @@ const AnalysisList = () => {
     },
     {
       title: "发生时间",
-      dataIndex: "timestamp",
+      dataIndex: "createTime",
     },
     {
       title: "发生页面",

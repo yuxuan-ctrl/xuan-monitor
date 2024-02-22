@@ -20,7 +20,6 @@ public class Errors {
     String url;
     String appId;
     String userId;
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
+    private String createTime;
 
 }

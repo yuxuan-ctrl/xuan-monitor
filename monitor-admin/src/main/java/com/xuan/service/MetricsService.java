@@ -8,6 +8,7 @@ import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Users;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -20,6 +21,6 @@ import java.util.List;
  */
 public interface MetricsService extends IService<Metrics> {
 
-    Metrics getMetrics(String userId,String startTime,String endTime) throws IOException;
+    Metrics getMetrics(String userId, Instant startTime, Instant endTime) throws IOException;
 
 }

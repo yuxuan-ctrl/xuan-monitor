@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
 import com.xuan.dao.model.EventList;
 import com.xuan.dao.pojo.dto.MetricsDTO;
+import com.xuan.dao.pojo.entity.Metrics;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -112,4 +113,5 @@ public interface ESDocumentService {
     void ensureIndexExists(String... indices) throws IOException;
     <T> List<T> queryPastHours(String idxName, String dateFieldName, Class<T> tClass, MetricsDTO metricsDTO) throws IOException;
 
+    Metrics aggregateData(String events, String timestamp, Class<EventList> eventListClass, MetricsDTO metricsDTO) throws IOException;
 }

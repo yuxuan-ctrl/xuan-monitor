@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/Metrics")
@@ -27,8 +28,8 @@ public class EventsController {
     @GetMapping("/getMetrics")
     @ApiOperation("指标获取")
     public Result<Metrics> getMetrics(@RequestParam(required = false,name = "userId",defaultValue = "") String userId,
-                                            @RequestParam(required = false,name = "startTime",defaultValue = "") String startTime,
-                                            @RequestParam(required = false,name = "endTime",defaultValue = "") String endTime) throws IOException {
+                                            @RequestParam(required = false,name = "startTime",defaultValue = "") Instant startTime,
+                                            @RequestParam(required = false,name = "endTime",defaultValue = "") Instant endTime) throws IOException {
         Metrics res = metricsService.getMetrics(userId,startTime,endTime);
         return Result.success(res);
     }

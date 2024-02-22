@@ -22,7 +22,7 @@ spring:
 xuan:
   task:
     # 定时任务入库时间
-    cron: "* * */10 * * *"
+    cron: "* * * * */10 *"
     hoursBack: 48
   jwt:
     # 设置jwt签名加密时使用的秘钥

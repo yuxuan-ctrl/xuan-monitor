@@ -20,4 +20,8 @@ public class MetricsDTO {
     public Instant getEndTimeOrDefault(Instant defaultValue) {
         return endTime != null ? endTime : defaultValue;
     }
+
+    public String getUserIdOrDefault() {
+        return userId != null ? userId : null;
+    }
 }

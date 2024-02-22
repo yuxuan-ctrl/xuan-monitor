@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 @Data
 @Builder
@@ -20,7 +22,7 @@ public class Metrics {
     private String id; // 假设id字段类型为Long，由于是 SERIAL PRIMARY KEY，所以使用@Id和@TableId注解，并设置type=IdType.AUTO
 
     @TableField("date")
-    private LocalDate date;
+    private String date;
 
     @TableField("most_visited_page_id")
     private String mostVisitedPageId;
@@ -41,6 +43,13 @@ public class Metrics {
     private Integer uniqueVisitors;
 
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
+    private String createTime;
+
+    @TableField("most_frequent_platform")
+    private String mostFrequentPlatform;
+
+    @TableField("most_frequent_screen_resolution")
+    private String mostFrequentScreenResolution;
+
 
 }

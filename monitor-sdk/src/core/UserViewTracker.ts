@@ -19,10 +19,14 @@ export default class UvTracker {
   public customKey?: string;
   public refreshIntervalId?: number;
   monitor: Monitor;
+  uniqueKey: string;
 
   constructor(customKey?: string, monitor?: Monitor) {
     this.customKey = customKey;
     this.monitor = monitor;
+    this.getUniqueKey().then((res) => {
+      this.uniqueKey = res;
+    });
   }
 
   /**
@@ -40,10 +44,7 @@ export default class UvTracker {
     const result = await fp.get();
 
     // 使用FingerprintJS生成的组件哈希作为唯一键
-    const uniqueKey = (result.components as any).reduce(
-      (acc, component) => acc + component.value,
-      ''
-    );
+    const uniqueKey = result.visitorId;
 
     return uniqueKey;
   }

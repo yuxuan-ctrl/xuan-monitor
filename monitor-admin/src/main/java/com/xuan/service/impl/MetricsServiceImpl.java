@@ -36,4 +36,6 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
          Metrics metrics= esDocumentService.aggregateData("events", "timestamp", EventList.class, new MetricsDTO(startTime, endTime, userId));
         return metrics;
     }
+
+
 }

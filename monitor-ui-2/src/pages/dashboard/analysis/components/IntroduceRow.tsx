@@ -48,7 +48,7 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: API
             日同比
             <span className={styles.trendText}>11%</span>
           </Trend> */}
-           <Area
+          <Area
             xField="x"
             yField="y"
             shapeField="smooth"
@@ -79,7 +79,7 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: API
           footer={<Field label="今日访问量" value={numeral(1234).format('0,0')} />}
           contentHeight={46}
         >
-            <Trend
+          <Trend
             flag="up"
             style={{
               marginRight: 16,
@@ -95,14 +95,14 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: API
         <ChartCard
           bordered={false}
           loading={loading}
-          title="页面浏览量"
+          title="总访问流量（PV）"
           action={
             <Tooltip title="指标说明">
               <InfoCircleOutlined />
             </Tooltip>
           }
           total={visitData.totalPageViews}
-          footer={<Field label="平均停留时间" value={visitData.averageStayDuration?.toFixed(2)} />}
+          footer={<Field label="今日访问流量" value={visitData.averageStayDuration?.toFixed(2)} />}
           contentHeight={46}
         >
           <Column

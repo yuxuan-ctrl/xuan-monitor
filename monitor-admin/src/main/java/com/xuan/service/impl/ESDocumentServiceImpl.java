@@ -3,11 +3,16 @@ package com.xuan.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.util.ObjectBuilder;
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.utils.CalculateUtil;
@@ -19,6 +24,8 @@ import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.service.ESDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jsqlparser.expression.TimeValue;
+import org.elasticsearch.client.RequestOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -272,7 +279,7 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         return new PageResult<T>(total, records,pageSize ,pageIndex);
     }
 
-    private <T> SearchRequest createSearchRequest(String idxName, String dateFieldName, Instant startTime, Instant endTime, String userId) {
+    private <T> SearchRequest createSearchRequest(String idxName, String dateFieldName, Instant startTime, Instant endTime, String userId,int size,String scrollId) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         if (startTime != null && endTime != null) {
@@ -295,7 +302,9 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         BoolQuery boolQuery = boolQueryBuilder.build();
         return new SearchRequest.Builder()
                 .index(idxName)
+                .size(size)
                 .query(boolQuery._toQuery())
+                .scroll(builder -> builder.time(scrollId))
                 .build();
 }
 
@@ -303,14 +312,44 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         Instant startTime = metricsDTO.getStartTimeOrDefault(Instant.now().minus(hoursBack, ChronoUnit.HOURS));
         Instant endTime = metricsDTO.getEndTimeOrDefault(Instant.now());
 
-        SearchRequest request = createSearchRequest(idxName, dateFieldName, startTime, endTime, metricsDTO.getUserIdOrDefault());
+        SearchRequest request = createSearchRequest(idxName, dateFieldName, startTime, endTime, metricsDTO.getUserIdOrDefault(),10,"5s");
+        System.out.println(request);
         SearchResponse<T> response = elasticsearchClient.search(request, tClass);
 
-        return response.hits().hits().stream()
+        List<T> allList = new ArrayList<>( response.hits().hits().stream()
                 .map(hit -> hit.source())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+
+        String scrollId = response.scrollId();
+        ScrollResponse<T> scrollResponse = null;
+        do {
+
+            String finalScrollId = scrollId;
+            scrollResponse = elasticsearchClient.scroll(s -> s.scrollId(finalScrollId).scroll(t -> t.time("5s")), tClass);
+            allList.addAll(scrollResponse.hits().hits().stream().map(hit->hit.source()).collect(Collectors.toList()));
+            scrollId =scrollResponse.scrollId();
+        }while (!scrollResponse.hits().hits().isEmpty());
+
+        String finalScrollId1 = scrollId;
+        ClearScrollRequest clearScrollRequest = ClearScrollRequest.of(builder -> builder.scrollId(String.valueOf(finalScrollId1)));
+        ClearScrollResponse clearResponse = elasticsearchClient.clearScroll(clearScrollRequest);
+
+        return allList;
     }
 
+    private <T> List<T> getResult(Class<T> target, List<T> result, SearchResponse search) {
+        List<Hit<HashMap>> hits = search.hits().hits();
+        Iterator<Hit<HashMap>> iterator = hits.iterator();
+        while (iterator.hasNext()) {
+            Hit<HashMap> decodeBeanHit = iterator.next();
+            Map<String, Object> docMap = decodeBeanHit.source();
+            docMap.put("id",decodeBeanHit.id());
+            String json = JSON.toJSONString(docMap);
+            T obj = JSON.parseObject(json, target);
+            result.add(obj);
+        }
+        return result;
+    }
     public Metrics aggregateData(String events, String timestamp, Class<EventList> eventListClass, MetricsDTO metricsDTO) throws IOException {
         List<EventList> eventList = this.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
         if(!eventList.isEmpty()){
@@ -321,6 +360,7 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         }
         return null;
     }
+
 
     public void ensureIndexExists(String... indices) throws IOException {
         for (String index : indices) {

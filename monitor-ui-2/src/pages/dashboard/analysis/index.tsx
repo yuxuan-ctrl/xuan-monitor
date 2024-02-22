@@ -11,7 +11,7 @@
 import { EllipsisOutlined } from '@ant-design/icons';
 import { GridContent } from '@ant-design/pro-components';
 import { useRequest } from '@umijs/max';
-import { Col, Dropdown, Row } from 'antd';
+import { Col, Dropdown, Row, Select, SelectProps } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type { RadioChangeEvent } from 'antd/es/radio';
 import type dayjs from 'dayjs';
@@ -104,14 +104,34 @@ const Analysis: FC<AnalysisProps> = () => {
   const handleTabChange = (key: string) => {
     setCurrentTabKey(key);
   };
+
+  //todo 下拉
+  const options: SelectProps['options'] = [];
+
+  for (let i = 10; i < 36; i++) {
+    options.push({
+      value: i.toString(36) + i,
+      label: i.toString(36) + i,
+    });
+  }
+  const handleChange = (value: string) => {
+    console.log(`selected ${value}`);
+  };
   // todo
   // const activeKey = currentTabKey || (data?.offlineData[0] && data?.offlineData[0].name) || '';
-  const activeKey ='';
+  const activeKey = '';
   return (
     <GridContent>
       <>
         <Suspense fallback={<PageLoading />}>
-          <IntroduceRow loading={loading} visitData={data ||{}} />
+          <Select
+            mode="tags"
+            style={{ width: '100%' }}
+            placeholder="Tags Mode"
+            onChange={handleChange}
+            options={options}
+          />
+          <IntroduceRow loading={loading} visitData={data || {}} />
         </Suspense>
 
         <Suspense fallback={null}>

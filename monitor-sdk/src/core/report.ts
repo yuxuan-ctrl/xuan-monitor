@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-20 17:47:31
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
@@ -36,7 +36,7 @@ export default class Report {
 
   constructor(config: MonitorConfig) {
     this.config = config;
-    this.timeInterval = config?.reportFrequency || 1800000;
+    this.timeInterval = config?.reportFrequency || 10000;
     this.dataRetentionHours = config?.dataRetentionHours || 1;
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
       dbName: 'monitorxq',

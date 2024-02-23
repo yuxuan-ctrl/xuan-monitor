@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.xuan.common.result.Result;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
+import com.xuan.dao.pojo.vo.MetricsVo;
 import com.xuan.service.MetricsService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 
 @RestController
@@ -27,10 +29,13 @@ public class EventsController {
 
     @GetMapping("/getMetrics")
     @ApiOperation("指标获取")
-    public Result<Metrics> getMetrics(@RequestParam(required = false,name = "userId",defaultValue = "") String userId,
-                                            @RequestParam(required = false,name = "startTime",defaultValue = "") Instant startTime,
-                                            @RequestParam(required = false,name = "endTime",defaultValue = "") Instant endTime) throws IOException {
-        Metrics res = metricsService.getMetrics(userId,startTime,endTime);
+    public Result<MetricsVo> getMetrics(@RequestParam(required = false,name = "userId",defaultValue = "") String userId,
+                                            @RequestParam(required = false,name = "hoursBack",defaultValue = "24") String hoursBack
+                                            ) throws IOException {
+        Instant endTime = Instant.now();
+        Duration duration = Duration.ofHours(Long.parseLong(hoursBack));
+        Instant startTime = endTime.minus(duration);
+        MetricsVo res = metricsService.getMetrics(userId,startTime,endTime);
         return Result.success(res);
     }
 }

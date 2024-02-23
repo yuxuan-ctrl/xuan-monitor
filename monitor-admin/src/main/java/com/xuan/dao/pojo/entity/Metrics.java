@@ -19,37 +19,40 @@ import java.util.Map;
 public class Metrics {
 
     @TableId(value = "id", type = IdType.AUTO)
-    private String id; // 假设id字段类型为Long，由于是 SERIAL PRIMARY KEY，所以使用@Id和@TableId注解，并设置type=IdType.AUTO
+    public String id; // 假设id字段类型为Long，由于是 SERIAL PRIMARY KEY，所以使用@Id和@TableId注解，并设置type=IdType.AUTO
 
     @TableField("date")
-    private String date;
+    public String date;
 
     @TableField("most_visited_page_id")
-    private String mostVisitedPageId;
+    public String mostVisitedPageId;
 
     @TableField("most_visited_page_views")
-    private Long mostVisitedPageViews;
+    public Long mostVisitedPageViews;
 
     @TableField("total_stay_duration")
-    private Double totalStayDuration; // 假设INTERVAL类型映射为String，具体映射方式请根据数据库驱动或框架调整
+    public Double totalStayDuration; // 假设INTERVAL类型映射为String，具体映射方式请根据数据库驱动或框架调整
 
     @TableField("average_stay_duration")
-    private Double averageStayDuration; // 同上
+    public Double averageStayDuration; // 同上
 
     @TableField("total_page_views")
-    private Long totalPageViews;
+    public Long totalPageViews;
 
     @TableField("unique_visitors")
-    private Integer uniqueVisitors;
+    public Integer uniqueVisitors;
+
+    @TableField("all_users_length")
+    public Long allUsersLength;
 
     @TableField(fill = FieldFill.INSERT)
-    private String createTime;
+    public String createTime;
 
     @TableField("most_frequent_platform")
-    private String mostFrequentPlatform;
+    public String mostFrequentPlatform;
 
     @TableField("most_frequent_screen_resolution")
-    private String mostFrequentScreenResolution;
+    public String mostFrequentScreenResolution;
 
 
 }

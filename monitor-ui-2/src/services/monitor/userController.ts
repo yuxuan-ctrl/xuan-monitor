@@ -2,21 +2,6 @@
 /* eslint-disable */
 import { request } from '@umijs/max';
 
-/** 手写分页查询用户列表 GET /user/getPageData */
-export async function getPageDataUsingGet1(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getPageDataUsingGET1Params,
-  options?: { [key: string]: any },
-) {
-  return request<API.ResultPageResultUsers>(`${process.env.DEV}/user/getPageData`, {
-    method: 'GET',
-    params: {
-      ...params,
-    },
-    ...(options || {}),
-  });
-}
-
 /** 用户通过Id查询 GET /user/getUserById */
 export async function getUserByIdUsingGet(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

@@ -4,8 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.xuan.common.exception.AccountNotFoundException;
-import com.xuan.common.exception.PasswordEditFailedException;
 import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.result.PageResult;
 import com.xuan.dao.mapper.UserMapper;
@@ -45,13 +43,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
         return userPage;
     }
 
-    @Override
-    public PageResult<Users> getPageData(PageUserDTO pageUserDto) {
-        Page<PageUserDTO> page = new Page<PageUserDTO>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
-        IPage<Users> userPage = userMapper.getPageData(page, pageUserDto);
-
-        return new PageResult<Users>(userPage.getTotal(), userPage.getRecords(), userPage.getSize(),userPage.getCurrent());
-    }
+//    @Override
+//    public PageResult<Users> getPageData(PageUserDTO pageUserDto) {
+//        Page<PageUserDTO> page = new Page<PageUserDTO>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
+//        IPage<Users> userPage = userMapper.getPageData(page, pageUserDto);
+//
+//        return new PageResult<Users>(userPage.getTotal(), userPage.getRecords(), userPage.getSize(),userPage.getCurrent());
+//    }
 
     @Override
     public List<Users> selectList() {
@@ -69,19 +67,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
         String password = userDto.getPassWord();
 
         //1、根据用户名查询数据库中的数据
-        Users users = userMapper.selectByUserName(userName);
+//        Users users = userMapper.selectByUserName(userName);
 
         //2、判斷是否有該用戶
-        if(users == null) {
-            throw new AccountNotFoundException("用戶不存在");
-        }
+//        if(users == null) {
+//            throw new AccountNotFoundException("用戶不存在");
+//        }
 
-        //3、判斷密碼是否正確
-        if(!users.getPassWord().equals(password) ){
-            throw new PasswordEditFailedException("密碼錯誤");
-        }
+//        //3、判斷密碼是否正確
+//        if(!users.getPassWord().equals(password) ){
+//            throw new PasswordEditFailedException("密碼錯誤");
+//        }
 
-        return users;
+//        return users;
+        return null;
     }
 
     private QueryWrapper getQueryMapper(PageUserDTO pageUserDto) {

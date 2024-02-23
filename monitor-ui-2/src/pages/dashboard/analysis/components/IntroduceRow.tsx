@@ -17,7 +17,7 @@ const topColResponsiveProps = {
     marginBottom: 24,
   },
 };
-const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: API.Metrics }) => {
+const IntroduceRow = ({ loading, visitData,hoursBack }: { loading: boolean; visitData: API.MetricsVo,hoursBack:string }) => {
   const { styles } = useStyles();
   return (
     <Row gutter={24}>
@@ -76,7 +76,7 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: API
             </Tooltip>
           }
           total={visitData.uniqueVisitors}
-          footer={<Field label="今日访问量" value={numeral(1234).format('0,0')} />}
+          footer={<Field label="今日UV" value={numeral(1234).format('0,0')} />}
           contentHeight={46}
         >
           <Trend
@@ -85,9 +85,9 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: API
               marginRight: 16,
             }}
           >
-            今日新增用户数
+            相对过去{+hoursBack/24}天新增用户
             {/* todo 今日新增用户数*/}
-            <span className={styles.trendText}>12</span>
+            <span className={styles.trendText}>{visitData.uniqueVisitorGrowthCount}</span>
           </Trend>
         </ChartCard>
       </Col>
@@ -105,15 +105,16 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: API
           footer={<Field label="今日访问流量" value={visitData.averageStayDuration?.toFixed(2)} />}
           contentHeight={46}
         >
-          <Column
-            xField="x"
-            yField="y"
-            padding={-20}
-            axis={false}
-            height={46}
-            data={visitData}
-            scale={{ x: { paddingInner: 0.4 } }}
-          />
+          <Trend
+            flag="up"
+            style={{
+              marginRight: 16,
+            }}
+          >
+            相对过去{+hoursBack/24}天新增流量
+            {/* todo 今日新增用户数*/}
+            <span className={styles.trendText}>{visitData.pageViewGrowthCount}</span>
+          </Trend>
         </ChartCard>
       </Col>
       <Col {...topColResponsiveProps}>

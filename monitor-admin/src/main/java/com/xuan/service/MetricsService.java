@@ -6,6 +6,7 @@ import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Users;
+import com.xuan.dao.pojo.vo.MetricsVo;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -21,6 +22,6 @@ import java.util.List;
  */
 public interface MetricsService extends IService<Metrics> {
 
-    Metrics getMetrics(String userId, Instant startTime, Instant endTime) throws IOException;
+    MetricsVo getMetrics(String userId, Instant startTime, Instant endTime) throws IOException;
 
 }

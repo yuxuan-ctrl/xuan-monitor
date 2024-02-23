@@ -1,61 +1,67 @@
 import { RRwebPlayerOptions } from 'rrweb-player';
 
-interface IIndexedDBConfig {
-    dbName?: string;
-    version?: number;
-    storeName?: string;
+/*
+ * @Author: yuxuan-ctrl
+ * @Date: 2023-12-05 14:03:01
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-21 14:29:01
+ * @FilePath: \monitor-sdk\src\types\index.d.ts
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
+interface MonitorConfig {
+  appId: string; // 系统ID
+  userId?: string; // 用户ID
+  baseUrl: string;
+  reportFrequency?: number; // 上报频率（单位：秒）
+  dataRetentionHours?: number;
 }
-interface IDBDatabaseInfo extends IDBDatabase {
-}
-declare class IndexedDBWrapper {
-    private config;
-    private db;
-    constructor(config?: IIndexedDBConfig);
-    openDatabase(storeNames: Array<string>): Promise<IDBDatabase>;
-    closeDatabase(): void;
-    protected ensureDatabaseOpen(): Promise<IDBDatabase>;
-    add(data: IMessage, storeName: string): Promise<number>;
-    get(id: number, storeName: string): Promise<IMessage | undefined>;
-    update(id: number, newData: IMessage, storeName: string): Promise<void>;
-    delete(id: number, storeName: string): Promise<void>;
-    getAll(storeName: string): Promise<IMessage[]>;
-    query(condition: (data: IMessage) => boolean, storeName: string, order?: {
-        field: keyof IMessage;
-        direction: 'asc' | 'desc';
-    }, limit?: number): Promise<IMessage[]>;
-    clear(storeName: string): Promise<void>;
-    getCount(storeName: string): Promise<number>;
-    getBaseInfo(): Promise<IDBDatabaseInfo>;
+
+interface UVData$1 {
+  uniqueKey: string;
+  timestamp: number;
+  userAgent?: string;
+  language?: string;
+  timeZoneOffset?: number;
+  screenResolution?: {
+    width: number;
+    height: number;
+  };
 }
 
 interface IMessage {
-    data?: any;
-    timestamp?: any;
-    id?: number;
-    name?: string;
-    age?: number;
-    email?: string;
-    status?: 'pending' | 'consumed';
-    userId?: string;
-    pageUrl?: string;
-    userAgent?: string;
-    platform?: string;
-    screenResolution?: any;
-    referrer?: string;
+  id?: number;
+  data?: any;
+  timestamp?: any;
+  status?: 'pending' | 'consumed';
+  pageUrl?: string;
 }
-declare class MessageQueueDBWrapper extends IndexedDBWrapper {
-    private static _instance;
-    private maxMessageCount;
-    constructor(config: any);
-    static getInstance(config: {
-        dbName: string;
-        dbVersion: number;
-        storeName: string;
-    }): MessageQueueDBWrapper;
-    enqueue(data: any, storeName: any): Promise<void>;
-    dequeue(storeName: any): Promise<IMessage[] | undefined>;
-    batchDeleteBeforeDate(storeNameList: string[], hoursAgo: number): Promise<void>;
+
+interface AnalysisData{
+  name?: string;
+  age?: number;
+  email?: string;
+  userId?: string;
+  userAgent?: string;
+  platform?: string;
+  pageUrl?: string;
+  screenResolution?: any;
+  referrer?: string;
+  metrics?:object;
+  timestamp?: any;
+  slowResources?:Record<string, PerformanceResources[]>
 }
+ interface PerformanceResources{
+    name: string;
+    startTime: number;
+    duration: number;
+    transferSize: number;
+    decodedBodySize: number;
+    responseStart: number;
+    responseEnd: number;
+    initiatorType: string;
+ }
 
 /**
  * 页面浏览跟踪器类。
@@ -132,7 +138,7 @@ declare class PageViewTracker {
     triggerCustomEvent(eventName: string, eventData: any): void;
 }
 
-interface UVData$1 {
+interface UVData {
     uniqueKey: string;
     timestamp: number;
     userAgent?: string;
@@ -144,10 +150,11 @@ interface UVData$1 {
     };
 }
 declare class UvTracker {
-    uvData: UVData$1 | null;
+    uvData: UVData | null;
     customKey?: string;
     refreshIntervalId?: number;
     monitor: Monitor;
+    uniqueKey: string;
     constructor(customKey?: string, monitor?: Monitor);
     /**
      * 获取或生成唯一的用户标识符（unique key）。
@@ -160,13 +167,13 @@ declare class UvTracker {
      *
      * @returns 返回包含附加用户信息的对象。
      */
-    collectUserInfo(): Partial<UVData$1>;
+    collectUserInfo(): Partial<UVData>;
     /**
      * 记录UV数据。
      *
      * @param customKey 可选的自定义唯一键。
      */
-    trackUv(customKey?: string): Promise<UVData$1>;
+    trackUv(customKey?: string): Promise<UVData>;
     /**
      * 初始化定期刷新UV数据的定时器。
      */
@@ -177,6 +184,74 @@ declare class UvTracker {
     stopRefreshInterval(): void;
 }
 
+interface IIndexedDBConfig {
+    dbName?: string;
+    version?: number;
+    storeName?: string;
+}
+interface IDBDatabaseInfo extends IDBDatabase {
+}
+declare class IndexedDBWrapper {
+    private config;
+    private db;
+    constructor(config?: IIndexedDBConfig);
+    openDatabase(storeNames: Array<string>): Promise<IDBDatabase>;
+    closeDatabase(): void;
+    protected ensureDatabaseOpen(): Promise<IDBDatabase>;
+    add(data: IMessage, storeName: string): Promise<number>;
+    get(id: number, storeName: string): Promise<IMessage | undefined>;
+    update(id: number, newData: IMessage, storeName: string): Promise<void>;
+    delete(id: number, storeName: string): Promise<void>;
+    getAll(storeName: string): Promise<IMessage[]>;
+    query(condition: (data: IMessage) => boolean, storeName: string, order?: {
+        field: keyof IMessage;
+        direction: 'asc' | 'desc';
+    }, limit?: number): Promise<IMessage[]>;
+    clear(storeName: string): Promise<void>;
+    getCount(storeName: string): Promise<number>;
+    getBaseInfo(): Promise<IDBDatabaseInfo>;
+}
+
+declare class MessageQueueDBWrapper extends IndexedDBWrapper {
+    private static _instance;
+    private maxMessageCount;
+    constructor(config: any);
+    static getInstance(config: {
+        dbName: string;
+        dbVersion: number;
+        storeName: string;
+    }): MessageQueueDBWrapper;
+    enqueue(data: any, storeName: any): Promise<void>;
+    dequeue(storeName: any): Promise<IMessage[] | undefined>;
+    batchDeleteBeforeDate(storeNameList: string[], hoursAgo: number): Promise<void>;
+}
+
+declare class HttpError extends Error {
+    status: number;
+    responseText: string;
+    cause: XMLHttpRequest;
+    method: string;
+    requestUrl: string;
+    data: string;
+    constructor(status: number, method: string, requestUrl: string, data: string, message: string, xhr: XMLHttpRequest);
+}
+
+interface ErrorInfo {
+    errorType: string;
+    errorMessage: string;
+    stackTrace?: string;
+    cause?: string;
+    timestamp: string;
+    userAgent: string;
+    url: string;
+    operationSequence: any[];
+    logContext: any;
+    method?: string;
+    requestUrl?: string;
+    data?: any;
+    status?: number;
+    record?: any;
+}
 declare class ErrorTracker {
     operationSequence: any;
     logContext: any;
@@ -188,26 +263,8 @@ declare class ErrorTracker {
     setLogContext(context: any): void;
     clearLogContext(): void;
     getRange(startTime?: any, endTime?: any): Promise<string[]>;
-    collectError(error: Error | string): Promise<any>;
-}
-
-interface MonitorConfig {
-    appId: string;
-    userId?: string;
-    baseUrl: string;
-    reportFrequency?: number;
-    dataRetentionHours?: number;
-}
-interface UVData {
-    uniqueKey: string;
-    timestamp: number;
-    userAgent?: string;
-    language?: string;
-    timeZoneOffset?: number;
-    screenResolution?: {
-        width: number;
-        height: number;
-    };
+    collectError(error: Error | string | HttpError): Promise<ErrorInfo>;
+    private getCommonErrorInfo;
 }
 
 declare class EventManager {
@@ -260,8 +317,8 @@ declare class Monitor extends EventManager {
     pvTracker: PageViewTracker;
     uvTracker: UvTracker;
     errorTracker: ErrorTracker;
-    uvData: UVData;
-    pvData: IMessage;
+    uvData: UVData$1;
+    pvData: AnalysisData;
     stayDuration: number;
     originalPushState: (data: any, unused: string, url?: string | URL) => void;
     originalReplaceState: (data: any, unused: string, url?: string | URL) => void;

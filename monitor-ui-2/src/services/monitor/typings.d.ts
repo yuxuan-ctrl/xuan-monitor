@@ -29,8 +29,12 @@ declare namespace API {
     actionList?: Record<string, any>[];
     appId?: string;
     eventList?: Record<string, any>[];
+    location?: Location;
+    platform?: string;
     record?: string[];
     timestamp?: Timestamp;
+    userAgent?: string;
+    userId?: string;
   };
 
   type getDetailsUsingGETParams = {
@@ -41,17 +45,8 @@ declare namespace API {
   type getMetricsUsingGETParams = {
     /** userId */
     userId?: string;
-    /** startTime */
-    startTime?: string;
-    /** endTime */
-    endTime?: string;
-  };
-
-  type getPageDataUsingGET1Params = {
-    id?: number;
-    pageIndex?: number;
-    pageSize?: number;
-    userName?: string;
+    /** hoursBack */
+    hoursBack?: string;
   };
 
   type getPageDataUsingGETParams = {
@@ -89,7 +84,13 @@ declare namespace API {
     total?: number;
   };
 
-  type Metrics = {
+  type Location = {
+    latitude?: number;
+    longitude?: number;
+  };
+
+  type MetricsVo = {
+    allUsersLength?: number;
     averageStayDuration?: number;
     createTime?: string;
     date?: string;
@@ -98,16 +99,11 @@ declare namespace API {
     mostFrequentScreenResolution?: string;
     mostVisitedPageId?: string;
     mostVisitedPageViews?: number;
+    pageViewGrowthCount?: number;
     totalPageViews?: number;
     totalStayDuration?: number;
+    uniqueVisitorGrowthCount?: number;
     uniqueVisitors?: number;
-  };
-
-  type PageResultUsers = {
-    pageIndex?: number;
-    pageSize?: number;
-    records?: Users[];
-    total?: number;
   };
 
   type ReportVo = {
@@ -135,15 +131,9 @@ declare namespace API {
     msg?: string;
   };
 
-  type ResultMetrics = {
+  type ResultMetricsVo = {
     code?: number;
-    data?: Metrics;
-    msg?: string;
-  };
-
-  type ResultPageResultUsers = {
-    code?: number;
-    data?: PageResultUsers;
+    data?: MetricsVo;
     msg?: string;
   };
 
@@ -161,6 +151,9 @@ declare namespace API {
 
   type testreportUsingGETParams = {
     appId?: string;
+    'location.latitude'?: number;
+    'location.longitude'?: number;
+    platform?: string;
     record?: string[];
     'timestamp.date'?: number;
     'timestamp.day'?: number;
@@ -172,6 +165,8 @@ declare namespace API {
     'timestamp.time'?: number;
     'timestamp.timezoneOffset'?: number;
     'timestamp.year'?: number;
+    userAgent?: string;
+    userId?: string;
   };
 
   type Timestamp = {
@@ -192,14 +187,12 @@ declare namespace API {
 
   type Users = {
     createTime?: string;
-    id?: number;
-    isUse?: number;
-    level?: number;
-    passWord?: string;
-    systemIds?: string;
-    token?: string;
-    userName?: string;
-    usertoken?: string;
+    ipAddress?: string;
+    lastLoginTime?: string;
+    location?: string;
+    platform?: string;
+    userAgent?: string;
+    userId?: string;
   };
 
   type Webpvuv = {

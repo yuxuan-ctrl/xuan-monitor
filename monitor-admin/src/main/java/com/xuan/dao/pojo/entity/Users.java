@@ -2,11 +2,9 @@ package com.xuan.dao.pojo.entity;
 
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import io.swagger.annotations.ApiModel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
-import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -17,34 +15,23 @@ import java.util.Date;
  * @since 2023-06-05
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
-@ApiModel(value="Users", description="")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+//@ApiModel(value="Users", description="")
 public class Users extends Model<Users> {
 
-    private static final long serialVersionUID = 1L;
+     String userId;
+     LocalDateTime createTime; // 更名为create_time对应的字段
+     LocalDateTime lastLoginTime; // 对应last_login字段
 
-      private String userName;
+     String ipAddress;
+     String platform;
+     String userAgent;
 
-    private String passWord;
-
-    private String systemIds;
-
-    private Integer isUse;
-
-    private Integer level;
-
-    private String token;
-
-    private String usertoken;
-
-    private Date createTime;
-
-    private Integer id;
+    // 如果存储经纬度信息
+     String location;
 
 
-    @Override
-    public Serializable pkVal() {
-        return this.userName;
-    }
 
 }

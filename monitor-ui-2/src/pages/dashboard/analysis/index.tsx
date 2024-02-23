@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 15:35:31
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-22 17:08:22
+ * @LastEditTime: 2024-02-23 18:11:23
  * @FilePath: \monitor-ui-2\src\pages\dashboard\analysis\index.tsx
  * @Description:
  *
@@ -38,11 +38,18 @@ type SalesType = 'all' | 'online' | 'stores';
 const Analysis: FC<AnalysisProps> = () => {
   const { styles } = useStyles();
   const [salesType, setSalesType] = useState<SalesType>('all');
+  const [hoursBack, setHoursBack] = useState<string>('24');
   const [currentTabKey, setCurrentTabKey] = useState<string>('');
   const [rangePickerValue, setRangePickerValue] = useState<RangePickerValue>(
     getTimeDistance('year'),
   );
-  const { loading, data } = useRequest(api.eventsController.getMetricsUsingGet);
+  const { loading, data } = useRequest(
+    () => api.eventsController.getMetricsUsingGet({ hoursBack }), // 将 hoursBack 转为数字类型（如果API需要数字）
+    {
+      // 这里设置默认请求时使用的参数
+      refreshDeps: [hoursBack], // 当 hoursBack 改变时自动重新发起请求
+    },
+  );
   const selectDate = (type: TimeType) => {
     setRangePickerValue(getTimeDistance(type));
   };
@@ -108,14 +115,14 @@ const Analysis: FC<AnalysisProps> = () => {
   //todo 下拉
   const options: SelectProps['options'] = [];
 
-  for (let i = 10; i < 36; i++) {
+  for (let i = 1; i < 8; i++) {
     options.push({
-      value: i.toString(36) + i,
-      label: i.toString(36) + i,
+      value: i,
+      label: `过去${i}天`,
     });
   }
-  const handleChange = (value: string) => {
-    console.log(`selected ${value}`);
+  const handleChange = (value: number) => {
+    setHoursBack((value * 24).toString());
   };
   // todo
   // const activeKey = currentTabKey || (data?.offlineData[0] && data?.offlineData[0].name) || '';
@@ -125,13 +132,12 @@ const Analysis: FC<AnalysisProps> = () => {
       <>
         <Suspense fallback={<PageLoading />}>
           <Select
-            mode="tags"
-            style={{ width: '100%' }}
-            placeholder="Tags Mode"
+            style={{ width: '200px' ,marginBottom:'24px'}}
+            placeholder="请选择过去天数"
             onChange={handleChange}
             options={options}
           />
-          <IntroduceRow loading={loading} visitData={data || {}} />
+          <IntroduceRow loading={loading} visitData={data || {}} hoursBack={hoursBack} />
         </Suspense>
 
         <Suspense fallback={null}>

@@ -25,7 +25,7 @@ public interface UserService extends IService<Users> {
      *
      * @return
      */
-    PageResult<Users> getPageData(PageUserDTO pageUserDto);
+//    PageResult<Users> getPageData(PageUserDTO pageUserDto);
     List<Users> selectList();
     Users selectById(String id);
 

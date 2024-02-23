@@ -17,7 +17,7 @@ const ErrorDetails = () => {
   const {id} = useParams<{id: string}>();
   const [errorDetail, setErrorDetail] = useState<defs.ErrorInfoDto>({});
   useEffect(() => {
-    window.API.errors.getDetails.request({id}).then((res) => {
+    API.errors.getDetails.request({id}).then((res) => {
       setErrorDetail(res.data);
     });
   }, []);

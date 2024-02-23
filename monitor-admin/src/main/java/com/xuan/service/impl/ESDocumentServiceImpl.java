@@ -3,29 +3,26 @@ package com.xuan.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
-import co.elastic.clients.elasticsearch._types.SortOptions;
-import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
-import co.elastic.clients.json.JsonpMapper;
-import co.elastic.clients.util.ObjectBuilder;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.common.utils.DateFormatUtils;
+import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.model.ESDocument;
 import com.xuan.dao.model.EventList;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
+import com.xuan.dao.pojo.entity.Users;
 import com.xuan.service.ESDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.expression.TimeValue;
-import org.elasticsearch.client.RequestOptions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +40,8 @@ import java.util.stream.Collectors;
 public class ESDocumentServiceImpl implements ESDocumentService {
 
     //同步客户端
+    @Autowired
+    private CalculateUtil calculateUtil;
     private final ElasticsearchClient elasticsearchClient;
 
     // 异步客户端
@@ -51,7 +50,7 @@ public class ESDocumentServiceImpl implements ESDocumentService {
     @Value("${xuan.task.hoursBack:24}") // 默认值为24小时
     private int hoursBack;
 
-//    private final JsonpMapper mapper; // 假设注入了JsonpMapper实例
+
 
 
     @Override
@@ -337,23 +336,10 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         return allList;
     }
 
-    private <T> List<T> getResult(Class<T> target, List<T> result, SearchResponse search) {
-        List<Hit<HashMap>> hits = search.hits().hits();
-        Iterator<Hit<HashMap>> iterator = hits.iterator();
-        while (iterator.hasNext()) {
-            Hit<HashMap> decodeBeanHit = iterator.next();
-            Map<String, Object> docMap = decodeBeanHit.source();
-            docMap.put("id",decodeBeanHit.id());
-            String json = JSON.toJSONString(docMap);
-            T obj = JSON.parseObject(json, target);
-            result.add(obj);
-        }
-        return result;
-    }
     public Metrics aggregateData(String events, String timestamp, Class<EventList> eventListClass, MetricsDTO metricsDTO) throws IOException {
         List<EventList> eventList = this.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
         if(!eventList.isEmpty()){
-            Metrics metrics = CalculateUtil.calculateMetrics(eventList);
+            Metrics metrics = calculateUtil.calculateMetrics(eventList);
             LocalDate date = LocalDate.ofInstant(eventList.get(eventList.size()-1).getTimestamp().toInstant(), ZoneId.systemDefault()).minusDays(1); // 假设timestamp是前一天的
             metrics.setDate(DateFormatUtils.format(date.atStartOfDay()));
             return metrics;

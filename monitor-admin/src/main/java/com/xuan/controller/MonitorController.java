@@ -31,7 +31,7 @@ public class MonitorController {
         log.info("监控信息：{}",httpRequest);
         log.info("监控信息：{}",httpRequest.getHeader("Authorization"));
 
-        ReportVo reportVo = monitorService.recordMonitorInfo(eventsDto);
+        ReportVo reportVo = monitorService.recordMonitorInfo(eventsDto,httpRequest);
         return Result.success(reportVo);
     }
 

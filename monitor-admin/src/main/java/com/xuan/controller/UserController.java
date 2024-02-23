@@ -55,12 +55,12 @@ public class UserController {
         return userService.selectById(id);
     }
 
-    @GetMapping("/getPageData")
-    @ApiOperation("手写分页查询用户列表")
-    public Result<PageResult<Users>> getPageData(PageUserDTO pageUserDto){
-        PageResult<Users> pageResult  = userService.getPageData(pageUserDto);
-        return Result.success(pageResult);
-    }
+//    @GetMapping("/getPageData")
+//    @ApiOperation("手写分页查询用户列表")
+//    public Result<PageResult<Users>> getPageData(PageUserDTO pageUserDto){
+//        PageResult<Users> pageResult  = userService.getPageData(pageUserDto);
+//        return Result.success(pageResult);
+//    }
 
     @PostMapping("/login")
     @ApiOperation("用戶登录")

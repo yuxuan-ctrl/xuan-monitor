@@ -13,9 +13,11 @@ package com.xuan.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.EventsDTO;
+import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 /**
@@ -26,8 +28,8 @@ import java.io.IOException;
  * @author yuxuan-ctrl
  * @since 2023-06-24
  */
-public interface MonitorService extends IService<Webpvuv> {
-    ReportVo recordMonitorInfo(EventsDTO eventsDto) throws IOException;
+public interface MonitorService extends IService<Metrics> {
+    ReportVo recordMonitorInfo(EventsDTO eventsDto, HttpServletRequest httpRequest) throws IOException;
 
 
     Void errorHandler(ErrorInfoDto errorInfoDto) throws Exception;

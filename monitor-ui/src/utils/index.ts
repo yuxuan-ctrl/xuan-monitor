@@ -33,6 +33,7 @@ export default class Record {
       "🚀 ~ Record ~ replay ~  dataList:",
       parseData.map((item) => item.data)
     );
+    
     setTimeout(() => {
       const replayInstance = new rrwebPlayer({
         target: dom, // 可以自定义 DOM 元素

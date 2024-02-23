@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-20 17:47:31
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-23 11:23:02
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -12,6 +12,7 @@ import {
   Request,
   WebSocketManager,
   formatDate,
+  getUserLocation,
   isArray,
   normalizeUrlForPath,
   recursiveTimeout,
@@ -19,6 +20,7 @@ import {
 import { MonitorConfig } from '../types';
 import MessageQueueDBWrapper from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
+import UvTracker from './UserViewTracker';
 export default class Report {
   baseUrl?: String = '/api';
   reportUrl?: String;
@@ -33,8 +35,10 @@ export default class Report {
   websocketManager: WebSocketManager;
   messageWrapper: any;
   config: MonitorConfig;
+  uvTracker: UvTracker;
 
-  constructor(config: MonitorConfig) {
+  constructor(config: MonitorConfig, uvTracker: UvTracker) {
+    this.uvTracker = uvTracker;
     this.config = config;
     this.timeInterval = config?.reportFrequency || 10000;
     this.dataRetentionHours = config?.dataRetentionHours || 1;
@@ -62,6 +66,10 @@ export default class Report {
       if (isArray(trafficList) || isArray(actionList)) {
         const reportData = {
           appId: this.config.appId,
+          userId: await this.uvTracker.getUniqueKey(),
+          platform: navigator.platform,
+          location: await getUserLocation(3000),
+          userAgent: navigator.userAgent,
           timestamp: formatDate(new Date()),
           eventList: isArray(trafficList)
             ? trafficList.map((item) => item.data)

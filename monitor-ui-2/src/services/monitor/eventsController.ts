@@ -8,7 +8,7 @@ export async function getMetricsUsingGet(
   params: API.getMetricsUsingGETParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.ResultMetrics>(`${process.env.DEV}/Metrics/getMetrics`, {
+  return request<API.ResultMetricsVo>(`${process.env.DEV}/Metrics/getMetrics`, {
     method: 'GET',
     params: {
       ...params,

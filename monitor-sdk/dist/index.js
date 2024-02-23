@@ -246,7 +246,6 @@ function wrapFetch(originalFetch, callback) {
             })
                 .catch((error) => {
                 // 在这里收集错误信息，例如记录到日志或发送到服务器
-                console.error('Error in fetch:', error);
                 callback(error); // 调用回调函数，将错误传递给上层处理
                 throw error;
             });
@@ -265,7 +264,6 @@ function wrapSetTimeout(originalSetTimeout, callback) {
             }
             catch (error) {
                 // 在这里收集错误信息，例如记录到日志或发送到服务器
-                console.error('Error in setTimeout:', error);
                 callback(error); // 调用回调函数，将错误传递给上层处理
                 throw error;
             }
@@ -298,7 +296,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     let data = null;
     function wrappedXMLHttpRequest() {
         const originalRequest = new OriginalXMLHttpRequest();
-        console.log('🚀 ~ file: wrappers.ts:134 ~ wrappedXMLHttpRequest ~ originalRequest:', originalRequest);
         // 包裹 open 方法
         const originalOpen = originalRequest.open;
         originalRequest.open = function (...args) {
@@ -336,7 +333,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
             }
             catch (error) {
                 // 在这里收集错误信息，例如记录到日志或发送到服务器
-                console.error('Error in XMLHttpRequest.send:', error);
                 callback(error); // 调用回调函数，将错误传递给上层处理
             }
         };
@@ -426,11 +422,13 @@ function layout(element) {
     return box;
 }
 
+var e$1,n$1,t$1,r$1,a$1=-1,o$1=function(e){addEventListener("pageshow",(function(n){n.persisted&&(a$1=n.timeStamp,e(n));}),!0);},c$1=function(){return window.performance&&performance.getEntriesByType&&performance.getEntriesByType("navigation")[0]},u$1=function(){var e=c$1();return e&&e.activationStart||0},f$1=function(e,n){var t=c$1(),r="navigate";a$1>=0?r="back-forward-cache":t&&(document.prerendering||u$1()>0?r="prerender":document.wasDiscarded?r="restore":t.type&&(r=t.type.replace(/_/g,"-")));return {name:e,value:void 0===n?-1:n,rating:"good",delta:0,entries:[],id:"v3-".concat(Date.now(),"-").concat(Math.floor(8999999999999*Math.random())+1e12),navigationType:r}},s$1=function(e,n,t){try{if(PerformanceObserver.supportedEntryTypes.includes(e)){var r=new PerformanceObserver((function(e){Promise.resolve().then((function(){n(e.getEntries());}));}));return r.observe(Object.assign({type:e,buffered:!0},t||{})),r}}catch(e){}},d$1=function(e,n,t,r){var i,a;return function(o){n.value>=0&&(o||r)&&((a=n.value-(i||0))||void 0===i)&&(i=n.value,n.delta=a,n.rating=function(e,n){return e>n[1]?"poor":e>n[0]?"needs-improvement":"good"}(n.value,t),e(n));}},l$1=function(e){requestAnimationFrame((function(){return requestAnimationFrame((function(){return e()}))}));},p$1=function(e){var n=function(n){"pagehide"!==n.type&&"hidden"!==document.visibilityState||e(n);};addEventListener("visibilitychange",n,!0),addEventListener("pagehide",n,!0);},v$1=function(e){var n=!1;return function(t){n||(e(t),n=!0);}},m$1=-1,h$1=function(){return "hidden"!==document.visibilityState||document.prerendering?1/0:0},g$1=function(e){"hidden"===document.visibilityState&&m$1>-1&&(m$1="visibilitychange"===e.type?e.timeStamp:0,T$1());},y$1=function(){addEventListener("visibilitychange",g$1,!0),addEventListener("prerenderingchange",g$1,!0);},T$1=function(){removeEventListener("visibilitychange",g$1,!0),removeEventListener("prerenderingchange",g$1,!0);},E$1=function(){return m$1<0&&(m$1=h$1(),y$1(),o$1((function(){setTimeout((function(){m$1=h$1(),y$1();}),0);}))),{get firstHiddenTime(){return m$1}}},C$1=function(e){document.prerendering?addEventListener("prerenderingchange",(function(){return e()}),!0):e();},L$1=[1800,3e3],b$1=function(e,n){n=n||{},C$1((function(){var t,r=E$1(),i=f$1("FCP"),a=s$1("paint",(function(e){e.forEach((function(e){"first-contentful-paint"===e.name&&(a.disconnect(),e.startTime<r.firstHiddenTime&&(i.value=Math.max(e.startTime-u$1(),0),i.entries.push(e),t(!0)));}));}));a&&(t=d$1(e,i,L$1,n.reportAllChanges),o$1((function(r){i=f$1("FCP"),t=d$1(e,i,L$1,n.reportAllChanges),l$1((function(){i.value=performance.now()-r.timeStamp,t(!0);}));})));}));},w$1=[.1,.25],S$1=function(e,n){n=n||{},b$1(v$1((function(){var t,r=f$1("CLS",0),i=0,a=[],c=function(e){e.forEach((function(e){if(!e.hadRecentInput){var n=a[0],t=a[a.length-1];i&&e.startTime-t.startTime<1e3&&e.startTime-n.startTime<5e3?(i+=e.value,a.push(e)):(i=e.value,a=[e]);}})),i>r.value&&(r.value=i,r.entries=a,t());},u=s$1("layout-shift",c);u&&(t=d$1(e,r,w$1,n.reportAllChanges),p$1((function(){c(u.takeRecords()),t(!0);})),o$1((function(){i=0,r=f$1("CLS",0),t=d$1(e,r,w$1,n.reportAllChanges),l$1((function(){return t()}));})),setTimeout(t,0));})));},A$1={passive:!0,capture:!0},I$1=new Date,P$1=function(r,i){e$1||(e$1=i,n$1=r,t$1=new Date,k$1(removeEventListener),F$1());},F$1=function(){if(n$1>=0&&n$1<t$1-I$1){var i={entryType:"first-input",name:e$1.type,target:e$1.target,cancelable:e$1.cancelable,startTime:e$1.timeStamp,processingStart:e$1.timeStamp+n$1};r$1.forEach((function(e){e(i);})),r$1=[];}},M$3=function(e){if(e.cancelable){var n=(e.timeStamp>1e12?new Date:performance.now())-e.timeStamp;"pointerdown"==e.type?function(e,n){var t=function(){P$1(e,n),i();},r=function(){i();},i=function(){removeEventListener("pointerup",t,A$1),removeEventListener("pointercancel",r,A$1);};addEventListener("pointerup",t,A$1),addEventListener("pointercancel",r,A$1);}(n,e):P$1(n,e);}},k$1=function(e){["mousedown","keydown","touchstart","pointerdown"].forEach((function(n){return e(n,M$3,A$1)}));},D$1=[100,300],x$1=function(t,i){i=i||{},C$1((function(){var a,c=E$1(),u=f$1("FID"),l=function(e){e.startTime<c.firstHiddenTime&&(u.value=e.processingStart-e.startTime,u.entries.push(e),a(!0));},m=function(e){e.forEach(l);},h=s$1("first-input",m);a=d$1(t,u,D$1,i.reportAllChanges),h&&p$1(v$1((function(){m(h.takeRecords()),h.disconnect();}))),h&&o$1((function(){var o;u=f$1("FID"),a=d$1(t,u,D$1,i.reportAllChanges),r$1=[],n$1=-1,e$1=null,k$1(addEventListener),o=l,r$1.push(o),F$1();}));}));},U$1=[2500,4e3],V$1={},W$1=function(e,n){n=n||{},C$1((function(){var t,r=E$1(),i=f$1("LCP"),a=function(e){var n=e[e.length-1];n&&n.startTime<r.firstHiddenTime&&(i.value=Math.max(n.startTime-u$1(),0),i.entries=[n],t());},c=s$1("largest-contentful-paint",a);if(c){t=d$1(e,i,U$1,n.reportAllChanges);var m=v$1((function(){V$1[i.id]||(a(c.takeRecords()),c.disconnect(),V$1[i.id]=!0,t(!0));}));["keydown","click"].forEach((function(e){addEventListener(e,(function(){return setTimeout(m,0)}),!0);})),p$1(m),o$1((function(r){i=f$1("LCP"),t=d$1(e,i,U$1,n.reportAllChanges),l$1((function(){i.value=performance.now()-r.timeStamp,V$1[i.id]=!0,t(!0);}));}));}}));},X$1=[800,1800],Y$1=function e(n){document.prerendering?C$1((function(){return e(n)})):"complete"!==document.readyState?addEventListener("load",(function(){return e(n)}),!0):setTimeout(n,0);},Z$1=function(e,n){n=n||{};var t=f$1("TTFB"),r=d$1(e,t,X$1,n.reportAllChanges);Y$1((function(){var i=c$1();if(i){var a=i.responseStart;if(a<=0||a>performance.now())return;t.value=Math.max(a-u$1(),0),t.entries=[i],r(!0),o$1((function(){t=f$1("TTFB",0),(r=d$1(e,t,X$1,n.reportAllChanges))(!0);}));}}));};
+
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-05 17:09:13
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-05 17:15:35
+ * @LastEditTime: 2024-02-21 11:36:30
  * @FilePath: \monitor-sdk\src\utils\calculate.ts
  * @Description:
  *
@@ -459,6 +457,93 @@ function normalizeUrlForPath(url) {
     // 重新组合规范化后的路径（去除末尾的"/"）
     const normalizedPath = `${normalizedPathSegments.join('/')}`.replace(/\/$/, '');
     return normalizedPath;
+}
+async function collectWebVitals(delay) {
+    let fcp = null;
+    let lcp = null;
+    let cls = null;
+    let fid = null;
+    let ttfb = null;
+    //First Contentful Paint (FCP): 首次内容绘制，当浏览器渲染了首个DOM内容元素，可以是文本、图像、SVG等。
+    let fcpPromise = new Promise((resolve) => {
+        b$1((metric) => {
+            fcp = metric;
+            resolve(metric);
+        });
+    });
+    //Largest Contentful Paint (LCP): 最大内容绘制，衡量网页主要内容加载完成的时间点。
+    let lcpPromise = new Promise((resolve) => {
+        W$1((metric) => {
+            lcp = metric;
+            resolve(metric);
+        });
+    });
+    //CLS：衡量视觉稳定性
+    let clsPromise = new Promise((resolve) => {
+        S$1((metric) => {
+            cls = metric;
+            resolve(metric);
+        });
+    });
+    //First Input Delay (FID): 首次输入延迟，用户首次尝试与页面交互时，从点击或触摸到浏览器能够处理该事件之间的时间。
+    let fidPromise = new Promise((resolve) => {
+        x$1((metric) => {
+            fid = metric;
+            resolve(metric);
+        });
+    });
+    //TTFB (Time to First Byte)：服务器响应第一个字节所需的时间。
+    let ttfbPromise = new Promise((resolve) => {
+        Z$1((metric) => {
+            ttfb = metric;
+            resolve(metric);
+        });
+    });
+    // 等待所有指标获取完成
+    await Promise.race([
+        Promise.all([lcpPromise, fcpPromise, ttfbPromise, clsPromise, fidPromise]),
+        new Promise((res) => {
+            setTimeout(() => res(null), delay);
+        }),
+    ]);
+    return {
+        fcp,
+        lcp,
+        ttfb,
+        cls,
+        fid,
+    };
+}
+async function collectSlowResources(SLOW_RESOURCE_THRESHOLD) {
+    const slowResources = {};
+    if (typeof window !== 'undefined' && 'PerformanceObserver' in window && 'performance' in window) {
+        const observer = new PerformanceObserver((list, observer) => {
+            list.getEntries().forEach((entry) => {
+                if (entry.entryType === 'resource' && entry.duration > SLOW_RESOURCE_THRESHOLD) {
+                    if (!slowResources[entry.name]) {
+                        slowResources[entry.name] = [];
+                    }
+                    const keyMetrics = {
+                        name: entry.name,
+                        startTime: entry.startTime,
+                        duration: entry.duration,
+                        transferSize: entry.transferSize,
+                        decodedBodySize: entry.decodedBodySize,
+                        responseStart: entry.responseStart,
+                        responseEnd: entry.responseEnd,
+                        initiatorType: entry.initiatorType,
+                    };
+                    slowResources[entry.name].push(keyMetrics);
+                }
+            });
+        });
+        observer.observe({ type: 'resource', buffered: true }); // 观察已经完成的资源加载事件
+        // 等待一小段时间以确保获取到所有已加载的资源（可调整等待时间）
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 停止观察新的资源加载事件
+        observer.disconnect();
+    }
+    return slowResources;
 }
 
 class Request {
@@ -623,22 +708,6 @@ function recursiveTimeout(callback, delay) {
     };
 }
 
-// interface IPVData {
-//   title?: string;
-//   url?: string;
-//   userAgent?: string;
-//   platform?: string;
-//   screenResolution?: {
-//     width: number;
-//     height: number;
-//   };
-//   timestamp?: number;
-//   referrer?: string | null;
-//   totalPageViews?: number;
-//   maxStayDuration?: number; // 单位：毫秒
-//   mostVisitedPageId?: string;
-//   mostVisitedPageViews?: number;
-// }
 /**
  * 页面浏览跟踪器类。
  */
@@ -674,7 +743,6 @@ class PageViewTracker {
     constructor(userId, monitor) {
         this.userId = userId;
         this.monitor = monitor;
-        // this.addEventListeners();
     }
     /**
      * 获取用户 ID。
@@ -734,6 +802,18 @@ class PageViewTracker {
      * @param pageId 页面 ID。
      */
     async updatePageViewTime(pageId) {
+        const { fcp, lcp, ttfb, cls, fid } = await collectWebVitals(3000);
+        const slowResources = await collectSlowResources(3000);
+        const metrics = {};
+        [fcp, lcp, ttfb, fid, cls].forEach((metric) => {
+            if (!metric)
+                return;
+            metrics[metric.name] = {
+                value: metric.value,
+                rating: metric.rating,
+                navigationType: metric.navigationType,
+            };
+        });
         const now = performance.now();
         const lastVisitInfo = this.pageVisits.get(pageId);
         if (lastVisitInfo !== undefined &&
@@ -753,8 +833,11 @@ class PageViewTracker {
                 height: window.screen.height,
             },
             timestamp: now,
+            metrics,
+            slowResources,
             referrer,
         };
+        console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ pvData:", pvData);
         this.pageVisits.set(pageId, pvData);
         const result = this.calculateAndSendPVData(pvData);
         return result;
@@ -4010,9 +4093,13 @@ class UvTracker {
     customKey;
     refreshIntervalId;
     monitor;
+    uniqueKey;
     constructor(customKey, monitor) {
         this.customKey = customKey;
         this.monitor = monitor;
+        this.getUniqueKey().then((res) => {
+            this.uniqueKey = res;
+        });
     }
     /**
      * 获取或生成唯一的用户标识符（unique key）。
@@ -4027,7 +4114,7 @@ class UvTracker {
         const fp = await index.load();
         const result = await fp.get();
         // 使用FingerprintJS生成的组件哈希作为唯一键
-        const uniqueKey = result.components.reduce((acc, component) => acc + component.value, '');
+        const uniqueKey = result.visitorId;
         return uniqueKey;
     }
     /**
@@ -4313,16 +4400,6 @@ class IndexedDBWrapper {
     }
 }
 
-/*
- * @Author: yuxuan-ctrl
- * @Date: 2023-12-18 09:17:00
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-20 09:41:06
- * @FilePath: \monitor-sdk\src\core\Message.ts
- * @Description:
- *
- * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
- */
 class MessageQueueDBWrapper extends IndexedDBWrapper {
     // 实例
     static _instance = null;
@@ -4455,70 +4532,35 @@ class ErrorTracker {
         return dataList.map((item) => JSON.stringify(item));
     }
     async collectError(error) {
-        let errorInfo;
+        let errorInfo = this.getCommonErrorInfo(error);
         if (error instanceof HttpError) {
-            errorInfo = {
-                errorType: error.name,
-                errorMessage: error.message,
-                stackTrace: error.stack,
-                cause: error.cause || '',
-                timestamp: formatDate(new Date()),
-                userAgent: navigator.userAgent,
-                pageUrl: normalizeUrlForPath(window.location.href),
-                operationSequence: this.operationSequence.slice(),
-                logContext: this.logContext,
-                method: error.method,
-                requestUrl: error.requestUrl,
-                data: error.data,
-                status: error.status,
-            };
-        }
-        else if (error instanceof Error) {
-            errorInfo = {
-                errorType: error.name,
-                errorMessage: error.message,
-                stackTrace: error.stack,
-                cause: error.cause || '',
-                timestamp: formatDate(new Date()),
-                userAgent: navigator.userAgent,
-                url: normalizeUrlForPath(window.location.href),
-                operationSequence: this.operationSequence.slice(),
-                logContext: this.logContext,
-            };
-        }
-        else if (typeof error === 'string') {
-            // 对于字符串类型的错误，我们假设它是网络错误或其他非 JavaScript 错误
-            errorInfo = {
-                errorType: 'Non-JavaScript Error',
-                errorMessage: error,
-                timestamp: formatDate(new Date()),
-                userAgent: navigator.userAgent,
-                url: normalizeUrlForPath(window.location.href),
-                operationSequence: this.operationSequence.slice(),
-                logContext: this.logContext,
-            };
-        }
-        else {
-            errorInfo = {
-                errorType: 'Unexpected Error',
-                errorMessage: error.message,
-                timestamp: formatDate(new Date()),
-                userAgent: navigator.userAgent,
-                url: normalizeUrlForPath(window.location.href),
-                operationSequence: this.operationSequence.slice(),
-                logContext: this.logContext,
-            };
+            errorInfo.errorType = 'XHR ERROR';
+            errorInfo.method = error.method;
+            errorInfo.requestUrl = error.requestUrl;
+            errorInfo.data = error.data;
+            errorInfo.status = error.status;
         }
         try {
             const startTime = new Date().getTime() - 120000;
             const endTime = new Date().getTime() + 300000;
             errorInfo.record = await this.getRange(startTime, endTime);
-            console.log(errorInfo.record);
         }
         catch (screenshotError) {
-            console.error('Error capturing screenshot:', screenshotError);
         }
-        return errorInfo;
+        return errorInfo; // 如果ErrorInfo是一个接口或类型，请确保它包含了所有可能的属性
+    }
+    getCommonErrorInfo(error) {
+        return {
+            errorType: (error instanceof Error) ? error.name : 'Non-JavaScript Error',
+            errorMessage: (error instanceof Error) ? error.message : error,
+            stackTrace: (error instanceof Error) ? error.stack : undefined,
+            cause: (error instanceof Error && error.cause) || '',
+            timestamp: formatDate(new Date()),
+            userAgent: navigator.userAgent,
+            url: normalizeUrlForPath(window.location.href),
+            operationSequence: this.operationSequence.slice(),
+            logContext: this.logContext,
+        };
     }
 }
 
@@ -4538,11 +4580,9 @@ class EventManager {
     manageEventListener(action, Class, root, eventName) {
         const element = root || document;
         const methods = Object.getOwnPropertyNames(Class).filter((methodName) => methodName !== 'constructor');
-        console.log(this);
         methods.forEach((methodName) => {
             const method = Class[methodName].bind(this);
             const eventConfig = Reflect.getMetadata('eventConfig', Class, methodName);
-            console.log(eventConfig);
             if (eventConfig && typeof method === 'function') {
                 if (Array.isArray(eventConfig)) {
                     eventConfig.forEach((name) => {
@@ -4603,7 +4643,7 @@ function Listener(config) {
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-20 11:13:33
+ * @LastEditTime: 2024-02-20 17:47:31
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -4625,7 +4665,7 @@ class Report {
     config;
     constructor(config) {
         this.config = config;
-        this.timeInterval = config?.reportFrequency || 1800000;
+        this.timeInterval = config?.reportFrequency || 10000;
         this.dataRetentionHours = config?.dataRetentionHours || 1;
         this.messageWrapper = MessageQueueDBWrapper.getInstance({
             dbName: 'monitorxq',
@@ -6143,9 +6183,9 @@ class Monitor extends EventManager {
         this.config = config;
         this.report = new Report(config);
         this.report.start('/api');
-        this.baseInfo = { appId: config.appId, userId: config.userId };
         this.pvTracker = new PageViewTracker(config?.userId, this);
         this.uvTracker = new UvTracker(config?.userId, this);
+        this.baseInfo = { appId: config.appId, userId: config?.userId };
         this.errorTracker = new ErrorTracker();
         this.uvTracker.initRefreshInterval(this.sendMessage);
         this.setGlobalProxy();
@@ -6168,7 +6208,6 @@ class Monitor extends EventManager {
         await this.pvTracker.trackPageView('popstate', event);
     }
     async onLoad(event) {
-        console.log(event);
         this.uvData = await this.uvTracker.trackUv();
         await this.pvTracker.trackPageView('load', event);
     }
@@ -6177,7 +6216,6 @@ class Monitor extends EventManager {
         this.pvTracker.calculateDuration();
     }
     onVisablechange(event) {
-        console.log(event);
         if (document.visibilityState === 'hidden') {
             this.pvTracker.calculateDuration();
         }
@@ -6186,13 +6224,9 @@ class Monitor extends EventManager {
         }
     }
     async onError(error) {
-        console.log(error);
-        console.log(this);
         this.reportError(error);
     }
     async onUnhandlerejection(error) {
-        console.log(error);
-        console.log(this);
         // this.reportError(error.reason);
     }
     stopTracking() {
@@ -6235,9 +6269,9 @@ class Monitor extends EventManager {
                 ...this.pvData,
                 ...this.uvData,
                 ...this.baseInfo,
+                userId: this.uvTracker.uniqueKey,
                 timestamp: Date.now(),
                 name: DB_CONFIG.TRAFFIC_STORE_NAME,
-                userId: this.pvTracker.userId,
             };
             this.sendMessage(message, DB_CONFIG.TRAFFIC_STORE_NAME);
         }
@@ -6248,15 +6282,16 @@ class Monitor extends EventManager {
     }
     async reportError(error) {
         const errorInfo = await this.errorTracker.collectError(error);
-        console.log('🚀 ~ Monitor ~ reportError ~ errorInfo:', errorInfo);
         this.report.fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
             ...errorInfo,
             ...this.baseInfo,
+            userId: this.uvTracker.uniqueKey,
         });
     }
     async updateDurationMessage() {
         console.log(this.stayDuration);
         const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
+        console.log('🚀 ~ Monitor ~ updateDurationMessage ~ latestPv:', latestPv);
         const { data } = latestPv;
         const newData = {
             ...latestPv,
@@ -6278,7 +6313,6 @@ class Monitor extends EventManager {
             }
         }
         catch (error) {
-            console.error('Error getting last data ID:', error);
             return undefined;
         }
     }
@@ -10487,10 +10521,8 @@ class SelectTracker extends EventManager {
         });
     }
     handler(root) {
-        console.log('🚀 ~ ResizeTracker ~ handler ~ root:', root);
         let doc = document;
         let current = doc.getSelection();
-        console.log('🚀 ~ ResizeTracker ~ handler ~ current:', current);
         // Bail out if we don't have a valid selection
         if (current === null) {
             return;

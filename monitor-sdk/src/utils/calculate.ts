@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-05 17:09:13
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-21 11:36:30
+ * @LastEditTime: 2024-02-23 11:38:34
  * @FilePath: \monitor-sdk\src\utils\calculate.ts
  * @Description:
  *
@@ -170,4 +170,30 @@ export async function collectSlowResources(SLOW_RESOURCE_THRESHOLD: number): Pro
   }
 
   return slowResources;
+}
+
+export function getUserLocation(timeout = 3000) {
+  return new Promise((resolve, reject) => {
+      const geoOptions = {
+          enableHighAccuracy: true,
+          timeout: timeout,
+          maximumAge: 0
+      };
+
+      navigator.geolocation.getCurrentPosition(
+          position => {
+              resolve({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude
+              });
+          },
+          error => {
+            resolve({
+              latitude: 0,
+              longitude: 0
+          });
+          },
+          geoOptions
+      );
+  });
 }

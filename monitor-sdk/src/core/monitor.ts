@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-21 09:42:00
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-23 10:25:47
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -53,13 +53,13 @@ export default class Monitor extends EventManager {
   constructor(config: MonitorConfig) {
     super();
     this.config = config;
-    this.report = new Report(config);
-    this.report.start('/api');
     this.pvTracker = new PageViewTracker(config?.userId, this);
     this.uvTracker = new UvTracker(config?.userId, this);
+    this.report = new Report(config,this.uvTracker);
+    this.report.start('/api');
     this.baseInfo = { appId: config.appId, userId: config?.userId };
     this.errorTracker = new ErrorTracker();
-    this.uvTracker.initRefreshInterval(this.sendMessage);
+    // this.uvTracker.initRefreshInterval(this.sendMessage);
     this.setGlobalProxy();
     this.initializeDatabase();
   }

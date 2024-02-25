@@ -10,68 +10,66 @@ import Trend from './Trend';
 
 const TopSearch = ({
   loading,
-  visitData2,
-  searchData,
-  dropdownGroup,
+  popularList,
+  handleGroup,
 }: {
   loading: boolean;
-  visitData2: DataItem[];
-  dropdownGroup: React.ReactNode;
-  searchData: DataItem[];
+  handleGroup: React.ReactNode;
+  popularList: API.PageViewCount[];
 }) => {
   const { styles } = useStyles();
+
   const columns = [
     {
       title: '排名',
       dataIndex: 'index',
       key: 'index',
+      render: (text, record, index) => (
+        <span
+          className={`${styles.rankingItemNumber} ${
+            index < 3 ? styles.rankingItemNumberActive : ''
+          }`}
+        >
+          {index + 1}
+        </span>
+      ),
     },
     {
-      title: '搜索关键词',
-      dataIndex: 'keyword',
-      key: 'keyword',
+      title: '页面URL',
+      dataIndex: 'pageUrl',
+      key: 'pageUrl',
       render: (text: React.ReactNode) => <a href="/">{text}</a>,
     },
     {
-      title: '用户数',
-      dataIndex: 'count',
-      key: 'count',
-      sorter: (
-        a: {
-          count: number;
-        },
-        b: {
-          count: number;
-        },
-      ) => a.count - b.count,
+      title: '页面访问数（PV）',
+      dataIndex: 'viewCount',
+      key: 'viewCount',
     },
+    // {
+    //   title: '页面访问人数（UV）',
+    //   dataIndex: 'count',
+    //   key: 'count',
+    //   sorter: (
+    //     a: {
+    //       count: number;
+    //     },
+    //     b: {
+    //       count: number;
+    //     },
+    //   ) => a.count - b.count,
+    // },
     {
-      title: '周涨幅',
-      dataIndex: 'range',
-      key: 'range',
-      sorter: (
-        a: {
-          range: number;
-        },
-        b: {
-          range: number;
-        },
-      ) => a.range - b.range,
-      render: (
-        text: React.ReactNode,
-        record: {
-          status: number;
-        },
-      ) => (
-        <Trend flag={record.status === 1 ? 'down' : 'up'}>
-          <span
-            style={{
-              marginRight: 4,
-            }}
-          >
-            {text}%
-          </span>
-        </Trend>
+      title: '用户平均停留时间',
+      dataIndex: 'averageStayDuration',
+      key: 'averageStayDuration',
+      render: (text: number) => (
+        <span
+          style={{
+            marginRight: 4,
+          }}
+        >
+          {(text / 1000).toFixed(2)} s
+        </span>
       ),
     },
   ];
@@ -79,91 +77,17 @@ const TopSearch = ({
     <Card
       loading={loading}
       bordered={false}
-      title="线上热门搜索"
-      extra={dropdownGroup}
+      title="热门页面访问"
+      extra={handleGroup}
       style={{
         height: '100%',
       }}
     >
-      <Row gutter={68}>
-        <Col
-          sm={12}
-          xs={24}
-          style={{
-            marginBottom: 24,
-          }}
-        >
-          <NumberInfo
-            subTitle={
-              <span>
-                搜索用户数
-                <Tooltip title="指标说明">
-                  <InfoCircleOutlined
-                    style={{
-                      marginLeft: 8,
-                    }}
-                  />
-                </Tooltip>
-              </span>
-            }
-            gap={8}
-            total={numeral(12321).format('0,0')}
-            status="up"
-            subTotal={17.1}
-          />
-          <Area
-            xField="x"
-            yField="y"
-            shapeField="smooth"
-            height={45}
-            axis={false}
-            padding={-12}
-            style={{ fill: 'linear-gradient(-90deg, white 0%, #6294FA 100%)', fillOpacity: 0.4 }}
-            data={visitData2}
-          />
-        </Col>
-        <Col
-          sm={12}
-          xs={24}
-          style={{
-            marginBottom: 24,
-          }}
-        >
-          <NumberInfo
-            subTitle={
-              <span>
-                人均搜索次数
-                <Tooltip title="指标说明">
-                  <InfoCircleOutlined
-                    style={{
-                      marginLeft: 8,
-                    }}
-                  />
-                </Tooltip>
-              </span>
-            }
-            total={2.7}
-            status="down"
-            subTotal={26.2}
-            gap={8}
-          />
-          <Area
-            xField="x"
-            yField="y"
-            shapeField="smooth"
-            height={45}
-            padding={-12}
-            style={{ fill: 'linear-gradient(-90deg, white 0%, #6294FA 100%)', fillOpacity: 0.4 }}
-            data={visitData2}
-            axis={false}
-          />
-        </Col>
-      </Row>
       <Table<any>
         rowKey={(record) => record.index}
         size="small"
         columns={columns}
-        dataSource={searchData}
+        dataSource={popularList}
         pagination={{
           style: {
             marginBottom: 0,

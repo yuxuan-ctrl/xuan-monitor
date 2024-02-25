@@ -16,7 +16,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class EventsDTO {
+public class  EventsDTO {
     @JsonProperty("appId")
     String appId;
 

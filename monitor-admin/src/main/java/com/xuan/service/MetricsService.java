@@ -22,6 +22,7 @@ import java.util.List;
  */
 public interface MetricsService extends IService<Metrics> {
 
-    MetricsVo getMetrics(String userId, Instant startTime, Instant endTime) throws IOException;
+    MetricsVo getMetrics(String appId, Instant startTime, Instant endTime,String userId) throws IOException;
+    List<MetricsVo> getChartsData (String appId, Instant startTime, Instant endTime) throws IOException;
 
 }

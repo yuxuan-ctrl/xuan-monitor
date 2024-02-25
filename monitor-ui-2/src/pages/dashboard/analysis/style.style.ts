@@ -99,7 +99,7 @@ const useStyles = createStyles(({ token }) => {
     salesRank: {
       padding: '0 32px 32px 72px',
     },
-    salesCard: {
+    ChartsCard: {
       '.ant-tabs-bar, .ant-tabs-nav-wrap': {
         paddingLeft: '16px',
         '.ant-tabs-nav .ant-tabs-tab': {

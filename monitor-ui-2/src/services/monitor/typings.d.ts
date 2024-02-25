@@ -20,6 +20,7 @@ declare namespace API {
     errorMessage?: string;
     errorType?: string;
     esErrorId?: string;
+    isResolved?: number;
     timestamp?: Timestamp;
     url?: string;
     userId?: string;
@@ -37,16 +38,27 @@ declare namespace API {
     userId?: string;
   };
 
+  type getChartsDataUsingGETParams = {
+    /** appId */
+    appId?: string;
+    /** startTime */
+    startTime?: string;
+    /** endTime */
+    endTime?: string;
+  };
+
   type getDetailsUsingGETParams = {
     /** id */
     id: string;
   };
 
   type getMetricsUsingGETParams = {
+    /** appId */
+    appId?: string;
     /** userId */
     userId?: string;
-    /** hoursBack */
-    hoursBack?: string;
+    /** currentDay */
+    currentDay?: string;
   };
 
   type getPageDataUsingGETParams = {
@@ -89,7 +101,7 @@ declare namespace API {
     longitude?: number;
   };
 
-  type MetricsVo = {
+  type Metrics = {
     allUsersLength?: number;
     averageStayDuration?: number;
     createTime?: string;
@@ -99,11 +111,37 @@ declare namespace API {
     mostFrequentScreenResolution?: string;
     mostVisitedPageId?: string;
     mostVisitedPageViews?: number;
-    pageViewGrowthCount?: number;
     totalPageViews?: number;
     totalStayDuration?: number;
-    uniqueVisitorGrowthCount?: number;
     uniqueVisitors?: number;
+  };
+
+  type MetricsVo = {
+    allUsersLength?: number;
+    averageStayDuration?: number;
+    createTime?: string;
+    dailyErrorCount?: number;
+    date?: string;
+    errorsTypeMap?: Record<string, any>;
+    id?: string;
+    mostFrequentPlatform?: string;
+    mostFrequentScreenResolution?: string;
+    mostVisitedPageId?: string;
+    mostVisitedPageViews?: number;
+    pastByMetric?: Metrics;
+    popularList?: PageViewInfo[];
+    resolvedErrorCount?: number;
+    totalErrorCount?: number;
+    totalPageViews?: number;
+    totalStayDuration?: number;
+    uniqueVisitors?: number;
+  };
+
+  type PageViewInfo = {
+    averageStayDuration?: number;
+    pageUrl?: string;
+    totalStayDuration?: number;
+    viewCount?: number;
   };
 
   type ReportVo = {
@@ -131,6 +169,12 @@ declare namespace API {
     msg?: string;
   };
 
+  type ResultListMetricsVo = {
+    code?: number;
+    data?: MetricsVo[];
+    msg?: string;
+  };
+
   type ResultMetricsVo = {
     code?: number;
     data?: MetricsVo;
@@ -147,6 +191,13 @@ declare namespace API {
     code?: number;
     data?: Webpvuv;
     msg?: string;
+  };
+
+  type Systemsduixiang = {
+    appId?: string;
+    appName?: string;
+    appType?: string;
+    createTime?: string;
   };
 
   type testreportUsingGETParams = {

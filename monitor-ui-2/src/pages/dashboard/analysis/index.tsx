@@ -11,18 +11,18 @@
 import { EllipsisOutlined } from '@ant-design/icons';
 import { GridContent } from '@ant-design/pro-components';
 import { useRequest } from '@umijs/max';
-import { Col, Dropdown, Row, Select, SelectProps } from 'antd';
+import { Col, DatePicker, Input, Row, Select, DateType } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type { RadioChangeEvent } from 'antd/es/radio';
-import type dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import type { FC } from 'react';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import IntroduceRow from './components/IntroduceRow';
 import OfflineData from './components/OfflineData';
 import PageLoading from './components/PageLoading';
 import ProportionSales from './components/ProportionSales';
-import type { TimeType } from './components/SalesCard';
-import SalesCard from './components/SalesCard';
+import type { TimeType } from './components/ChartsCard';
+import ChartsCard from './components/ChartsCard';
 import TopSearch from './components/TopSearch';
 import type { AnalysisData } from './data.d';
 import api from '@/services/monitor';
@@ -36,20 +36,56 @@ type AnalysisProps = {
 type SalesType = 'all' | 'online' | 'stores';
 
 const Analysis: FC<AnalysisProps> = () => {
+  const { Search } = Input;
   const { styles } = useStyles();
   const [salesType, setSalesType] = useState<SalesType>('all');
-  const [hoursBack, setHoursBack] = useState<string>('24');
+  const [userId, setUserId] = useState<string>('');
+  const [currentDay, setCurrentDay] = useState<string>(dayjs().format('YYYY-MM-DD'));
   const [currentTabKey, setCurrentTabKey] = useState<string>('');
+  const [appId, setAppId] = useState<string>('');
   const [rangePickerValue, setRangePickerValue] = useState<RangePickerValue>(
-    getTimeDistance('year'),
+    getTimeDistance('week'),
   );
+
+  //useEffect
+  useEffect(() => {}, []);
+
+  // Request
   const { loading, data } = useRequest(
-    () => api.eventsController.getMetricsUsingGet({ hoursBack }), // 将 hoursBack 转为数字类型（如果API需要数字）
+    () => api.eventsController.getMetricsUsingGet({ currentDay, userId, appId }), // 将 currentDay 转为数字类型（如果API需要数字）
     {
       // 这里设置默认请求时使用的参数
-      refreshDeps: [hoursBack], // 当 hoursBack 改变时自动重新发起请求
+      refreshDeps: [currentDay, userId, appId], // 当 currentDay 改变时自动重新发起请求
     },
   );
+
+  const getRangeString = (type: number) => {
+    return rangePickerValue![type]?.format('YYYY-MM-DD');
+  };
+
+  const { data: chartsData } = useRequest(
+    () =>
+      api.eventsController.getChartsDataUsingGet({
+        startTime: getRangeString(0),
+        endTime: getRangeString(1),
+      }), // 将 currentDay 转为数字类型（如果API需要数字）
+    {
+      // 这里设置默认请求时使用的参数
+      refreshDeps: [rangePickerValue], // 当 currentDay 改变时自动重新发起请求
+    },
+  );
+
+  const { data: systemList } = useRequest(
+    () => api.systemsController.getSystemsListUsingGet(), // 将 currentDay 转为数字类型（如果API需要数字）
+    {
+      // 这里设置默认请求时使用的参数
+      refreshDeps: [], // 当 currentDay 改变时自动重新发起请求
+    },
+  );
+  console.log('🚀 ~ systemList:', systemList);
+
+  //methods
+
   const selectDate = (type: TimeType) => {
     setRangePickerValue(getTimeDistance(type));
   };
@@ -75,75 +111,61 @@ const Analysis: FC<AnalysisProps> = () => {
     }
     return '';
   };
+  console.log('🚀 ~ ?Array.from ~ data?.errorsTypeMap:', data?.errorsTypeMap);
 
-  let salesPieData;
+  let errorsTypeList = [];
+  console.log(data?.errorsTypeMap);
 
-  if (salesType === 'all') {
-    salesPieData = data?.salesTypeData;
-  } else {
-    salesPieData = salesType === 'online' ? data?.salesTypeDataOnline : data?.salesTypeDataOffline;
+  if (data?.errorsTypeMap && data?.errorsTypeMap.toString() !== '{}') {
+    Object.keys(data?.errorsTypeMap).forEach((key) => {
+      errorsTypeList.push({ type: key, value: data?.errorsTypeMap![key] });
+    });
   }
 
-  const dropdownGroup = (
-    <span className={styles.iconGroup}>
-      <Dropdown
-        menu={{
-          items: [
-            {
-              key: '1',
-              label: '操作一',
-            },
-            {
-              key: '2',
-              label: '操作二',
-            },
-          ],
-        }}
-        placement="bottomRight"
-      >
-        <EllipsisOutlined />
-      </Dropdown>
-    </span>
-  );
   const handleChangeSalesType = (e: RadioChangeEvent) => {
     setSalesType(e.target.value);
   };
-  const handleTabChange = (key: string) => {
-    setCurrentTabKey(key);
+  const onSearch = (value: string) => {
+    setUserId(value);
   };
 
-  //todo 下拉
-  const options: SelectProps['options'] = [];
-
-  for (let i = 1; i < 8; i++) {
-    options.push({
-      value: i,
-      label: `过去${i}天`,
-    });
-  }
-  const handleChange = (value: number) => {
-    setHoursBack((value * 24).toString());
+  const handleChange = (value: DateType | null, dateString: string) => {
+    setCurrentDay(value.format('YYYY-MM-DD'));
   };
+
+  const handleSystemChange = (value, dateString: string) => {
+    setAppId(dateString);
+  };
+
   // todo
-  // const activeKey = currentTabKey || (data?.offlineData[0] && data?.offlineData[0].name) || '';
-  const activeKey = '';
+  const handleGroup = (
+    <Search placeholder="请输入userId" onSearch={onSearch} style={{ width: 200 }} />
+  );
+
   return (
     <GridContent>
       <>
         <Suspense fallback={<PageLoading />}>
           <Select
-            style={{ width: '200px' ,marginBottom:'24px'}}
-            placeholder="请选择过去天数"
-            onChange={handleChange}
-            options={options}
+            style={{ width: '200px', marginRight: '24px' }}
+            placeholder="请选择当前系统"
+            onChange={handleSystemChange}
+            options={
+              Array.isArray(systemList)
+                ? systemList.map((item) => {
+                    return { label: item.appName, value: item.appId };
+                  })
+                : []
+            }
           />
-          <IntroduceRow loading={loading} visitData={data || {}} hoursBack={hoursBack} />
+          <DatePicker onChange={handleChange} style={{ marginBottom: '24px' }} />
+          <IntroduceRow loading={loading} visitData={data || {}} currentDay={currentDay} />
         </Suspense>
 
         <Suspense fallback={null}>
-          <SalesCard
+          <ChartsCard
             rangePickerValue={rangePickerValue}
-            salesData={data?.salesData || []}
+            chartsData={chartsData || []}
             isActive={isActive}
             handleRangePickerChange={handleRangePickerChange}
             loading={loading}
@@ -161,34 +183,23 @@ const Analysis: FC<AnalysisProps> = () => {
             <Suspense fallback={null}>
               <TopSearch
                 loading={loading}
-                visitData2={data?.visitData2 || []}
-                searchData={data?.searchData || []}
-                dropdownGroup={dropdownGroup}
+                popularList={data?.popularList || []}
+                handleGroup={handleGroup}
               />
             </Suspense>
           </Col>
           <Col xl={12} lg={24} md={24} sm={24} xs={24}>
             <Suspense fallback={null}>
               <ProportionSales
-                dropdownGroup={dropdownGroup}
+                handleGroup={handleGroup}
                 salesType={salesType}
                 loading={loading}
-                salesPieData={salesPieData || []}
+                errorsTypeList={errorsTypeList}
                 handleChangeSalesType={handleChangeSalesType}
               />
             </Suspense>
           </Col>
         </Row>
-
-        <Suspense fallback={null}>
-          <OfflineData
-            activeKey={activeKey}
-            loading={loading}
-            offlineData={data?.offlineData || []}
-            offlineChartData={data?.offlineChartData || []}
-            handleTabChange={handleTabChange}
-          />
-        </Suspense>
       </>
     </GridContent>
   );

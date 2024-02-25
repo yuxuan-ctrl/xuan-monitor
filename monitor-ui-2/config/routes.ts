@@ -52,7 +52,7 @@ export default [
         icon: 'smile',
         path: '/dashboard/analysis',
         component: './dashboard/analysis',
-      }
+      },
       // ,
       // {
       //   name: 'monitor',

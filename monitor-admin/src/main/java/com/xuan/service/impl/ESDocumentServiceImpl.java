@@ -278,7 +278,7 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         return new PageResult<T>(total, records,pageSize ,pageIndex);
     }
 
-    private <T> SearchRequest createSearchRequest(String idxName, String dateFieldName, Instant startTime, Instant endTime, String userId,int size,String scrollId) {
+    private <T> SearchRequest createSearchRequest(String idxName, String dateFieldName, Instant startTime, Instant endTime, String appId,int size,String scrollId,String userId) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         if (startTime != null && endTime != null) {
@@ -288,6 +288,14 @@ public class ESDocumentServiceImpl implements ESDocumentService {
                     .lte(JsonData.of(endTime.toEpochMilli()))
                     .build()._toQuery();
             boolQueryBuilder.must(rangeQuery);
+        }
+
+        if (appId != null && !appId.isEmpty()) {
+            Query termQuery = QueryBuilders.term()
+                    .field("appId")
+                    .value(appId)
+                    .build()._toQuery();
+            boolQueryBuilder.filter(termQuery);
         }
 
         if (userId != null && !userId.isEmpty()) {
@@ -311,7 +319,7 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         Instant startTime = metricsDTO.getStartTimeOrDefault(Instant.now().minus(hoursBack, ChronoUnit.HOURS));
         Instant endTime = metricsDTO.getEndTimeOrDefault(Instant.now());
 
-        SearchRequest request = createSearchRequest(idxName, dateFieldName, startTime, endTime, metricsDTO.getUserIdOrDefault(),10,"5s");
+        SearchRequest request = createSearchRequest(idxName, dateFieldName, startTime, endTime, metricsDTO.getAppIdOrDefault(),10,"5s",metricsDTO.getUserIdOrDefault());
         System.out.println(request);
         SearchResponse<T> response = elasticsearchClient.search(request, tClass);
 

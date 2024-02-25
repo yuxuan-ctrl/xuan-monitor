@@ -5,6 +5,7 @@
 import * as errorsController from './errorsController';
 import * as eventsController from './eventsController';
 import * as monitorController from './monitorController';
+import * as systemsController from './systemsController';
 import * as testController from './testController';
 import * as userController from './userController';
 import * as getUserPage from './getUserPage';
@@ -12,6 +13,7 @@ export default {
   errorsController,
   eventsController,
   monitorController,
+  systemsController,
   testController,
   userController,
   getUserPage,

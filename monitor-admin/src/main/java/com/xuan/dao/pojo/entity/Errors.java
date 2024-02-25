@@ -21,5 +21,6 @@ public class Errors {
     String appId;
     String userId;
     private String createTime;
+    private int isResolved;
 
 }

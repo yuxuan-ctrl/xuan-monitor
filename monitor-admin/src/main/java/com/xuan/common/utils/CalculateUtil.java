@@ -3,17 +3,22 @@ package com.xuan.common.utils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.model.EventList;
+import com.xuan.dao.model.PageViewInfo;
+import com.xuan.dao.model.PageViewInfo;
+import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 @Component
 public class CalculateUtil {
@@ -74,10 +79,10 @@ public class CalculateUtil {
     }
 
     public static Map.Entry<String, Long> getMostVisitedPageInfo(List<EventList> eventList) {
-        Map<String, Long> pageViewCountMap = eventList.stream()
+        Map<String, Long> PageViewInfoMap = eventList.stream()
                 .collect(Collectors.groupingBy(EventList::getPageUrl, Collectors.counting()));
 
-        Map.Entry<String, Long> maxEntry = pageViewCountMap.entrySet().stream()
+        Map.Entry<String, Long> maxEntry = PageViewInfoMap.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .orElse(null);
 
@@ -121,4 +126,37 @@ public class CalculateUtil {
 
         return ipAddress;
     }
+
+    public List<PageViewInfo> countAndRankPageViews(List<EventList> events) {
+        Map<String, PageViewInfo> pageViewInfoMap = new HashMap<String, PageViewInfo>();
+        events.stream().forEach(event->{
+            PageViewInfo current = !ObjectUtils.isEmpty(pageViewInfoMap.get(event.getPageUrl())) ? pageViewInfoMap.get(event.getPageUrl()): new PageViewInfo();
+            pageViewInfoMap.put(event.getPageUrl(),current);
+        });
+
+        // 使用Map统计每个页面URL出现的次数
+        Map<String, Long> PageViewInfos = events.stream()
+                .collect(Collectors.groupingBy(EventList::getPageUrl, Collectors.counting()));
+
+        // 对页面访问次数进行排序（从高到低）
+        List<Map.Entry<String, Long>> sortedEntries = new ArrayList<>(PageViewInfos.entrySet());
+        sortedEntries.sort(Map.Entry.<String, Long>comparingByValue().reversed());
+
+        // 取前10条记录
+        List<PageViewInfo> topTenPageViews = new ArrayList<>();
+        for (int i = 0; i < Math.min(sortedEntries.size(), 10); i++) {
+            Map.Entry<String, Long> entry = sortedEntries.get(i);
+            PageViewInfo PageViewInfo = new PageViewInfo(entry.getKey(), entry.getValue());
+            topTenPageViews.add(PageViewInfo);
+        }
+
+        return topTenPageViews;
+    }
+    public  Map<String, Long> calculateErrorsType(List<Errors> errors) {
+        Map<String, Long> errorsTypeMap = errors.stream()
+                .collect(Collectors.groupingBy(Errors::getErrorType, Collectors.counting()));
+
+        return errorsTypeMap != null ? errorsTypeMap : null;
+    }
+
 }

@@ -7,55 +7,43 @@ import type { DataItem } from '../data.d';
 import useStyles from '../style.style';
 const { Text } = Typography;
 const ProportionSales = ({
-  dropdownGroup,
+  handleGroup,
   salesType,
   loading,
-  salesPieData,
+  errorsTypeList,
   handleChangeSalesType,
 }: {
   loading: boolean;
-  dropdownGroup: React.ReactNode;
+  handleGroup: React.ReactNode;
   salesType: 'all' | 'online' | 'stores';
-  salesPieData: DataItem[];
+  errorsTypeList: any[];
   handleChangeSalesType?: (e: RadioChangeEvent) => void;
 }) => {
+  console.log('🚀 ~ errorsTypeList:', errorsTypeList);
   const { styles } = useStyles();
   return (
     <Card
       loading={loading}
       className={styles.salesCard}
       bordered={false}
-      title="销售额类别占比"
+      title="错误类别占比"
       style={{
         height: '100%',
       }}
-      extra={
-        <div className={styles.salesCardExtra}>
-          {dropdownGroup}
-          <div className={styles.salesTypeRadio}>
-            <Radio.Group value={salesType} onChange={handleChangeSalesType}>
-              <Radio.Button value="all">全部渠道</Radio.Button>
-              <Radio.Button value="online">线上</Radio.Button>
-              <Radio.Button value="stores">门店</Radio.Button>
-            </Radio.Group>
-          </div>
-        </div>
-      }
     >
       <div>
-        <Text>销售额</Text>
         <Pie
           height={340}
           radius={0.8}
           innerRadius={0.5}
-          angleField="y"
-          colorField="x"
-          data={salesPieData as any}
+          angleField="value"
+          colorField="type"
+          data={errorsTypeList as any}
           legend={false}
           label={{
             position: 'spider',
-            text: (item: { x: number; y: number }) => {
-              return `${item.x}: ${numeral(item.y).format('0,0')}`;
+            text: (item: { type: number; value: number }) => {
+              return `${item.type}: ${numeral(item.value).format('0,0')}`;
             },
           }}
         />

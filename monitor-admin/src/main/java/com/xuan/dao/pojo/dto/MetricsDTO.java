@@ -11,6 +11,7 @@ import java.time.Instant;
 public class MetricsDTO {
     private Instant startTime;
     private Instant endTime;
+    private String appId;
     private String userId;
 
     public Instant getStartTimeOrDefault(Instant defaultValue) {
@@ -19,6 +20,10 @@ public class MetricsDTO {
 
     public Instant getEndTimeOrDefault(Instant defaultValue) {
         return endTime != null ? endTime : defaultValue;
+    }
+
+    public String getAppIdOrDefault() {
+        return appId != null ? appId : null;
     }
 
     public String getUserIdOrDefault() {

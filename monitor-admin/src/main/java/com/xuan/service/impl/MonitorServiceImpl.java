@@ -21,17 +21,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.utils.CalculateUtil;
-import com.xuan.dao.mapper.ErrorMapper;
-import com.xuan.dao.mapper.MetricsMapper;
-import com.xuan.dao.mapper.UserMapper;
-import com.xuan.dao.mapper.WebpvuvMapper;
+import com.xuan.dao.mapper.*;
 import com.xuan.dao.model.Location;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.EventsDTO;
-import com.xuan.dao.pojo.entity.Errors;
-import com.xuan.dao.pojo.entity.Metrics;
-import com.xuan.dao.pojo.entity.Users;
-import com.xuan.dao.pojo.entity.Webpvuv;
+import com.xuan.dao.pojo.entity.*;
 import com.xuan.dao.pojo.vo.ReportVo;
 import com.xuan.service.ESDocumentService;
 import com.xuan.service.MonitorService;
@@ -48,6 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.awt.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,7 +72,8 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
     @Autowired
     public ErrorMapper errorMapper;
 
-
+    @Autowired
+    public SystemsMapper systemsMapper;
 
     @Autowired
     private ElasticsearchClient client;
@@ -99,6 +95,15 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
         Location location = eventsDto.getLocation();
         List<Map<String, Object>> actionList = eventsDto.getActionList();
         List<Map<String, Object>> eventList = eventsDto.getEventList();
+
+        if(!systemsMapper.exists(new LambdaQueryWrapper<Systems>().eq(Systems::getAppId,appId))){
+            systemsMapper.insert(Systems.builder()
+                    .appId(appId)
+                    .appName(appId)
+                    .appType(platform)
+                    .createTime(OffsetDateTime.now())
+                    .build());
+        }
 
         // 使用Java 8 Optional处理用户查询结果，避免空指针异常
         Optional<Users> optionalCurrentUser = Optional.ofNullable(userMapper.selectOne(

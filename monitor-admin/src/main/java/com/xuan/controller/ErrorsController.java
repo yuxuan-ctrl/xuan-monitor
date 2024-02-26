@@ -29,8 +29,9 @@ public class ErrorsController {
 
     @GetMapping("/getPageData")
     @ApiOperation("错误列表获取")
-    public Result<IPage<Errors>> getPageData(@RequestParam int pageIndex, @RequestParam int pageSize) throws IOException {
-        IPage<Errors> res = errorsService.selectPage(pageIndex,pageSize);
+    public Result<IPage<Errors>> getPageData(@RequestParam int pageIndex, @RequestParam int pageSize
+            ,@RequestParam(required = false, name = "userId",defaultValue = "") String userId) throws IOException {
+        IPage<Errors> res = errorsService.selectPage(pageIndex,pageSize,userId);
         return Result.success(res);
     }
 

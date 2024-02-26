@@ -1,6 +1,6 @@
 import { ProList } from '@ant-design/pro-components';
 import { Button, Space, Tag } from 'antd';
-import { useRequest } from '@umijs/max';
+import { useRequest, history } from '@umijs/max';
 import { useState, type FC } from 'react';
 import api from '@/services/monitor';
 import AvatarImg from '../../../public/icons/avatar.png'; // 引入图片
@@ -10,10 +10,11 @@ const Errors: FC = () => {
     pageIndex: 1,
     pageSize: 10,
   });
+  const [userId, setUserId] = useState('');
   // Request
-  const { loading, data } = useRequest(() => api.errorsController.getPageDataUsingGet(pagination), {
+  const { loading, data } = useRequest(() => api.errorsController.getPageDataUsingGet({...pagination,userId}), {
     // 这里设置默认请求时使用的参数
-    refreshDeps: [pagination.pageIndex],
+    refreshDeps: [pagination.pageIndex,userId],
   });
 
   console.log('🚀 ~ data:', data);
@@ -24,16 +25,22 @@ const Errors: FC = () => {
       return { ...prev, pageIndex: val };
     });
   };
+
+  const gotoFun = (type, row) => {
+    console.log('🚀 ~ gotoFun ~ row:', row);
+    switch (type) {
+      case 'details':
+        history.push('/errors/details', { id: row.esErrorId });
+        break;
+    }
+  };
   return (
     <ProList<API.Errors>
-      // toolBarRender={() => {
-      //   return [
-      //     <Button key="3" type="primary">
-      //       新建
-      //     </Button>,
-      //   ];
-      // }}
       search={{}}
+      request={(val) => {
+        console.log("🚀 ~ val:", val)
+        setUserId(val?.userId)
+      }}
       rowKey="name"
       headerTitle="基础列表"
       dataSource={data?.records || []}
@@ -62,7 +69,6 @@ const Errors: FC = () => {
         subTitle: {
           dataIndex: 'errorType',
           render: (_, row) => {
-            console.log('🚀 ~ row:', row);
             return (
               <Space size={0}>
                 <Tag color="blue" key={row.esErrorId}>
@@ -75,38 +81,32 @@ const Errors: FC = () => {
         },
         actions: {
           render: (text, row) => [
-            <a href={row.url} target="_blank" rel="noopener noreferrer" key="link">
-              链路
-            </a>,
-            <a href={row.url} target="_blank" rel="noopener noreferrer" key="warning">
-              报警
-            </a>,
-            <a href={row.url} target="_blank" rel="noopener noreferrer" key="view">
+            <a key="view" onClick={() => gotoFun('details', row)}>
               查看
             </a>,
           ],
           search: false,
         },
-        status: {
-          // 自己扩展的字段，主要用于筛选，不在列表中显示
-          title: '状态',
-          valueType: 'select',
-          valueEnum: {
-            all: { text: '全部', status: 'Default' },
-            open: {
-              text: '未解决',
-              status: 'Error',
-            },
-            closed: {
-              text: '已解决',
-              status: 'Success',
-            },
-            processing: {
-              text: '解决中',
-              status: 'Processing',
-            },
-          },
-        },
+        // status: {
+        //   // 自己扩展的字段，主要用于筛选，不在列表中显示
+        //   title: '状态',
+        //   valueType: 'select',
+        //   valueEnum: {
+        //     all: { text: '全部', status: 'Default' },
+        //     open: {
+        //       text: '未解决',
+        //       status: 'Error',
+        //     },
+        //     closed: {
+        //       text: '已解决',
+        //       status: 'Success',
+        //     },
+        //     processing: {
+        //       text: '解决中',
+        //       status: 'Processing',
+        //     },
+        //   },
+        // },
       }}
     />
   );

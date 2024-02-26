@@ -83,6 +83,12 @@ export default [
         name: 'errorsList',
         component: './Errors',
       },
+      {
+        path: '/errors/details',
+        name: 'errorsDetails',
+        component: './Errors/details',
+        hideInMenu: true,
+      },
     ],
   },
   {

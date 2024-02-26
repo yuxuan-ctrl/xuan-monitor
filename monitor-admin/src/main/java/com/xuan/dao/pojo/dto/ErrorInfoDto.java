@@ -25,10 +25,11 @@ public class ErrorInfoDto extends PageDTO{
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     Timestamp timestamp;
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
+    private String createTime;
     String appId;
     String userId;
     String url;
+    String requestUrl;
 
     //    String operationSequence;
 //    String logContext;

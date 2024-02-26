@@ -7,6 +7,7 @@ declare namespace API {
     pageIndex?: number;
     pageSize?: number;
     record?: string[];
+    requestUrl?: string;
     stackTrace?: string;
     timestamp?: Timestamp;
     url?: string;
@@ -66,6 +67,8 @@ declare namespace API {
     pageIndex: number;
     /** pageSize */
     pageSize: number;
+    /** userId */
+    userId?: string;
   };
 
   type getUserByIdUsingGETParams = {
@@ -172,6 +175,12 @@ declare namespace API {
   type ResultListMetricsVo = {
     code?: number;
     data?: MetricsVo[];
+    msg?: string;
+  };
+
+  type ResultListSystemsduixiang = {
+    code?: number;
+    data?: Systemsduixiang[];
     msg?: string;
   };
 

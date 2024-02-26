@@ -5,6 +5,7 @@ export default {
   'menu.admin': '管理页',
   'menu.errors': '错误管理页',
   'menu.errors.errorsList': '错误列表',
+  'menu.errors.errorsDetails': '错误详情',
   'menu.admin.sub-page': '二级管理页',
   'menu.login': '登录',
   'menu.register': '注册',

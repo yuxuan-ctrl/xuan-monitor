@@ -76,7 +76,6 @@ export default class ErrorTracker {
 
   async collectError(error: Error | string | HttpError) {
     let errorInfo = this.getCommonErrorInfo(error);
-
     if (error instanceof HttpError) {
       errorInfo.errorType = 'XHR ERROR';
       errorInfo.method = error.method;

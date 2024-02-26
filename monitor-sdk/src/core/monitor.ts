@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-26 15:02:20
+ * @LastEditTime: 2024-02-26 17:39:38
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -105,8 +105,9 @@ export default class Monitor extends EventManager {
   }
 
   @Listener('error')
-  public async onError(error: Error) {
-    this.reportError(error);
+  public async onError(error: ErrorEvent) {
+    console.log("🚀 ~ Monitor ~ onError ~ error:", error)
+    this.reportError(error.error);
   }
 
   @Listener('unhandledrejection')

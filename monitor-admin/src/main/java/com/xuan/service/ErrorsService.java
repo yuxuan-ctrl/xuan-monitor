@@ -21,7 +21,7 @@ import java.util.List;
  */
 public interface ErrorsService extends IService<Errors> {
 
-    IPage<Errors> selectPage(int pageIndex,int pageSize);
+    IPage<Errors> selectPage(int pageIndex,int pageSize,String userId);
     ErrorInfoDto getDetails(String id) throws IOException;
     List<Users> selectList();
     Users selectById(String id);

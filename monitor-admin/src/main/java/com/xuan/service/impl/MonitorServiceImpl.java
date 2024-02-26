@@ -172,7 +172,7 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
         if (!exists.value()) {
             client.indices().create(c -> c.index("errors"));
         }else{
-            errorInfoDto.setCreateTime(LocalDateTime.now());
+            errorInfoDto.setCreateTime(LocalDateTime.now().toString());
             IndexResponse response = elasticService.createByJson("errors", UUID.randomUUID().toString(), JSON.toJSONString(errorInfoDto));
             System.out.println("response.toString() -> " + response.toString());
             Errors errors = new Errors();

@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-23 10:25:47
+ * @LastEditTime: 2024-02-26 15:02:20
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -115,7 +115,7 @@ export default class Monitor extends EventManager {
     promise: Promise<any>;
     reason: Error;
   }) {
-    // this.reportError(error.reason);
+    this.reportError(error.reason);
   }
 
   public stopTracking() {

@@ -1,5 +1,6 @@
 package com.xuan.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -33,7 +34,7 @@ public class ErrorsServiceImpl extends ServiceImpl<ErrorMapper, Errors> implemen
     @Override
     public IPage<Errors> selectPage(int pageIndex,int pageSize) {
         Page<Errors> page = new Page<Errors>(pageIndex, pageSize);
-        IPage<Errors> errorsIPage = errorMapper.selectPage(page, null);
+        IPage<Errors> errorsIPage = errorMapper.selectPage(page, new LambdaQueryWrapper<Errors>().orderByDesc(Errors::getCreateTime));
         return errorsIPage;
     }
 

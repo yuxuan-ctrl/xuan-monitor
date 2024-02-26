@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-22 16:29:08
+ * @LastEditTime: 2024-02-26 09:20:54
  * @FilePath: \monitor-ui-2\config\routes.ts
  * @Description:
  *
@@ -69,19 +69,19 @@ export default [
     ],
   },
   {
-    path: '/admin',
-    name: 'admin',
+    path: '/errors',
+    name: 'errors',
     icon: 'crown',
-    access: 'canAdmin',
+    access: false,
     routes: [
       {
-        path: '/admin',
-        redirect: '/admin/sub-page',
+        path: '/errors',
+        redirect: '/errors/list',
       },
       {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        component: './Admin',
+        path: '/errors/list',
+        name: 'errorsList',
+        component: './Errors',
       },
     ],
   },

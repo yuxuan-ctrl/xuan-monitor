@@ -55,7 +55,8 @@ export default class Record {
           DB_CONFIG.RECORD_STORE_NAME
         );
       },
-      checkoutEveryNms: 1000 * 60 * 10,
+      checkoutEveryNms: 10 * 1000, // 每10秒重新制作快照
+      checkoutEveryNth: 200, // 每 200 个 event 重新制作快照
     });
     return this.stopFn;
   }

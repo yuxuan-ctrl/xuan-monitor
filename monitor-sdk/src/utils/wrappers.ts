@@ -4,13 +4,22 @@ import HttpError from '../model/HttpError';
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
   return function wrappedFetch(...args) {
+    const method = args[1].method;
+    let errorContext = new Error().stack;
     try {
       return originalFetch
         .apply(this, args)
         .then(async (response) => {
           if (!response.ok) {
-            const message = `${response.status} ${response.statusText} at url:${response.url} `;
-            const error = new Error(message, response);
+            const error = new HttpError(
+              response.status,
+              method,
+              response.url,
+              response,
+              `HTTP Error ${response.status} config : ${response.statusText}`,
+              response,
+              errorContext
+            );
             callback(error); // 调用回调函数，将错误传递给上层处理
           }
 
@@ -24,6 +33,7 @@ function wrapFetch(originalFetch, callback) {
     } catch (err) {
       console.log(err);
     }
+    errorContext = null;
   };
 }
 
@@ -129,7 +139,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   let method = null;
   let requestUrl = null;
   let data = null;
-
+  let errorContext = '';
   function wrappedXMLHttpRequest() {
     const originalRequest = new OriginalXMLHttpRequest();
 
@@ -141,14 +151,16 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         requestUrl = args[1];
         originalOpen.apply(this, args);
       } catch (error) {
+        console.log('🚀 ~ wrappedXMLHttpRequest ~ error:', error);
         // 在这里收集错误信息，例如记录到日志或发送到服务器
         callback(error); // 调用回调函数，将错误传递给上层处理
         throw error;
       }
     };
+
     //  // 保存原始的 onreadystatechange 函数
     const originalOnReadyStateChange = originalRequest.onreadystatechange;
-    originalRequest.onreadystatechange = function () {
+    originalRequest.onreadystatechange = function (event) {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
         if (originalRequest.status >= 400) {
           const error = new HttpError(
@@ -157,7 +169,8 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
             requestUrl,
             data,
             `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`,
-            originalRequest
+            originalRequest,
+            errorContext
           );
           callback(error); // 调用回调函数，将错误传递给上层处理
         }
@@ -171,7 +184,9 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
 
     // 包裹 send 方法
     const originalSend = originalRequest.send;
-    originalRequest.send = function (...args) {
+
+    OriginalXMLHttpRequest.prototype.send = function (...args) {
+      errorContext = new Error().stack;
       try {
         data = args[0];
         originalSend.apply(this, args);
@@ -184,6 +199,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     method = null;
     requestUrl = null;
     data = null;
+    errorContext = null;
     return originalRequest;
   }
 

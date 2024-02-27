@@ -21,9 +21,6 @@ public class Metrics {
     @TableId(value = "id", type = IdType.AUTO)
     public String id; // 假设id字段类型为Long，由于是 SERIAL PRIMARY KEY，所以使用@Id和@TableId注解，并设置type=IdType.AUTO
 
-    @TableField("date")
-    public String date;
-
     @TableField("most_visited_page_id")
     public String mostVisitedPageId;
 

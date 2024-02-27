@@ -41,9 +41,7 @@ public class TrafficAnalyticsAggregationTask {
         esDocumentService.ensureIndexExists("events", "actions");
         List<EventList> eventList = esDocumentService.queryPastHours("events", "timestamp", EventList.class,new MetricsDTO());
         if(!eventList.isEmpty()){
-            LocalDate date = LocalDate.ofInstant(eventList.get(eventList.size()-1).getTimestamp().toInstant(), ZoneId.systemDefault()).minusDays(1); // 假设timestamp是前一天的
             Metrics metrics = calculateUtil.calculateMetrics(eventList);
-            metrics.setDate(DateFormatUtils.format(date.atStartOfDay()));
             metricsMapper.insert(metrics);
         }
     }

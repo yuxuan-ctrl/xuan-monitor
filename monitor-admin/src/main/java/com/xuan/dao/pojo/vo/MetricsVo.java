@@ -19,6 +19,7 @@ public class MetricsVo extends Metrics {
     private Long resolvedErrorCount;
     private List<PageViewInfo> popularList;
     private Map<String,Long> errorsTypeMap;
+    private Long realTimeUsers;
     public MetricsVo(Long totalPageViews, Integer uniqueVisitors, String createTime) {
         this.setTotalPageViews(totalPageViews);
         this.setUniqueVisitors(uniqueVisitors);

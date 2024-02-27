@@ -71,6 +71,11 @@ declare namespace API {
     userId?: string;
   };
 
+  type getSystemsByIdUsingGETParams = {
+    /** appId */
+    appId: string;
+  };
+
   type getUserByIdUsingGETParams = {
     /** id */
     id: string;
@@ -108,7 +113,6 @@ declare namespace API {
     allUsersLength?: number;
     averageStayDuration?: number;
     createTime?: string;
-    date?: string;
     id?: string;
     mostFrequentPlatform?: string;
     mostFrequentScreenResolution?: string;
@@ -124,7 +128,6 @@ declare namespace API {
     averageStayDuration?: number;
     createTime?: string;
     dailyErrorCount?: number;
-    date?: string;
     errorsTypeMap?: Record<string, any>;
     id?: string;
     mostFrequentPlatform?: string;
@@ -193,6 +196,12 @@ declare namespace API {
   type ResultReportVo = {
     code?: number;
     data?: ReportVo;
+    msg?: string;
+  };
+
+  type ResultSystemsduixiang = {
+    code?: number;
+    data?: Systemsduixiang;
     msg?: string;
   };
 

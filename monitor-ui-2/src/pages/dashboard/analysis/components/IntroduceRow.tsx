@@ -1,12 +1,13 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Area, Column } from '@ant-design/plots';
-import { Col, Progress, Row, Tooltip } from 'antd';
+import { Col, Progress, Row, Tooltip, Empty } from 'antd';
 import numeral from 'numeral';
 import type { DataItem } from '../data.d';
 import useStyles from '../style.style';
-import Yuan from '../utils/Yuan';
 import { ChartCard, Field } from './Charts';
 import Trend from './Trend';
+import { getConditionalComponent } from '@/utils/index.tsx';
+
 const topColResponsiveProps = {
   xs: 24,
   sm: 12,
@@ -27,6 +28,68 @@ const IntroduceRow = ({
   hoursBack: string;
 }) => {
   const { styles } = useStyles();
+  const PvComponent = ({ visitData }) => {
+    const trendValue =
+      visitData.totalPageViews! > visitData.pastByMetric?.totalPageViews
+        ? visitData.totalPageViews - visitData.pastByMetric?.totalPageViews
+        : visitData.pastByMetric?.totalPageViews - visitData.totalPageViews;
+
+    return (
+      <>
+        {visitData.totalPageViews! > visitData.pastByMetric?.totalPageViews ? (
+          <Trend
+            flag="up"
+            style={{
+              marginRight: 16,
+            }}
+          >
+            较前一天新增流量
+            <span className={styles.trendText}>{trendValue}</span>
+          </Trend>
+        ) : (
+          <Trend
+            flag="down"
+            style={{
+              marginRight: 16,
+            }}
+          >
+            较前一天减少流量
+            <span className={styles.trendText}>{trendValue}</span>
+          </Trend>
+        )}
+      </>
+    );
+  };
+
+  const UvComponent: React.FC = ({ visitData }) => {
+    const diff = visitData.uniqueVisitors - (visitData.pastByMetric?.uniqueVisitors || 0);
+
+    return (
+      <div>
+        {diff > 0 ? (
+          <Trend
+            flag="up"
+            style={{
+              marginRight: 16,
+            }}
+          >
+            较前一天新增用户
+            <span className={styles.trendText}>{diff}</span>
+          </Trend>
+        ) : (
+          <Trend
+            flag="down"
+            style={{
+              marginRight: 16,
+            }}
+          >
+            较前一天减少用户
+            <span className={styles.trendText}>{-diff}</span>
+          </Trend>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Row gutter={24}>
@@ -40,34 +103,14 @@ const IntroduceRow = ({
               <InfoCircleOutlined />
             </Tooltip>
           }
-          total={visitData.uniqueVisitors}
+          total={<Field label="" value={visitData.totalPageViews}></Field>}
           footer={<Field label="总用户数" value={visitData.allUsersLength} />}
           contentHeight={46}
         >
-          {visitData.uniqueVisitors! > visitData.pastByMetric?.uniqueVisitors ? (
-            <Trend
-              flag="up"
-              style={{
-                marginRight: 16,
-              }}
-            >
-              较前一天新增用户
-              <span className={styles.trendText}>
-                {visitData.uniqueVisitors - visitData.pastByMetric?.uniqueVisitors}
-              </span>
-            </Trend>
-          ) : (
-            <Trend
-              flag="down"
-              style={{
-                marginRight: 16,
-              }}
-            >
-              较前一天减少用户
-              <span className={styles.trendText}>
-                {visitData.pastByMetric?.uniqueVisitors - visitData.uniqueVisitors}
-              </span>
-            </Trend>
+          {getConditionalComponent(
+            visitData.totalPageViews, // 条件
+            UvComponent, // 组件
+            { visitData }, // 传递给组件的props
           )}
         </ChartCard>
       </Col>
@@ -81,34 +124,14 @@ const IntroduceRow = ({
               <InfoCircleOutlined />
             </Tooltip>
           }
-          total={visitData.totalPageViews}
+          total={() => <Field label="" value={visitData.totalPageViews}></Field>}
           footer={<Field label="今日访问流量" value={visitData.averageStayDuration?.toFixed(2)} />}
           contentHeight={46}
         >
-          {visitData.totalPageViews! > visitData.pastByMetric?.totalPageViews ? (
-            <Trend
-              flag="up"
-              style={{
-                marginRight: 16,
-              }}
-            >
-              较前一天新增流量
-              <span className={styles.trendText}>
-                {visitData.totalPageViews - visitData.pastByMetric?.totalPageViews}
-              </span>
-            </Trend>
-          ) : (
-            <Trend
-              flag="down"
-              style={{
-                marginRight: 16,
-              }}
-            >
-              较前一天减少流量
-              <span className={styles.trendText}>
-                {visitData.pastByMetric?.totalPageViews - visitData.totalPageViews}
-              </span>
-            </Trend>
+          {getConditionalComponent(
+            visitData.totalPageViews, // 条件
+            PvComponent, // 组件
+            { visitData }, // 传递给组件的props
           )}
         </ChartCard>
       </Col>
@@ -168,36 +191,14 @@ const IntroduceRow = ({
           }
           loading={loading}
           total={() => <Field label="" value={visitData.mostVisitedPageId}></Field>}
-          footer={<Field label="最高访问次数" value={`${visitData.mostVisitedPageViews}`} />}
+          footer={<Field label="最高访问次数" value={visitData.mostVisitedPageViews} />}
           contentHeight={46}
         >
-          {/* <Trend
-            flag="up"
-            style={{
-              marginRight: 16,
-            }}
-          >
-            周同比
-            <span className={styles.trendText}>12%</span>
-          </Trend>
-          <Trend flag="down">
-            日同比
-            <span className={styles.trendText}>11%</span>
-          </Trend> */}
-          <Area
-            xField="x"
-            yField="y"
-            shapeField="smooth"
-            height={46}
-            axis={false}
-            style={{
-              fill: 'linear-gradient(-90deg, white 0%, #975FE4 100%)',
-              fillOpacity: 0.6,
-              width: '100%',
-            }}
-            padding={-20}
-            data={visitData}
-          />
+        {getConditionalComponent(
+            visitData.mostVisitedPageId, // 条件
+            Area, // 组件
+            { visitData }, // 传递给组件的props
+          )}
         </ChartCard>
       </Col>
     </Row>

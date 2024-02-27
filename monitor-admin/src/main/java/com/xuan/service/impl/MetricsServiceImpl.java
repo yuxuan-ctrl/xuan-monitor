@@ -8,6 +8,7 @@ import com.mchange.v1.db.sql.ConnectionUtils;
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.dao.mapper.ErrorMapper;
 import com.xuan.dao.mapper.MetricsMapper;
+import com.xuan.dao.mapper.SystemsMapper;
 import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.model.EventList;
 import com.xuan.dao.model.PageViewInfo;
@@ -15,11 +16,13 @@ import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
+import com.xuan.dao.pojo.entity.Systems;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.dao.pojo.vo.MetricsVo;
 import com.xuan.service.ESDocumentService;
 import com.xuan.service.ErrorsService;
 import com.xuan.service.MetricsService;
+import com.xuan.service.SystemsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,9 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
 
     @Autowired
     private MetricsMapper metricsMapper;
+
+    @Autowired
+    private SystemsService systemsService;
 
     @Autowired
     private ErrorMapper errorMapper;
@@ -86,8 +92,12 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
         return metricList.stream().map(metrics -> new MetricsVo(metrics.getTotalPageViews(),metrics.getUniqueVisitors(),metrics.getCreateTime())).collect(Collectors.toList());
     }
 
+    @Override
+    public MetricsVo getAppsDashboardData() {
+        List<Systems> systemList = systemsService.getSystemList();
 
-
+        return null;
+    }
 
 
 }

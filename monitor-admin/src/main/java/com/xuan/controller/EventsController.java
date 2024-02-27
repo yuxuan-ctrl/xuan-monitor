@@ -69,5 +69,14 @@ public class EventsController {
         return Result.success(res);
     }
 
+    @GetMapping("/getAppsDashboardData")
+    @ApiOperation("获取图表数据")
+    public Result<MetricsVo> getAppsDashboardData() throws IOException {
+
+
+
+        MetricsVo res = metricsService.getAppsDashboardData();
+        return Result.success(res);
+    }
 }
 

@@ -1,5 +1,5 @@
 import { Column, Line } from '@ant-design/plots';
-import { Card, Col, DatePicker, Row, Tabs } from 'antd';
+import { Card, Col, DatePicker, Row, Tabs, Empty } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type dayjs from 'dayjs';
 import useStyles from '../style.style';
@@ -92,7 +92,15 @@ const ChartsCard = ({
                 <Row>
                   <Col xl={24} lg={24} md={24} sm={24} xs={24}>
                     <div className={styles.salesBar}>
-                      <Line {...baseConfig} yField="totalPageViews" />
+                      {Array.isArray(chartsData) && chartsData.length > 0 ? (
+                        <Line {...baseConfig} yField="totalPageViews" />
+                      ) : (
+                        <Empty
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          imageStyle={{ height: 60 }}
+                          description={<span>暂无PV数据</span>}
+                        ></Empty>
+                      )}
                     </div>
                   </Col>
                 </Row>
@@ -105,7 +113,15 @@ const ChartsCard = ({
                 <Row>
                   <Col xl={24} lg={24} md={24} sm={24} xs={24}>
                     <div className={styles.salesBar}>
-                      <Line {...baseConfig} yField="uniqueVisitors" />
+                      {Array.isArray(chartsData) && chartsData.length > 0 ? (
+                        <Line {...baseConfig} yField="uniqueVisitors" />
+                      ) : (
+                        <Empty
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          imageStyle={{ height: 60 }}
+                          description={<span>暂无UV数据</span>}
+                        ></Empty>
+                      )}
                     </div>
                   </Col>
                 </Row>

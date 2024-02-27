@@ -25,4 +25,6 @@ public interface MetricsService extends IService<Metrics> {
     MetricsVo getMetrics(String appId, Instant startTime, Instant endTime,String userId) throws IOException;
     List<MetricsVo> getChartsData (String appId, Instant startTime, Instant endTime) throws IOException;
 
+MetricsVo getAppsDashboardData();
+
 }

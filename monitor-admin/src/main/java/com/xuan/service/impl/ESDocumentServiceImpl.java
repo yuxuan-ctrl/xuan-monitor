@@ -348,8 +348,6 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         List<EventList> eventList = this.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
         if(!eventList.isEmpty()){
             Metrics metrics = calculateUtil.calculateMetrics(eventList);
-            LocalDate date = LocalDate.ofInstant(eventList.get(eventList.size()-1).getTimestamp().toInstant(), ZoneId.systemDefault()).minusDays(1); // 假设timestamp是前一天的
-            metrics.setDate(DateFormatUtils.format(date.atStartOfDay()));
             return metrics;
         }
         return null;

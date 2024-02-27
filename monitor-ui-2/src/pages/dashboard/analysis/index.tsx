@@ -2,13 +2,12 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 15:35:31
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-23 18:11:23
+ * @LastEditTime: 2024-02-27 08:57:18
  * @FilePath: \monitor-ui-2\src\pages\dashboard\analysis\index.tsx
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import { EllipsisOutlined } from '@ant-design/icons';
 import { GridContent } from '@ant-design/pro-components';
 import { useRequest } from '@umijs/max';
 import { Col, DatePicker, Input, Row, Select, DateType } from 'antd';
@@ -18,7 +17,6 @@ import dayjs from 'dayjs';
 import type { FC } from 'react';
 import { Suspense, useEffect, useState } from 'react';
 import IntroduceRow from './components/IntroduceRow';
-import OfflineData from './components/OfflineData';
 import PageLoading from './components/PageLoading';
 import ProportionSales from './components/ProportionSales';
 import type { TimeType } from './components/ChartsCard';
@@ -44,7 +42,7 @@ const Analysis: FC<AnalysisProps> = () => {
   const [currentTabKey, setCurrentTabKey] = useState<string>('');
   const [appId, setAppId] = useState<string>('');
   const [rangePickerValue, setRangePickerValue] = useState<RangePickerValue>(
-    getTimeDistance('week'),
+    getTimeDistance('month'),
   );
 
   //useEffect
@@ -129,8 +127,8 @@ const Analysis: FC<AnalysisProps> = () => {
     setUserId(value);
   };
 
-  const handleChange = (value: DateType | null, dateString: string) => {
-    setCurrentDay(value.format('YYYY-MM-DD'));
+  const handleChange = (value: DateType | null) => {
+    setCurrentDay(value ? value.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'));
   };
 
   const handleSystemChange = (value, dateString: string) => {

@@ -21,6 +21,26 @@ const ProportionSales = ({
 }) => {
   console.log('🚀 ~ errorsTypeList:', errorsTypeList);
   const { styles } = useStyles();
+  const config = {
+    appendPadding: 10,
+    data: errorsTypeList,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.9,
+    label: {
+      type: 'inner',
+      offset: '-30%',
+      style: {
+        fontSize: 14,
+        textAlign: 'center',
+      },
+    },
+    interactions: [
+      {
+        type: 'element-active',
+      },
+    ],
+  };
   return (
     <Card
       loading={loading}
@@ -32,7 +52,8 @@ const ProportionSales = ({
       }}
     >
       <div>
-        <Pie
+        <Pie {...config} />
+        {/* <Pie
           height={340}
           radius={0.8}
           innerRadius={0.5}
@@ -46,7 +67,7 @@ const ProportionSales = ({
               return `${item.type}: ${numeral(item.value).format('0,0')}`;
             },
           }}
-        />
+        /> */}
       </div>
     </Card>
   );

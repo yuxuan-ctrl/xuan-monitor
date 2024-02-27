@@ -9,9 +9,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -36,5 +34,25 @@ public class SystemsController {
         return Result.success(systemsService.list());
     }
 
+
+    @GetMapping("/getSystemsById")
+    @ApiOperation("获取系统详情")
+    public Result<Systems> getSystemsById(@RequestParam(value = "appId",required = true) String appId){
+        return Result.success(systemsService.getSystemById(appId));
+    }
+
+    @PostMapping("/createSystem")
+    @ApiOperation("新增系统")
+    public Result<Systems> createSystem(@RequestBody Systems systems){
+        systemsService.createSystem(systems);
+        return Result.success(null);
+    }
+
+    @PutMapping("/editSystem")
+    @ApiOperation("修改系统")
+    public Result<Systems> editSystem(@RequestBody Systems systems){
+        systemsService.editSystem(systems);
+        return Result.success(null);
+    }
 }
 

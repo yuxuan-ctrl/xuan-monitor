@@ -1,7 +1,6 @@
 package com.xuan.dao.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xuan.dao.pojo.entity.Metrics;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +13,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class  EventList {
+public class ActionsList {
 
     @JsonProperty("appId")
     String appId;

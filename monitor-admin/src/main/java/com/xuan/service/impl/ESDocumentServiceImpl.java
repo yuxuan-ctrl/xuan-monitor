@@ -39,9 +39,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ESDocumentServiceImpl implements ESDocumentService {
 
-    //同步客户端
-    @Autowired
-    private CalculateUtil calculateUtil;
     private final ElasticsearchClient elasticsearchClient;
 
     // 异步客户端
@@ -291,17 +288,17 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         }
 
         if (appId != null && !appId.isEmpty()) {
-            Query termQuery = QueryBuilders.term()
+            Query termQuery = QueryBuilders.match()
                     .field("appId")
-                    .value(appId)
+                    .query(appId)
                     .build()._toQuery();
             boolQueryBuilder.filter(termQuery);
         }
 
         if (userId != null && !userId.isEmpty()) {
-            Query termQuery = QueryBuilders.term()
+            Query termQuery = QueryBuilders.match()
                     .field("userId")
-                    .value(userId)
+                    .query(appId)
                     .build()._toQuery();
             boolQueryBuilder.filter(termQuery);
         }
@@ -347,7 +344,7 @@ public class ESDocumentServiceImpl implements ESDocumentService {
     public Metrics aggregateData(String events, String timestamp, Class<EventList> eventListClass, MetricsDTO metricsDTO) throws IOException {
         List<EventList> eventList = this.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
         if(!eventList.isEmpty()){
-            Metrics metrics = calculateUtil.calculateMetrics(eventList);
+            Metrics metrics = CalculateUtil.calculateMetrics(eventList);
             return metrics;
         }
         return null;

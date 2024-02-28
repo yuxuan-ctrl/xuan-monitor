@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 15:35:31
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-27 08:57:18
+ * @LastEditTime: 2024-02-28 11:27:55
  * @FilePath: \monitor-ui-2\src\pages\dashboard\analysis\index.tsx
  * @Description:
  *
@@ -131,7 +131,7 @@ const Analysis: FC<AnalysisProps> = () => {
     setCurrentDay(value ? value.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'));
   };
 
-  const handleSystemChange = (value, dateString: string) => {
+  const handleSystemChange = (dateString: string, value) => {
     setAppId(dateString);
   };
 

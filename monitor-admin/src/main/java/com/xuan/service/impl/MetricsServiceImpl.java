@@ -68,9 +68,10 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
                 .last("LIMIT 1"));
         Long dailyErrorCount = errorMapper.selectCount(new LambdaQueryWrapper<Errors>()
                 .between(Errors::getCreateTime, startTime, endTime));
-        List<Errors> totalErrorList = errorMapper.selectList(null);
+        List<Errors> totalErrorList = errorMapper.selectList(new LambdaQueryWrapper<Errors>().eq(Errors::getAppId,appId));
         Long resolvedErrorCount = totalErrorList.stream().filter(item-> item.getIsResolved() == 1).count();
-        MetricsVo metricsVo = new MetricsVo(pastByMetric,(long) totalErrorList.size(),dailyErrorCount,resolvedErrorCount,popularList,errorsTypeMap);
+        MetricsVo metricsVo = new MetricsVo(pastByMetric, (long) totalErrorList.size(),dailyErrorCount,resolvedErrorCount,popularList,errorsTypeMap,null);
+
 
         if(!ObjectUtils.isEmpty(metrics)){
             BeanUtils.copyProperties(metrics,metricsVo);
@@ -93,9 +94,9 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
     }
 
     @Override
-    public MetricsVo getAppsDashboardData() {
+    public MetricsVo getAppsDashboardData(String appId,String userId) throws IOException {
         List<Systems> systemList = systemsService.getSystemList();
-
+        List<Users> users = calculateUtil.calculateActiveUsers(appId, userId);
         return null;
     }
 

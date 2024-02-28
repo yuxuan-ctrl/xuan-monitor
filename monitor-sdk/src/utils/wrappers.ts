@@ -4,7 +4,7 @@ import HttpError from '../model/HttpError';
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
   return function wrappedFetch(...args) {
-    const method = args[1].method;
+    const method = args.length > 1 ? args[1]?.method : 'GET';
     let errorContext = new Error().stack;
     try {
       return originalFetch

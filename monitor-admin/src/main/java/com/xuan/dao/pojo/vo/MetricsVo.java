@@ -3,6 +3,7 @@ package com.xuan.dao.pojo.vo;
 import com.xuan.dao.model.PageViewInfo;
 import com.xuan.dao.pojo.entity.Metrics;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

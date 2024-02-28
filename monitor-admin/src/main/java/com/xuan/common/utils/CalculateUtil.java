@@ -5,15 +5,18 @@ import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.model.EventList;
 import com.xuan.dao.model.PageViewInfo;
 import com.xuan.dao.model.PageViewInfo;
+import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Users;
+import com.xuan.service.ESDocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
@@ -24,13 +27,16 @@ import java.util.stream.Collectors;
 public class CalculateUtil {
 
     @Autowired
-    private UserMapper userMapper;
+    private static UserMapper userMapper;
+
+    @Autowired
+    private ESDocumentService esDocumentService;
 
     public CalculateUtil(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
 
-    public  Metrics calculateMetrics(List<EventList> eventList){
+    public static  Metrics calculateMetrics(List<EventList> eventList){
         long totalPageViews = eventList.size();
         Set<String> allUsers = eventList.stream().map(EventList::getUserId).collect(Collectors.toSet());
         long uniqueVisitors = eventList.stream().map(EventList::getUserId).distinct().count();
@@ -157,6 +163,13 @@ public class CalculateUtil {
                 .collect(Collectors.groupingBy(Errors::getErrorType, Collectors.counting()));
 
         return errorsTypeMap != null ? errorsTypeMap : null;
+    }
+
+    public  List<Users> calculateActiveUsers(String appId,String userId) throws IOException {
+        MetricsDTO metricsDTO = new MetricsDTO();
+        List<EventList> eventList = esDocumentService.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
+        List<Object> actionList = esDocumentService.queryPastHours("actions", "timestamp", Object.class,metricsDTO);
+        return null;
     }
 
 }

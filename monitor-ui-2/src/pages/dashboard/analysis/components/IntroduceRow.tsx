@@ -103,7 +103,7 @@ const IntroduceRow = ({
               <InfoCircleOutlined />
             </Tooltip>
           }
-          total={<Field label="" value={visitData.totalPageViews}></Field>}
+          total={<Field label="" value={visitData.uniqueVisitors}></Field>}
           footer={<Field label="总用户数" value={visitData.allUsersLength} />}
           contentHeight={46}
         >
@@ -172,7 +172,7 @@ const IntroduceRow = ({
             <span style={{ width: '100px' }}>解决率:</span>
             <Progress
               percent={
-                (visitData.resolvedErrorCount! / visitData.totalErrorCount!).toFixed(2) * 100
+                (visitData.resolvedErrorCount! / visitData.totalErrorCount!).toFixed(1) * 100
               }
               strokeColor={{ from: '#108ee9', to: '#87d068' }}
               status="active"

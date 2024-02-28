@@ -36,18 +36,10 @@ public class EventsController {
                                         @RequestParam(required = false, name = "userId", defaultValue = "") String userId,
                                         @RequestParam(required = false, name = "currentDay", defaultValue = "") String currentDay) throws IOException {
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateFormatUtils.ISO_8601_EXT_DATE_PATTERN);
-        LocalDate date = LocalDate.parse(currentDay, formatter);
+        List<Instant> adjustedDayBoundary = DateFormatUtils.getAdjustedDayBoundary(currentDay);
 
-        ZoneId targetZoneId = ZoneId.of("Asia/Shanghai");
-
-        // 获取指定日期在上海时区的开始和结束时间
-        ZonedDateTime startDateTime = date.atStartOfDay(targetZoneId);
-        ZonedDateTime endDateTime = date.plusDays(1).atStartOfDay(targetZoneId);
-
-
-        Instant startTime = startDateTime.toInstant().plusMillis(TimeUnit.HOURS.toMillis(8));
-        Instant endTime = endDateTime.toInstant().plusMillis(TimeUnit.HOURS.toMillis(8));
+        Instant startTime = adjustedDayBoundary.get(0);
+        Instant endTime = adjustedDayBoundary.get(1);
 
         MetricsVo res = metricsService.getMetrics(appId, startTime, endTime,userId);
         return Result.success(res);
@@ -71,11 +63,12 @@ public class EventsController {
 
     @GetMapping("/getAppsDashboardData")
     @ApiOperation("获取图表数据")
-    public Result<MetricsVo> getAppsDashboardData() throws IOException {
+    public Result<MetricsVo> getAppsDashboardData(@RequestParam(required = false, name = "appId", defaultValue = "") String appId,
+                                                  @RequestParam(required = false, name = "userId", defaultValue = "") String userId) throws IOException {
 
 
 
-        MetricsVo res = metricsService.getAppsDashboardData();
+        MetricsVo res = metricsService.getAppsDashboardData(appId,userId);
         return Result.success(res);
     }
 }

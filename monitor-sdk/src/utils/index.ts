@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-07 11:30:20
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-02-29 16:10:06
  * @FilePath: \monitor-sdk\src\utils\index.ts
  * @Description:
  *
@@ -38,7 +38,7 @@ export function json2FormData(data) {
  * @return {*}
  */
 export function createUUid(): string {
-  let now = new Date().getTime();
+  let now = getCurrentUnix();
   const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
     /[xy]/g,
     (char) => {
@@ -107,6 +107,10 @@ export function formatDate(date) {
   var seconds = ('0' + date.getSeconds()).slice(-2);
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+export function getCurrentUnix(unix?) {
+  return unix ? new Date(unix).getTime() : new Date().getTime();
 }
 
 export function recursiveTimeout(callback, delay) {

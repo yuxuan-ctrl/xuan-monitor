@@ -1,6 +1,6 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import Monitor from './Monitor';
-
+import { getCurrentUnix } from '../utils';
 interface UVData {
   uniqueKey: string;
   timestamp: number;
@@ -84,7 +84,7 @@ export default class UvTracker {
     // 存储UV数据
     this.uvData = {
       uniqueKey,
-      timestamp: Date.now(),
+      timestamp: getCurrentUnix(),
       ...userInfo,
     };
 

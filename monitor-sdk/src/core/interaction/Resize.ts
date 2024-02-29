@@ -1,6 +1,7 @@
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
+import {  getCurrentUnix } from '../../utils';
 
 let data = null;
 
@@ -30,6 +31,7 @@ export default class ResizeTracker extends EventManager {
           ? Math.min(de.clientHeight, window.innerHeight)
           : window.innerHeight,
       type: this.type,
+      timestamp: getCurrentUnix(),
     };
     console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data);
     this.messageWrapper.enqueue(

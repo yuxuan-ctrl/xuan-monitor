@@ -2,7 +2,7 @@
 ` * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-28 11:07:51
+ * @LastEditTime: 2024-02-29 16:47:57
  * @FilePath: \monitor-sdk\examples\vue\src\main.ts
  * @Description:
  *
@@ -19,7 +19,7 @@ let app: AppInstance | null = null;
 // 将渲染操作放入 mount 函数
 function mount() {
   // Monitor.start(window);
-  const monitor = new Monitor({ appId: '602907c5-e72e-46ea-ab07-09ac01fedb86', baseUrl: '/api' });
+  const monitor = new Monitor({ appId: '1', baseUrl: '/api',userId:'222' });
   monitor.start(window);
   Behavior.start();
   app = createApp(App);

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mchange.v1.db.sql.ConnectionUtils;
 import com.xuan.common.utils.CalculateUtil;
+import com.xuan.common.utils.DateFormatUtils;
 import com.xuan.dao.mapper.ErrorMapper;
 import com.xuan.dao.mapper.MetricsMapper;
 import com.xuan.dao.mapper.SystemsMapper;
@@ -18,6 +19,7 @@ import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Systems;
 import com.xuan.dao.pojo.entity.Users;
+import com.xuan.dao.pojo.vo.AppsDashboardVo;
 import com.xuan.dao.pojo.vo.MetricsVo;
 import com.xuan.service.ESDocumentService;
 import com.xuan.service.ErrorsService;
@@ -32,9 +34,13 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -89,15 +95,36 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
                 .lt(Metrics::getCreateTime, endTime)
                 .orderByAsc(Metrics::getCreateTime));
 
-
         return metricList.stream().map(metrics -> new MetricsVo(metrics.getTotalPageViews(),metrics.getUniqueVisitors(),metrics.getCreateTime())).collect(Collectors.toList());
     }
 
     @Override
-    public MetricsVo getAppsDashboardData(String appId,String userId) throws IOException {
+    public AppsDashboardVo  getAppsDashboardData(String userId) throws IOException {
         List<Systems> systemList = systemsService.getSystemList();
-        List<Users> users = calculateUtil.calculateActiveUsers(appId, userId);
-        return null;
+        HashMap<String, Integer> activeUserMap = new HashMap<>();
+        HashMap<String, Integer> todayUserMap = new HashMap<>();
+        systemList.stream().forEach(system -> {
+            Set<String> activeUsers = null;
+            Set<String> todayUsers = null;
+            try {
+                Instant endTime = Instant.now();
+                Instant startTime =endTime.minusMillis(TimeUnit.HOURS.toMillis(1));
+                activeUsers = calculateUtil.calculateUsersCount(startTime,endTime,system.getAppId(), userId);
+                activeUserMap.put(system.getAppId(),activeUsers.size());
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateFormatUtils.ISO_8601_EXT_DATE_PATTERN);
+                List<Instant> adjustedDayBoundary = DateFormatUtils.getAdjustedDayBoundary(LocalDate.now().format(formatter));
+                Instant currentDayStartTime = adjustedDayBoundary.get(0);
+                Instant currentDayEndTime = adjustedDayBoundary.get(1);
+                todayUsers = calculateUtil.calculateUsersCount(currentDayStartTime,currentDayEndTime,system.getAppId(), userId);
+                todayUserMap.put(system.getAppId(),todayUsers.size());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        AppsDashboardVo appsDashboardVo = new AppsDashboardVo(activeUserMap,todayUserMap);
+        return appsDashboardVo;
     }
 
 

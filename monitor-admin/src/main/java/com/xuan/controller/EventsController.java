@@ -5,6 +5,7 @@ import com.xuan.common.result.Result;
 import com.xuan.common.utils.DateFormatUtils;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
+import com.xuan.dao.pojo.vo.AppsDashboardVo;
 import com.xuan.dao.pojo.vo.MetricsVo;
 import com.xuan.service.MetricsService;
 import io.swagger.annotations.Api;
@@ -20,6 +21,8 @@ import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -63,12 +66,12 @@ public class EventsController {
 
     @GetMapping("/getAppsDashboardData")
     @ApiOperation("获取图表数据")
-    public Result<MetricsVo> getAppsDashboardData(@RequestParam(required = false, name = "appId", defaultValue = "") String appId,
-                                                  @RequestParam(required = false, name = "userId", defaultValue = "") String userId) throws IOException {
+    public Result<AppsDashboardVo> getAppsDashboardData(@RequestParam(required = false, name = "appId", defaultValue = "") String appId,
+                                                    @RequestParam(required = false, name = "userId", defaultValue = "") String userId) throws IOException {
 
 
 
-        MetricsVo res = metricsService.getAppsDashboardData(appId,userId);
+        AppsDashboardVo res = metricsService.getAppsDashboardData(userId);
         return Result.success(res);
     }
 }

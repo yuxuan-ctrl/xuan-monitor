@@ -4,14 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.model.EventList;
 import com.xuan.dao.model.PageViewInfo;
-import com.xuan.dao.model.PageViewInfo;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.service.ESDocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -19,9 +17,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 @Component
 public class CalculateUtil {
@@ -165,11 +164,39 @@ public class CalculateUtil {
         return errorsTypeMap != null ? errorsTypeMap : null;
     }
 
-    public  List<Users> calculateActiveUsers(String appId,String userId) throws IOException {
-        MetricsDTO metricsDTO = new MetricsDTO();
+    public  Set<String> calculateUsersCount(Instant startTime,Instant endTime,String appId,String userId) throws IOException {
+
+        MetricsDTO metricsDTO = new MetricsDTO(startTime,endTime,appId,userId);
         List<EventList> eventList = esDocumentService.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
         List<Object> actionList = esDocumentService.queryPastHours("actions", "timestamp", Object.class,metricsDTO);
-        return null;
+        // 提取并合并用户ID
+        Set<String> allUserIdsFromEvents = extractUserIdsFromEventList(eventList);
+        Set<String> allUserIdsFromActions = extractUserIdsFromActionList(actionList);
+
+// 合并两个集合中的不重复用户ID
+        Set<String> combinedUserIds = new HashSet<>(allUserIdsFromEvents);
+        combinedUserIds.addAll(allUserIdsFromActions);
+        return combinedUserIds;
     }
 
+    // 定义两个方法来提取用户ID
+    private  Set<String> extractUserIdsFromEventList(List<EventList> list) {
+        return list.stream()
+                .map(EventList::getUserId) // 假设EventList类有一个getUserID()方法来获取用户ID
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> extractUserIdsFromActionList(List<Object> list) {
+        Set<String> userIds = new HashSet<>();
+        for (Object obj : list) {
+            if (obj instanceof Map) { // 假设数据是Map类型，其中含有"userId"键
+                Map<String, Object> mapObj = (Map<String, Object>) obj;
+                if (mapObj.containsKey("userId")) {
+                    String userId = (String) mapObj.get("userId");
+                    userIds.add(userId);
+                }
+            }
+        }
+        return userIds;
+    }
 }

@@ -1,4 +1,4 @@
-import { normalizeUrlForPath, formatDate } from '../utils';
+import { normalizeUrlForPath, formatDate,getCurrentUnix } from '../utils';
 import MessageQueueDBWrapper from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
 import HttpError from '../model/HttpError';
@@ -85,8 +85,8 @@ export default class ErrorTracker {
     }
 
     try {
-      const startTime = new Date().getTime() - 120000;
-      const endTime = new Date().getTime() + 300000;
+      const startTime = getCurrentUnix() - 120000;
+      const endTime = getCurrentUnix() + 300000;
       errorInfo.record = await this.getRange(startTime, endTime);
     } catch (screenshotError) {
     }

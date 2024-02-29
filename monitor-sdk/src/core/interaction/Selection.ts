@@ -11,6 +11,7 @@
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
+import {  getCurrentUnix } from '../../utils';
 
 export let data = null;
 
@@ -61,6 +62,7 @@ export default class SelectTracker extends EventManager {
       end: current.focusNode,
       endOffset: current.focusOffset,
       type: this.type,
+      timestamp: getCurrentUnix(),
     };
     console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data);
     this.messageWrapper.enqueue(

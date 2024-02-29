@@ -16,6 +16,7 @@ import {
   isArray,
   normalizeUrlForPath,
   recursiveTimeout,
+  getCurrentUnix
 } from '../utils';
 import { MonitorConfig } from '../types';
 import MessageQueueDBWrapper from './Message';
@@ -55,8 +56,8 @@ export default class Report {
     );
     this.clearIndex();
     recursiveTimeout(async () => {
-      const startTime = new Date().getTime() - 30000;
-      const endTime = new Date().getTime() + 30000;
+      const startTime = getCurrentUnix() - 30000;
+      const endTime = getCurrentUnix() + 30000;
       const trafficList = await this.messageWrapper.dequeue(
         DB_CONFIG.TRAFFIC_STORE_NAME
       );

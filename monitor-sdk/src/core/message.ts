@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-21 14:24:42
+ * @LastEditTime: 2024-02-29 15:37:44
  * @FilePath: \monitor-sdk\src\core\Message.ts
  * @Description:
  *
@@ -10,6 +10,7 @@
  */
 import { IMessage } from '../types';
 import IndexedDBWrapper from '../db/index';
+import {getCurrentUnix} from "../utils";
 
 export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   // 实例
@@ -37,9 +38,9 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
 
   // 添加消息
   public async enqueue(data: any, storeName): Promise<void> {
-    const message:IMessage = {
+    const message: IMessage = {
       data,
-      timestamp: Date.now(),
+      timestamp: getCurrentUnix(),
       status: 'pending',
       pageUrl: data.pageUrl,
     };

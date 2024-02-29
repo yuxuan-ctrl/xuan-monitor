@@ -1,8 +1,5 @@
 import {
-  DownloadOutlined,
   EditOutlined,
-  EllipsisOutlined,
-  ShareAltOutlined,
 } from '@ant-design/icons';
 import { useRequest } from '@umijs/max';
 
@@ -11,7 +8,6 @@ import {
   Button,
   Card,
   Col,
-  Dropdown,
   Form,
   List,
   Row,
@@ -22,11 +18,9 @@ import {
   Result,
   message,
 } from 'antd';
-import numeral from 'numeral';
 import type { FC } from 'react';
 import React, { useRef, useState } from 'react';
 import StandardFormRow from './components/StandardFormRow';
-import type { ListItemDataType } from './data.d';
 import ApplicationForm from './components/StepForm';
 import useStyles from './style.style';
 import AvatarImg from '../../../../public/icons/avatar.png'; // 引入图片
@@ -34,30 +28,6 @@ import api from '@/services/monitor';
 import { ProFormInstance } from '@ant-design/pro-components';
 const { TextArea } = Input;
 
-export function formatWan(val: number) {
-  const v = val * 1;
-  if (!v || Number.isNaN(v)) return '';
-  let result: React.ReactNode = val;
-  if (val > 10000) {
-    result = (
-      <span>
-        {Math.floor(val / 10000)}
-        <span
-          style={{
-            position: 'relative',
-            top: -2,
-            fontSize: 14,
-            fontStyle: 'normal',
-            marginLeft: 2,
-          }}
-        >
-          万
-        </span>
-      </span>
-    );
-  }
-  return result;
-}
 const formItemLayout = {
   wrapperCol: {
     xs: {
@@ -98,6 +68,14 @@ export const Applications: FC<Record<string, any>> = () => {
   const [formData, setFormData] = useState();
   const [form] = Form.useForm();
   const formRef = useRef<ProFormInstance>(form);
+
+  const { data: AppData } = useRequest(
+    () => api.eventsController.getAppsDashboardDataUsingGet(), // 将 currentDay 转为数字类型（如果API需要数字）
+    {
+      // 这里设置默认请求时使用的参数
+      refreshDeps: [], // 当 currentDay 改变时自动重新发起请求
+    },
+  );
 
   const showModal = () => {
     setOpen(true);
@@ -173,7 +151,7 @@ export const Applications: FC<Record<string, any>> = () => {
         </Form>
       </Card>
       <br />
-      <List<ListItemDataType>
+      <List<API.Systemsduixiang>
         rowKey="id"
         grid={{
           gutter: 16,
@@ -202,8 +180,8 @@ export const Applications: FC<Record<string, any>> = () => {
               <Card.Meta avatar={<Avatar size="small" src={AvatarImg} />} title={item.appName} />
               <div>
                 <CardInfo
-                  activeUser={formatWan(item.activeUser)}
-                  newUser={numeral(item.newUser).format('0,0')}
+                  activeUser={AppData?.activeUserMap[item.appId] || 0}
+                  newUser={AppData?.todayUserMap[item.appId] || 0}
                 />
               </div>
             </Card>

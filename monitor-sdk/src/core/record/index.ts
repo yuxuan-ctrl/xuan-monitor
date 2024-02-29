@@ -13,7 +13,7 @@ import rrwebPlayer, { RRwebPlayerOptions } from 'rrweb-player';
 // import 'rrweb-player/dist/style.css';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
-import { normalizeUrlForPath } from '../../utils';
+import { normalizeUrlForPath ,getCurrentUnix} from '../../utils';
 
 interface RecordReplayConfig extends RRwebPlayerOptions {
   startTime?: number | string;
@@ -66,8 +66,8 @@ export default class Record {
   // }
 
   async replay(dom, config?: RecordReplayConfig) {
-    const startTime = config?.startTime || new Date().getTime() - 300000;
-    const endTime = config?.endTime || new Date().getTime() + 3000;
+    const startTime = config?.startTime || getCurrentUnix() - 300000;
+    const endTime = config?.endTime || getCurrentUnix() + 3000;
     const dataList = await this.getRange(startTime, endTime);
     console.log(
       '🚀 ~ Record ~ replay ~  dataList:',

@@ -128,9 +128,12 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
 
         elasticService.ensureIndexExists("events", "actions"); // 一次性检查两个索引
 
-        List<Map<String, Object>> combinedList = combineAndAddAppId(eventList, actionList, appId);
 
-        processAndSaveData(appId, combinedList, Arrays.asList("events", "actions")); // 合并事件和操作列表处理，并一次性保存到两个索引
+        Map dataMap = new HashMap();
+        dataMap.put("events",eventList);
+        dataMap.put("actions",actionList);
+
+        processAndSaveData(appId,userId, dataMap, Arrays.asList("events", "actions")); // 合并事件和操作列表处理，并一次性保存到两个索引
 
         return null; // 根据实际业务需求填充返回值
     }
@@ -152,12 +155,16 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
         return Stream.concat(eventList.stream(), actionList.stream()).collect(Collectors.toList());
     }
 
-    private void processAndSaveData(String appId, List<? extends Map<String, Object>> dataList, List<String> indexNames) {
+    private void processAndSaveData(String appId, String userId,Map<String,List> dataMap, List<String> indexNames) {
         for (String indexName : indexNames) {
+            List<? extends Map<String, Object>> dataList = dataMap.get(indexName);
             dataList.forEach(data -> {
                 data.put("createTime", LocalDateTime.now());
+                data.put("appId", appId);
+                data.put("userId", userId);
                 try {
                     IndexResponse response = elasticService.createByJson(indexName, UUID.randomUUID().toString(), JSON.toJSONString(data));
+                    System.out.printf("reponse->",response);
                     // 可能需要对响应进行处理或记录错误
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to save data to index '" + indexName + "'", e);

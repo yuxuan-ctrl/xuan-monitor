@@ -11,7 +11,7 @@
 
 export let state = [];
 
-import { target } from '../../utils';
+import {  getCurrentUnix,target } from '../../utils';
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
@@ -44,7 +44,7 @@ export default class InputTracker extends EventManager {
         target: JSON.stringify(input),
         value: v,
         type: this.type,
-        
+        timestamp: getCurrentUnix(),
       };
 
       console.log('🚀 ~ ClickTracker ~ handler ~ data:', data);

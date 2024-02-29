@@ -1,6 +1,11 @@
 import { AnalysisData, IMessage } from '../types';
 import Monitor from './Monitor';
-import { normalizeUrlForPath, collectWebVitals,collectSlowResources } from '../utils';
+import {
+  normalizeUrlForPath,
+  getCurrentUnix,
+  collectWebVitals,
+  collectSlowResources,
+} from '../utils';
 
 interface metricType {
   value: number;
@@ -114,7 +119,7 @@ export default class PageViewTracker {
    */
   private async updatePageViewTime(pageId: string) {
     const { fcp, lcp, ttfb, cls, fid } = await collectWebVitals(3000);
-    const slowResources  = await collectSlowResources(3000);
+    const slowResources = await collectSlowResources(3000);
     const metrics = {};
     [fcp, lcp, ttfb, fid, cls].forEach((metric: metricType) => {
       if (!metric) return;
@@ -124,12 +129,12 @@ export default class PageViewTracker {
         navigationType: metric.navigationType,
       };
     });
-    const now = performance.now();
+
     const lastVisitInfo = this.pageVisits.get(pageId);
 
     if (
       lastVisitInfo !== undefined &&
-      now - lastVisitInfo.timestamp < this.minTimeInterval
+      getCurrentUnix() - lastVisitInfo.timestamp < this.minTimeInterval
     ) {
       return; // 如果上次访问时间距离现在小于最小时间间隔，则不计算 PV
     }
@@ -148,12 +153,12 @@ export default class PageViewTracker {
         width: window.screen.width,
         height: window.screen.height,
       },
-      timestamp: now,
+      timestamp: getCurrentUnix(),
       metrics,
       slowResources,
       referrer,
     };
-    console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ pvData:", pvData)
+    console.log('🚀 ~ PageViewTracker ~ updatePageViewTime ~ pvData:', pvData);
     this.pageVisits.set(pageId, pvData);
     const result = this.calculateAndSendPVData(pvData);
     return result;

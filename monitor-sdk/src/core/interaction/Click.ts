@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import { getTime, layout, link, target, text } from '../../utils';
+import { getCurrentUnix, getTime, layout, link, target, text } from '../../utils';
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
@@ -64,6 +64,7 @@ export default class ClickTracker extends EventManager {
           // target: JSON.stringify(targetElement),
           x: pageCoords.x,
           y: pageCoords.y,
+          timestamp: getCurrentUnix(),
           ...relativeCoords,
           button: event.button,
           text: text(targetElement),

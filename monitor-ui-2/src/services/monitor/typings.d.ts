@@ -39,6 +39,13 @@ declare namespace API {
     userId?: string;
   };
 
+  type getAppsDashboardDataUsingGETParams = {
+    /** appId */
+    appId?: string;
+    /** userId */
+    userId?: string;
+  };
+
   type getChartsDataUsingGETParams = {
     /** appId */
     appId?: string;
@@ -136,6 +143,7 @@ declare namespace API {
     mostVisitedPageViews?: number;
     pastByMetric?: Metrics;
     popularList?: PageViewInfo[];
+    realTimeUsers?: number;
     resolvedErrorCount?: number;
     totalErrorCount?: number;
     totalPageViews?: number;

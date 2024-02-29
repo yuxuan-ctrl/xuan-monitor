@@ -1,5 +1,5 @@
 import { Listener, EventManager } from '../../decorator';
-import { getTime, layout, link, target, text } from '../../utils';
+import { getTime,  getCurrentUnix,layout, link, target, text } from '../../utils';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 
@@ -65,6 +65,7 @@ export default class ClipboardTracker extends EventManager {
           type: this.type,
           data: {
             // target: JSON.stringify(event.target),
+            timestamp: getCurrentUnix(),
             clipboardData: dataObject,
           },
           session: new Date().getDate(),

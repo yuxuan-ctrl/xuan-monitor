@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-26 17:39:38
+ * @LastEditTime: 2024-02-29 15:34:04
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -19,6 +19,7 @@ import {
   wrapFetch,
   wrapSetTimeout,
   wrapXMLHttpRequest,
+  getCurrentUnix
 } from '../utils';
 import { Listener, EventManager } from '../decorator';
 import Report from './Report';
@@ -173,7 +174,7 @@ export default class Monitor extends EventManager {
         ...this.uvData,
         ...this.baseInfo,
         userId: this.uvTracker.uniqueKey,
-        timestamp: Date.now(),
+        timestamp: getCurrentUnix(),
         name: DB_CONFIG.TRAFFIC_STORE_NAME,
       };
       this.sendMessage(message, DB_CONFIG.TRAFFIC_STORE_NAME);

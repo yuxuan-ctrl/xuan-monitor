@@ -5,24 +5,17 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.*;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
-import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.utils.CalculateUtil;
-import com.xuan.common.utils.DateFormatUtils;
-import com.xuan.dao.mapper.UserMapper;
 import com.xuan.dao.model.ESDocument;
 import com.xuan.dao.model.EventList;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
-import com.xuan.dao.pojo.entity.Users;
 import com.xuan.service.ESDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -337,7 +330,6 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         String finalScrollId1 = scrollId;
         ClearScrollRequest clearScrollRequest = ClearScrollRequest.of(builder -> builder.scrollId(String.valueOf(finalScrollId1)));
         ClearScrollResponse clearResponse = elasticsearchClient.clearScroll(clearScrollRequest);
-
         return allList;
     }
 

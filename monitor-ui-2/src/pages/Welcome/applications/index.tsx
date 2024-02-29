@@ -50,7 +50,7 @@ const CardInfo: React.FC<{
         <p>{activeUser}</p>
       </div>
       <div>
-        <p>新增用户</p>
+        <p>今日用户</p>
         <p>{newUser}</p>
       </div>
     </div>

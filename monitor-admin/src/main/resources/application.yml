@@ -2,6 +2,8 @@ server:
   port: 5200
 
 spring:
+  datastore:
+    type: clickhouse
   datasource:
     url: jdbc:postgresql://127.0.0.1:5432/monitor
     username: postgres
@@ -9,6 +11,10 @@ spring:
     driverClassName: org.postgresql.Driver
   elasticsearch:
         uris: 127.0.0.1:9200 #es
+  clickhouse:
+      url: jdbc:clickhouse://localhost:8123/default
+      username: default
+      password:
 
 
 

@@ -9,7 +9,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Setter;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +29,7 @@ public class ESClientConfig {
     public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 10000;
     public static final int DEFAULT_SOCKET_TIMEOUT_MILLIS = 300000;
     public static final int DEFAULT_CONNECT_REQUEST_TIMEOUT_MILLIS = 1000;
+
 
     /**
      * 同步方式

@@ -1,7 +1,6 @@
-package com.xuan.dao.mapper;
+package com.xuan.dao.mapper.postgres;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Webpvuv;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -14,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-06-24
  */
 @Mapper
-public interface ErrorMapper extends BaseMapper<Errors> {
+public interface WebpvuvMapper extends BaseMapper<Webpvuv> {
 
 }

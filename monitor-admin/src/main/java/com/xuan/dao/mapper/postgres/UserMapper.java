@@ -1,4 +1,4 @@
-package com.xuan.dao.mapper;
+package com.xuan.dao.mapper.postgres;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;

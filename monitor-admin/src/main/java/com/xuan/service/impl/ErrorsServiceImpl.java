@@ -4,15 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.xuan.common.result.PageResult;
-import com.xuan.common.result.Result;
-import com.xuan.dao.mapper.ErrorMapper;
+
+import com.xuan.dao.mapper.postgres.ErrorMapper;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
-import com.xuan.dao.pojo.dto.PageDTO;
-import com.xuan.dao.pojo.dto.PageUserDTO;
+
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Users;
-import com.xuan.service.ESDocumentService;
+import com.xuan.service.BusinessAnalyticsService;
 import com.xuan.service.ErrorsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +25,7 @@ import java.util.List;
 public class ErrorsServiceImpl extends ServiceImpl<ErrorMapper, Errors> implements ErrorsService {
 
     @Autowired
-    public ESDocumentService esDocumentService;
+    public BusinessAnalyticsService businessAnalyticsService;
 
     @Autowired
     public ErrorMapper errorMapper;
@@ -43,7 +41,7 @@ public class ErrorsServiceImpl extends ServiceImpl<ErrorMapper, Errors> implemen
 
     @Override
     public ErrorInfoDto getDetails(String id) throws IOException {
-        return esDocumentService.getById("errors",id,ErrorInfoDto.class);
+        return businessAnalyticsService.getDetailedErrorInfoByIdentifier(id);
     }
 
     @Override

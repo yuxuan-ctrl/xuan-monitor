@@ -1,7 +1,7 @@
-package com.xuan.dao.mapper;
+package com.xuan.dao.mapper.postgres;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.xuan.dao.pojo.entity.Webpvuv;
+import com.xuan.dao.pojo.entity.Systems;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -10,9 +10,9 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author yuxuan-ctrl
- * @since 2023-06-24
+ * @since 2023-06-05
  */
 @Mapper
-public interface WebpvuvMapper extends BaseMapper<Webpvuv> {
+public interface SystemsMapper extends BaseMapper<Systems> {
 
 }

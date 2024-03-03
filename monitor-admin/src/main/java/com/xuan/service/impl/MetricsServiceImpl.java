@@ -1,60 +1,36 @@
 package com.xuan.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.mchange.v1.db.sql.ConnectionUtils;
 import com.xuan.common.utils.CalculateUtil;
-import com.xuan.common.utils.DateFormatUtils;
-import com.xuan.dao.mapper.ErrorMapper;
-import com.xuan.dao.mapper.MetricsMapper;
-import com.xuan.dao.mapper.SystemsMapper;
-import com.xuan.dao.mapper.UserMapper;
-import com.xuan.dao.model.EventList;
+import com.xuan.dao.mapper.postgres.ErrorMapper;
+import com.xuan.dao.mapper.postgres.MetricsMapper;
 import com.xuan.dao.model.PageViewInfo;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
-import com.xuan.dao.pojo.dto.MetricsDTO;
+import com.xuan.dao.model.StoresMetrics;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
-import com.xuan.dao.pojo.entity.Systems;
-import com.xuan.dao.pojo.entity.Users;
 import com.xuan.dao.pojo.vo.AppsDashboardVo;
 import com.xuan.dao.pojo.vo.MetricsVo;
-import com.xuan.service.ESDocumentService;
-import com.xuan.service.ErrorsService;
+import com.xuan.service.BusinessAnalyticsService;
 import com.xuan.service.MetricsService;
-import com.xuan.service.SystemsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> implements MetricsService {
-
-    @Autowired
-    public ESDocumentService esDocumentService;
-
     @Autowired
     private MetricsMapper metricsMapper;
-
     @Autowired
-    private SystemsService systemsService;
+    private BusinessAnalyticsService businessAnalyticsService;
 
     @Autowired
     private ErrorMapper errorMapper;
@@ -63,69 +39,82 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
     private CalculateUtil calculateUtil;
 
     @Override
-    public MetricsVo getMetrics(String appId, Instant startTime, Instant endTime,String userId) throws IOException {
-        Metrics metrics= esDocumentService.aggregateData("events", "timestamp", EventList.class, new MetricsDTO(startTime, endTime, appId,null));
-        List<EventList> todayEventList = esDocumentService.queryPastHours("events", "timestamp", EventList.class, new MetricsDTO(startTime, endTime, appId, userId));
-        List<PageViewInfo> popularList = calculateUtil.countAndRankPageViews(todayEventList);
+    public MetricsVo getMetrics(String appId, Instant startTime, Instant endTime, String userId) throws IOException {
+
+        StoresMetrics storesMetrics = businessAnalyticsService.fetchPerformanceMetrics(appId, startTime, endTime, userId);
+
+        // 计算并排名页面访问量
+        List<PageViewInfo> popularList = calculateUtil.countAndRankPageViews(storesMetrics.getTodayEventList());
+
+        // 计算错误类型分布
         Map<String, Long> errorsTypeMap = calculateUtil.calculateErrorsType(errorMapper.selectList(null));
-        Metrics pastByMetric= metricsMapper.selectOne(new LambdaQueryWrapper<Metrics>()
-                .lt(Metrics::getCreateTime, startTime)
-                .orderByDesc(Metrics::getCreateTime)
-                .last("LIMIT 1"));
-        Long dailyErrorCount = errorMapper.selectCount(new LambdaQueryWrapper<Errors>()
-                .between(Errors::getCreateTime, startTime, endTime));
-        List<Errors> totalErrorList = errorMapper.selectList(new LambdaQueryWrapper<Errors>().eq(Errors::getAppId,appId));
-        Long resolvedErrorCount = totalErrorList.stream().filter(item-> item.getIsResolved() == 1).count();
-        MetricsVo metricsVo = new MetricsVo(pastByMetric, (long) totalErrorList.size(),dailyErrorCount,resolvedErrorCount,popularList,errorsTypeMap,null);
 
+        // 查询最近一次的Metrics数据
+        Metrics pastByMetric = getLastMetricsBeforeTime(startTime);
 
-        if(!ObjectUtils.isEmpty(metrics)){
-            BeanUtils.copyProperties(metrics,metricsVo);
+        // 计算今日错误总数
+        Long dailyErrorCount = countTodayErrors(errorMapper, startTime, endTime);
+
+        // 获取应用的所有错误列表
+        List<Errors> totalErrorList = getApplicationErrors(errorMapper, appId);
+
+        // 计算已解决错误数量
+        Long resolvedErrorCount = totalErrorList.stream().count() ;
+
+        // 构建MetricsVo对象
+        MetricsVo metricsVo = buildMetricsVo(storesMetrics.getAggregatedMetrics(), pastByMetric, totalErrorList.size(), dailyErrorCount, resolvedErrorCount, popularList, errorsTypeMap);
+
+        // 处理空值情况
+        if (!ObjectUtils.isEmpty(storesMetrics.getAggregatedMetrics())) {
+            BeanUtils.copyProperties(storesMetrics.getAggregatedMetrics(), metricsVo);
         }
-        if(!ObjectUtils.isEmpty(pastByMetric)){
+        if (!ObjectUtils.isEmpty(pastByMetric)) {
             metricsVo.setPastByMetric(pastByMetric);
         }
+
         return metricsVo;
     }
 
     @Override
     public List<MetricsVo> getChartsData(String appId, Instant startTime, Instant endTime) throws IOException {
-        List<Metrics> metricList= metricsMapper.selectList(new LambdaQueryWrapper<Metrics>()
+        List<Metrics> metricList = metricsMapper.selectList(new LambdaQueryWrapper<Metrics>()
                 .gt(Metrics::getCreateTime, startTime)
                 .lt(Metrics::getCreateTime, endTime)
                 .orderByAsc(Metrics::getCreateTime));
 
-        return metricList.stream().map(metrics -> new MetricsVo(metrics.getTotalPageViews(),metrics.getUniqueVisitors(),metrics.getCreateTime())).collect(Collectors.toList());
+        return metricList.stream().map(metrics -> new MetricsVo(metrics.getTotalPageViews(), metrics.getUniqueVisitors(), metrics.getCreateTime())).collect(Collectors.toList());
     }
 
     @Override
-    public AppsDashboardVo  getAppsDashboardData(String userId) throws IOException {
-        List<Systems> systemList = systemsService.getSystemList();
-        HashMap<String, Integer> activeUserMap = new HashMap<>();
-        HashMap<String, Integer> todayUserMap = new HashMap<>();
-        systemList.stream().forEach(system -> {
-            Set<String> activeUsers = null;
-            Set<String> todayUsers = null;
-            try {
-                Instant endTime = Instant.now();
-                Instant startTime =endTime.minusMillis(TimeUnit.HOURS.toMillis(1));
-                activeUsers = calculateUtil.calculateUsersCount(startTime,endTime,system.getAppId(), userId);
-                activeUserMap.put(system.getAppId(),activeUsers.size());
-
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateFormatUtils.ISO_8601_EXT_DATE_PATTERN);
-                List<Instant> adjustedDayBoundary = DateFormatUtils.getAdjustedDayBoundary(LocalDate.now().format(formatter));
-                Instant currentDayStartTime = adjustedDayBoundary.get(0);
-                Instant currentDayEndTime = adjustedDayBoundary.get(1);
-                todayUsers = calculateUtil.calculateUsersCount(currentDayStartTime,currentDayEndTime,system.getAppId(), userId);
-                todayUserMap.put(system.getAppId(),todayUsers.size());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        AppsDashboardVo appsDashboardVo = new AppsDashboardVo(activeUserMap,todayUserMap);
-        return appsDashboardVo;
+    public AppsDashboardVo getAppsDashboardData(String userId) throws IOException {
+        return businessAnalyticsService.getUserAppsDashboardData(userId);
     }
 
+    private Metrics getLastMetricsBeforeTime(Instant startTime) {
+        return metricsMapper.selectOne(new LambdaQueryWrapper<Metrics>()
+                .lt(Metrics::getCreateTime, startTime)
+                .orderByDesc(Metrics::getCreateTime)
+                .last("LIMIT 1"));
+    }
+
+    private Long countTodayErrors(ErrorMapper errorMapper, Instant startTime, Instant endTime) {
+        return errorMapper.selectCount(new LambdaQueryWrapper<Errors>()
+                .between(Errors::getCreateTime, startTime, endTime));
+    }
+
+    private List<Errors> getApplicationErrors(ErrorMapper errorMapper, String appId) {
+        return errorMapper.selectList(new LambdaQueryWrapper<Errors>().eq(Errors::getAppId, appId));
+    }
+
+    private MetricsVo buildMetricsVo(Metrics aggregatedMetrics, Metrics pastByMetric, long totalErrorCount, long dailyErrorCount, long resolvedErrorCount, List<PageViewInfo> popularList, Map<String, Long> errorsTypeMap) {
+        MetricsVo metricsVo = new MetricsVo();
+        metricsVo.setTotalErrorCount(totalErrorCount);
+        metricsVo.setDailyErrorCount(dailyErrorCount);
+        metricsVo.setResolvedErrorCount(resolvedErrorCount);
+        metricsVo.setPopularList(popularList);
+        metricsVo.setErrorsTypeMap(errorsTypeMap);
+
+        return metricsVo;
+    }
 
 }

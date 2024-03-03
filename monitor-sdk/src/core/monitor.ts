@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-29 15:34:04
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
@@ -19,7 +19,7 @@ import {
   wrapFetch,
   wrapSetTimeout,
   wrapXMLHttpRequest,
-  getCurrentUnix
+  getCurrentUnix,
 } from '../utils';
 import { Listener, EventManager } from '../decorator';
 import Report from './Report';
@@ -56,7 +56,7 @@ export default class Monitor extends EventManager {
     this.config = config;
     this.pvTracker = new PageViewTracker(config?.userId, this);
     this.uvTracker = new UvTracker(config?.userId, this);
-    this.report = new Report(config,this.uvTracker);
+    this.report = new Report(config, this.uvTracker);
     this.report.start('/api');
     this.baseInfo = { appId: config.appId, userId: config?.userId };
     this.errorTracker = new ErrorTracker();
@@ -107,7 +107,7 @@ export default class Monitor extends EventManager {
 
   @Listener('error')
   public async onError(error: ErrorEvent) {
-    console.log("🚀 ~ Monitor ~ onError ~ error:", error)
+    console.log('🚀 ~ Monitor ~ onError ~ error:', error);
     this.reportError(error.error);
   }
 

@@ -1,12 +1,10 @@
+import { getConditionalComponent } from '@/utils/index.tsx';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Area, Column } from '@ant-design/plots';
-import { Col, Progress, Row, Tooltip, Empty } from 'antd';
-import numeral from 'numeral';
-import type { DataItem } from '../data.d';
+import { Area } from '@ant-design/plots';
+import { Col, Progress, Row, Tooltip } from 'antd';
 import useStyles from '../style.style';
 import { ChartCard, Field } from './Charts';
 import Trend from './Trend';
-import { getConditionalComponent } from '@/utils/index.tsx';
 
 const topColResponsiveProps = {
   xs: 24,
@@ -194,7 +192,7 @@ const IntroduceRow = ({
           footer={<Field label="最高访问次数" value={visitData.mostVisitedPageViews} />}
           contentHeight={46}
         >
-        {getConditionalComponent(
+          {getConditionalComponent(
             visitData.mostVisitedPageId, // 条件
             Area, // 组件
             { visitData }, // 传递给组件的props

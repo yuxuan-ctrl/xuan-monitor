@@ -1,4 +1,4 @@
-package com.xuan.service.impl;
+package com.xuan.service.impl.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -17,6 +17,7 @@ import com.xuan.service.ESDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -30,6 +31,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.datastore.type", havingValue = "elasticsearch")
+
 public class ESDocumentServiceImpl implements ESDocumentService {
 
     private final ElasticsearchClient elasticsearchClient;

@@ -2,7 +2,7 @@ package com.xuan.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.xuan.dao.mapper.SystemsMapper;
+import com.xuan.dao.mapper.postgres.SystemsMapper;
 import com.xuan.dao.pojo.entity.Systems;
 import com.xuan.service.SystemsService;
 import org.springframework.beans.factory.annotation.Autowired;

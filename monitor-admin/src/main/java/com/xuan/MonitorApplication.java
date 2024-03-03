@@ -17,7 +17,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling // 添加此注解以启用定时任务
-@MapperScan("com.xuan.dao.mapper")
 public class MonitorApplication {
     public static void main(String[] args) {
         SpringApplication.run(MonitorApplication.class,args);

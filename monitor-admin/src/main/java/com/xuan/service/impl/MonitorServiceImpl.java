@@ -10,43 +10,33 @@
  */
 package com.xuan.service.impl;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
+
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.utils.CalculateUtil;
-import com.xuan.dao.mapper.*;
+import com.xuan.dao.mapper.postgres.MetricsMapper;
+import com.xuan.dao.mapper.postgres.SystemsMapper;
+import com.xuan.dao.mapper.postgres.UserMapper;
 import com.xuan.dao.model.Location;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.EventsDTO;
 import com.xuan.dao.pojo.entity.*;
 import com.xuan.dao.pojo.vo.ReportVo;
-import com.xuan.service.ESDocumentService;
+import com.xuan.service.ErrorLoggingService;
 import com.xuan.service.MonitorService;
+import com.xuan.service.MonitoringDataStorageService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
-import javax.json.Json;
 import javax.servlet.http.HttpServletRequest;
-import java.awt.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 
 /**
  * <p>
@@ -61,28 +51,13 @@ import java.util.stream.Stream;
 public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> implements MonitorService {
 
     @Autowired
-    public MetricsMapper metricsMapper;
-
+    private MonitoringDataStorageService monitoringDataStorageService;
+    @Autowired
+    private ErrorLoggingService errorLoggingService;
     @Autowired
     public UserMapper userMapper;
-
-    @Autowired
-    public JwtProperties jwtProperties;
-
-    @Autowired
-    public ErrorMapper errorMapper;
-
     @Autowired
     public SystemsMapper systemsMapper;
-
-    @Autowired
-    private ElasticsearchClient client;
-    private final ESDocumentService elasticService;
-
-    public MonitorServiceImpl(ESDocumentService elasticService) {
-        this.elasticService = elasticService;
-    }
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -126,13 +101,7 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
             userMapper.insert(currentUser);
         }
 
-//        elasticService.ensureIndexExists("events", "actions"); // 一次性检查两个索引
-
-
-//        Map dataMap = new HashMap();
-//        dataMap.put("events",eventList);
-//        dataMap.put("actions",actionList);
-
+        monitoringDataStorageService.recordMonitoringData(appId,userId,actionList,eventList);
 
         return null; // 根据实际业务需求填充返回值
     }
@@ -150,18 +119,7 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
 
     @Override
     public Void errorHandler(ErrorInfoDto errorInfoDto) throws Exception {
-        BooleanResponse exists = client.indices().exists(e -> e.index("errors"));
-        if (!exists.value()) {
-            client.indices().create(c -> c.index("errors"));
-        }else{
-            errorInfoDto.setCreateTime(LocalDateTime.now().toString());
-            IndexResponse response = elasticService.createByJson("errors", UUID.randomUUID().toString(), JSON.toJSONString(errorInfoDto));
-            System.out.println("response.toString() -> " + response.toString());
-            Errors errors = new Errors();
-            BeanUtils.copyProperties(errorInfoDto,errors);
-            errors.setEsErrorId(response.id());
-            errorMapper.insert(errors);
-        }
+        errorLoggingService.logAndPersistError(errorInfoDto);
         return null;
     }
 }

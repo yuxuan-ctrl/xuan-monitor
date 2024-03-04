@@ -14,7 +14,7 @@ import java.sql.*;
 //@RunWith(SpringRunner.class)
 @Slf4j
 public class TestClickHouse {
-   private static Connection connection = null;
+    private static Connection connection = null;
 
 
     @Autowired

@@ -4,13 +4,17 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.xuan.dao.pojo.entity.Systems">
-        <id column="id" property="id" />
-        <result column="type" property="type" />
-        <result column="is_use" property="isUse" />
-        <result column="app_id" property="appId" />
-        <result column="system_name" property="systemName" />
-        <result column="system_domain" property="systemDomain" />
+        <id column="app_id" property="appId" />
+        <result column="appName" property="appName" />
+        <result column="appType" property="appType" />
         <result column="create_time" property="createTime" />
+
     </resultMap>
 
+    <!-- 定义selectNewList方法的SQL查询语句 -->
+    <select id="selectNewList" resultType="com.xuan.dao.pojo.entity.Systems">
+        SELECT * FROM systems
+        <!-- 根据实际情况添加排序条件，例如按时间降序排列，获取最新的记录 -->
+        ORDER BY create_time DESC
+    </select>
 </mapper>

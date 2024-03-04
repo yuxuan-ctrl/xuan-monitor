@@ -2,7 +2,6 @@ package com.xuan.dao.mapper.postgres;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.xuan.dao.pojo.entity.Metrics;
-import com.xuan.dao.pojo.entity.Webpvuv;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

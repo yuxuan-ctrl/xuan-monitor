@@ -1,54 +1,89 @@
-server:
-  port: 5200
+  server:
+    port: 5200
 
-spring:
-  datastore:
-    #type: elasticsearch
-    type: clickhouse
-  datasource:
-    postgres:
-      url: jdbc:postgresql://127.0.0.1:5432/monitor
-      username: postgres
-      password: 123456
-      driverClassName: org.postgresql.Driver
+  spring:
+    datastore:
+      type: elasticsearch
+      # type: clickhouse
+  #  datasource:
+  #    url: jdbc:postgresql://127.0.0.1:5432/monitor
+  #    username: postgres
+  #    password: 123456
+  #    driverClassName: org.postgresql.Driver
+
+    datasource:
+      dynamic:
+        name: master,slave
+        primary: master
+        datasource:
+          master:
+            type: com.alibaba.druid.pool.xa.DruidXADataSource
+            driver-class-name: org.postgresql.Driver
+            username: postgres
+            password: 123456
+            url: jdbc:postgresql://127.0.0.1:5432/monitor?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+            druid:
+              initialSize: 5
+              minIdle: 5
+              maxActive: 20
+          slave:
+            type: com.alibaba.druid.pool.xa.DruidXADataSource
+            driver-class-name: ru.yandex.clickhouse.ClickHouseDriver
+            username: default
+            password: xxxxxxx
+            url: jdbc:clickhouse://localhost:8123/default
+            druid:
+              initialSize: 5
+              minIdle: 5
+              maxActive: 20
+
+
+
+
+
+  #    postgres:
+  #      jdbcUrl: jdbc:postgresql://127.0.0.1:5432/monitor
+  #      username: postgres
+  #      password: 123456
+  #      driverClassName: org.postgresql.Driver
+  #    clickhouse:
+  #      jdbcUrl: jdbc:clickhouse://localhost:8123/default
+  #      username: default
+  #      password:
+  #      driverClassName: ru.yandex.clickhouse.ClickHouseDriver
+
+
+    elasticsearch:
+          uris: 127.0.0.1:9200 #es
     clickhouse:
-      url: jdbc:clickhouse://localhost:8123/default
-      username: default
-      password:
-      driverClassName: ru.yandex.clickhouse.ClickHouseDriver
-
-
-  elasticsearch:
-        uris: 127.0.0.1:9200 #es
-  clickhouse:
-      url: jdbc:clickhouse://localhost:8123/default
-      username: default
-      password:
+        url: jdbc:clickhouse://localhost:8123/default
+        username: default
+        password:
 
 
 
-#配置日志  打印sql语句
-#mybatis-plus:
-#  configuration:
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-#    #下划线转驼峰
-#    map-underscore-to-camel-case: true
+  #配置日志  打印sql语句
+  mybatis-plus:
+    configuration:
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+      #下划线转驼峰
+      map-underscore-to-camel-case: true
 
-xuan:
-  task:
-    # 定时任务入库时间
-    cron: "* * * * */10 *"
-    hoursBack: 48
-  jwt:
-    # 设置jwt签名加密时使用的秘钥
-    admin-secret-key: xuanmonitorabc
-    # 设置jwt过期时间
-    admin-ttl: 7200000000
-    # 设置前端传递过来的令牌名称
-    admin-token-name: token
-    # 设置jwt签名加密时使用的秘钥
-    user-secret-key: xuanmonitorabc
-    # 设置jwt过期时间
-    user-ttl: 7200000
-    # 设置前端传递过来的令牌名称
-    user-token-name: token
+  xuan:
+    task:
+      # 定时任务入库时间
+      cron: "* * * * */10 *"
+      hoursBack: 48
+    jwt:
+      # 设置jwt签名加密时使用的秘钥
+      admin-secret-key: xuanmonitorabc
+      # 设置jwt过期时间
+      admin-ttl: 7200000000
+      # 设置前端传递过来的令牌名称
+      admin-token-name: token
+      # 设置jwt签名加密时使用的秘钥
+      user-secret-key: xuanmonitorabc
+      # 设置jwt过期时间
+      user-ttl: 7200000
+      # 设置前端传递过来的令牌名称
+      user-token-name: token

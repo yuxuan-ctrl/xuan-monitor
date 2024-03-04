@@ -3,7 +3,6 @@ package com.xuan.controller;
 import com.xuan.common.result.Result;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.EventsDTO;
-import com.xuan.dao.pojo.entity.Webpvuv;
 import com.xuan.dao.pojo.vo.ReportVo;
 import com.xuan.service.MonitorService;
 import io.swagger.annotations.Api;
@@ -44,11 +43,4 @@ public class MonitorController {
         return Result.success(null,"上传成功");
     }
 
-    @GetMapping("/report/test")
-    @ApiOperation("监控信息上传测试")
-    public Result<Webpvuv> testreport(EventsDTO eventsDto) throws Exception{
-        log.info("监控信息：{}", eventsDto);
-        Webpvuv webpvuvVo = new Webpvuv();
-        return Result.success(webpvuvVo);
-    }
 }

@@ -1,20 +1,22 @@
 package com.xuan.dao.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xuan.dao.pojo.entity.Metrics;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class  EventList {
+public class  EventInfo {
 
     @JsonProperty("appId")
     String appId;
@@ -38,7 +40,7 @@ public class  EventList {
     private Map<String, Integer> screenResolution;
 
     @JsonProperty("timestamp")
-    private Timestamp timestamp;;
+    private Long timestamp;
 
     @JsonProperty("referrer")
     private String referrer;
@@ -59,9 +61,9 @@ public class  EventList {
     private String userId;
 
     @JsonProperty("stayDuration")
-    private double stayDuration;
+    private int stayDuration;
 
-    private Date createTime;
+    private LocalDateTime createTime;
 
     private Map<String, Object> metrics;
 

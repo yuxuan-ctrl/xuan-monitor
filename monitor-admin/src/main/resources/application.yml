@@ -8,10 +8,10 @@ spring:
 
   datasource:
     dynamic:
-      name: master,slave
-      primary: master
+      name: postgres,clickhouse
+      primary: postgres
       datasource:
-        master:
+        postgres:
           type: com.alibaba.druid.pool.xa.DruidXADataSource
           driver-class-name: org.postgresql.Driver
           username: postgres
@@ -21,11 +21,11 @@ spring:
             initialSize: 5
             minIdle: 5
             maxActive: 20
-        slave:
+        clickhouse:
           type: com.alibaba.druid.pool.xa.DruidXADataSource
           driver-class-name: ru.yandex.clickhouse.ClickHouseDriver
           username: default
-          password: xxxxxxx
+          password:
           url: jdbc:clickhouse://localhost:8123/default
           druid:
             initialSize: 5

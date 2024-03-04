@@ -5,7 +5,7 @@ import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
-import com.xuan.dao.model.EventList;
+import com.xuan.dao.model.EventInfo;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
 
@@ -113,5 +113,5 @@ public interface ESDocumentService {
     void ensureIndexExists(String... indices) throws IOException;
     <T> List<T> queryPastHours(String idxName, String dateFieldName, Class<T> tClass, MetricsDTO metricsDTO) throws IOException;
 
-    Metrics aggregateData(String events, String timestamp, Class<EventList> eventListClass, MetricsDTO metricsDTO) throws IOException;
+    Metrics aggregateData(String events, String timestamp, Class<EventInfo> eventListClass, MetricsDTO metricsDTO) throws IOException;
 }

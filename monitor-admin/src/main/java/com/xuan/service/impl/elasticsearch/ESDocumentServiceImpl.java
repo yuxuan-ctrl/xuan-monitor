@@ -10,7 +10,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.dao.model.ESDocument;
-import com.xuan.dao.model.EventList;
+import com.xuan.dao.model.EventInfo;
+import com.xuan.dao.model.EventInfo;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.service.ESDocumentService;
@@ -336,8 +337,8 @@ public class ESDocumentServiceImpl implements ESDocumentService {
         return allList;
     }
 
-    public Metrics aggregateData(String events, String timestamp, Class<EventList> eventListClass, MetricsDTO metricsDTO) throws IOException {
-        List<EventList> eventList = this.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
+    public Metrics aggregateData(String events, String timestamp, Class<EventInfo> eventListClass, MetricsDTO metricsDTO) throws IOException {
+        List<EventInfo> eventList = this.queryPastHours("events", "timestamp", EventInfo.class,metricsDTO);
         if(!eventList.isEmpty()){
             Metrics metrics = CalculateUtil.calculateMetrics(eventList);
             return metrics;

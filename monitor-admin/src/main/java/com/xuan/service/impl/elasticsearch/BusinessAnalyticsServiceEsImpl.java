@@ -2,7 +2,7 @@ package com.xuan.service.impl.elasticsearch;
 
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.common.utils.DateFormatUtils;
-import com.xuan.dao.model.EventList;
+import com.xuan.dao.model.EventInfo;
 import com.xuan.dao.model.StoresMetrics;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.MetricsDTO;
@@ -39,10 +39,10 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
     @Override
     public StoresMetrics fetchPerformanceMetrics(String appId, Instant analysisStartTime, Instant analysisEndTime, String optionalUserId) throws IOException {
         // 从Elasticsearch获取聚合数据
-        Metrics aggregatedMetrics = fetchAggregatedMetricsFromES("events", "timestamp", EventList.class, new MetricsDTO(analysisStartTime, analysisEndTime, appId, null));
+        Metrics aggregatedMetrics = fetchAggregatedMetricsFromES("events", "timestamp", EventInfo.class, new MetricsDTO(analysisStartTime, analysisEndTime, appId, null));
 
         // 查询今天的时间段内事件列表
-        List<EventList> todayEventList = queryPastHoursFromES("events", "timestamp", EventList.class, new MetricsDTO(analysisStartTime, analysisEndTime, appId, optionalUserId));
+        List<EventInfo> todayEventList = queryPastHoursFromES("events", "timestamp", EventInfo.class, new MetricsDTO(analysisStartTime, analysisEndTime, appId, optionalUserId));
 
         return new StoresMetrics(aggregatedMetrics, todayEventList);
     }
@@ -88,18 +88,18 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
         return esDocumentService.getById("errors",errorIdentifier,ErrorInfoDto.class);
     }
 
-    private Metrics fetchAggregatedMetricsFromES(String index, String timestampField, Class<EventList> clazz, MetricsDTO metricsDTO) throws IOException {
+    private Metrics fetchAggregatedMetricsFromES(String index, String timestampField, Class<EventInfo> clazz, MetricsDTO metricsDTO) throws IOException {
         return esDocumentService.aggregateData(index, timestampField, clazz, metricsDTO);
     }
 
-    private List<EventList> queryPastHoursFromES(String index, String timestampField, Class<EventList> clazz, MetricsDTO metricsDTO) throws IOException {
+    private List<EventInfo> queryPastHoursFromES(String index, String timestampField, Class<EventInfo> clazz, MetricsDTO metricsDTO) throws IOException {
         return esDocumentService.queryPastHours(index, timestampField, clazz, metricsDTO);
     }
 
     private   Set<String> calculateUsersCount(Instant startTime,Instant endTime,String appId,String userId) throws IOException {
 
         MetricsDTO metricsDTO = new MetricsDTO(startTime,endTime,appId,userId);
-        List<EventList> eventList = esDocumentService.queryPastHours("events", "timestamp", EventList.class,metricsDTO);
+        List<EventInfo> eventList = esDocumentService.queryPastHours("events", "timestamp", EventInfo.class,metricsDTO);
         List<Object> actionList = esDocumentService.queryPastHours("actions", "timestamp", Object.class,metricsDTO);
         // 提取并合并用户ID
         Set<String> allUserIdsFromEvents = extractUserIdsFromEventList(eventList);
@@ -112,9 +112,9 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
     }
 
     // 定义两个方法来提取用户ID
-    private  Set<String> extractUserIdsFromEventList(List<EventList> list) {
+    private  Set<String> extractUserIdsFromEventList(List<EventInfo> list) {
         return list.stream()
-                .map(EventList::getUserId) // 假设EventList类有一个getUserID()方法来获取用户ID
+                .map(EventInfo::getUserId) // 假设EventList类有一个getUserID()方法来获取用户ID
                 .collect(Collectors.toSet());
     }
 

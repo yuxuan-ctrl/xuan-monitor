@@ -2,7 +2,7 @@ package com.xuan.service.impl.elasticsearch;
 
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.dao.mapper.postgres.MetricsMapper;
-import com.xuan.dao.model.EventList;
+import com.xuan.dao.model.EventInfo;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.service.DataAggregationService;
@@ -28,7 +28,7 @@ public class DataAggregationServiceEsImpl implements DataAggregationService {
     @Override
     public void processAndAggregateYesterdayData() throws IOException {
         esDocumentService.ensureIndexExists("events", "actions");
-        List<EventList> eventList = esDocumentService.queryPastHours("events", "timestamp", EventList.class,new MetricsDTO());
+        List<EventInfo> eventList = esDocumentService.queryPastHours("events", "timestamp", EventInfo.class,new MetricsDTO());
         if(!eventList.isEmpty()){
             Metrics metrics = calculateUtil.calculateMetrics(eventList);
             metricsMapper.insert(metrics);

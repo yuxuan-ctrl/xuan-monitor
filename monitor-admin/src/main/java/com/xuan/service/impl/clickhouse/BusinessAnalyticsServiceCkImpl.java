@@ -1,7 +1,8 @@
 package com.xuan.service.impl.clickhouse;
 
 import com.xuan.common.utils.DateFormatUtils;
-import com.xuan.dao.model.EventList;
+import com.xuan.dao.mapper.clickhouse.EventsMapper;
+import com.xuan.dao.model.EventInfo;
 import com.xuan.dao.model.StoresMetrics;
 import com.xuan.dao.pojo.dto.ErrorInfoDto;
 import com.xuan.dao.pojo.dto.MetricsDTO;
@@ -28,9 +29,13 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(name = "spring.datastore.type", havingValue = "clickhouse")
 public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService {
 
+    @Autowired
+    public EventsMapper eventsMapper;
 
     @Override
     public StoresMetrics fetchPerformanceMetrics(String appId, Instant analysisStartTime, Instant analysisEndTime, String optionalUserId) throws IOException {
+        List<EventInfo> eventLists = eventsMapper.selectList(null);
+        System.out.println(eventLists);
         return null;
     }
 

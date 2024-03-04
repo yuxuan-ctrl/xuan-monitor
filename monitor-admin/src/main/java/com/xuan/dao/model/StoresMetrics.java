@@ -13,5 +13,5 @@ import java.util.List;
 public class StoresMetrics {
     Metrics aggregatedMetrics;
 
-    List<EventList> todayEventList;
+    List<EventInfo> todayEventList;
 }

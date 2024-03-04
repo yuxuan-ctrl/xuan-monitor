@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.dao.mapper.postgres.ErrorMapper;
 import com.xuan.dao.mapper.postgres.MetricsMapper;
+import com.xuan.dao.model.EventInfo;
 import com.xuan.dao.model.PageViewInfo;
 import com.xuan.dao.model.StoresMetrics;
 import com.xuan.dao.pojo.entity.Errors;
@@ -14,10 +15,11 @@ import com.xuan.dao.pojo.vo.MetricsVo;
 import com.xuan.service.BusinessAnalyticsService;
 import com.xuan.service.MetricsService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -42,9 +44,10 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
     public MetricsVo getMetrics(String appId, Instant startTime, Instant endTime, String userId) throws IOException {
 
         StoresMetrics storesMetrics = businessAnalyticsService.fetchPerformanceMetrics(appId, startTime, endTime, userId);
-
+        Metrics aggregatedMetrics = ObjectUtils.isEmpty(storesMetrics) ? new Metrics() : storesMetrics.getAggregatedMetrics();
+        List<EventInfo> todayEventList = ObjectUtils.isEmpty(storesMetrics) ? new ArrayList() : storesMetrics.getTodayEventList();
         // 计算并排名页面访问量
-        List<PageViewInfo> popularList = calculateUtil.countAndRankPageViews(storesMetrics.getTodayEventList());
+        List<PageViewInfo> popularList = calculateUtil.countAndRankPageViews(todayEventList);
 
         // 计算错误类型分布
         Map<String, Long> errorsTypeMap = calculateUtil.calculateErrorsType(errorMapper.selectList(null));
@@ -59,14 +62,14 @@ public class MetricsServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
         List<Errors> totalErrorList = getApplicationErrors(errorMapper, appId);
 
         // 计算已解决错误数量
-        Long resolvedErrorCount = totalErrorList.stream().count() ;
+        Long resolvedErrorCount = totalErrorList.stream().count();
 
         // 构建MetricsVo对象
-        MetricsVo metricsVo = buildMetricsVo(storesMetrics.getAggregatedMetrics(), pastByMetric, totalErrorList.size(), dailyErrorCount, resolvedErrorCount, popularList, errorsTypeMap);
+        MetricsVo metricsVo = buildMetricsVo(aggregatedMetrics, pastByMetric, totalErrorList.size(), dailyErrorCount, resolvedErrorCount, popularList, errorsTypeMap);
 
         // 处理空值情况
-        if (!ObjectUtils.isEmpty(storesMetrics.getAggregatedMetrics())) {
-            BeanUtils.copyProperties(storesMetrics.getAggregatedMetrics(), metricsVo);
+        if (!ObjectUtils.isEmpty(aggregatedMetrics)) {
+            BeanUtils.copyProperties(aggregatedMetrics, metricsVo);
         }
         if (!ObjectUtils.isEmpty(pastByMetric)) {
             metricsVo.setPastByMetric(pastByMetric);

@@ -2,7 +2,7 @@ package com.xuan.common.utils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xuan.dao.mapper.postgres.UserMapper;
-import com.xuan.dao.model.EventList;
+import com.xuan.dao.model.EventInfo;
 import com.xuan.dao.model.PageViewInfo;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
@@ -28,13 +28,13 @@ public class CalculateUtil {
         this.userMapper = userMapper;
     }
 
-    public static  Metrics calculateMetrics(List<EventList> eventList){
+    public static  Metrics calculateMetrics(List<EventInfo> eventList){
         long totalPageViews = eventList.size();
-        Set<String> allUsers = eventList.stream().map(EventList::getUserId).collect(Collectors.toSet());
-        long uniqueVisitors = eventList.stream().map(EventList::getUserId).distinct().count();
+        Set<String> allUsers = eventList.stream().map(EventInfo::getUserId).collect(Collectors.toSet());
+        long uniqueVisitors = eventList.stream().map(EventInfo::getUserId).distinct().count();
         long allUsersLength = userMapper.selectCount(new LambdaQueryWrapper<Users>());
 
-        double totalStayDuration = eventList.stream().mapToDouble(EventList::getStayDuration).sum();
+        double totalStayDuration = eventList.stream().mapToDouble(EventInfo::getStayDuration).sum();
         double averageStayDuration = totalStayDuration / Math.max(allUsers.size(), 1);
 
         Map.Entry<String, Long> mostVisitedPageInfo = getMostVisitedPageInfo(eventList);
@@ -42,7 +42,7 @@ public class CalculateUtil {
         System.out.println("mostVisitedPageInfo = " + mostVisitedPageInfo);
 
         Optional<Map.Entry<String, Long>> mostFrequentPlatform = eventList.stream()
-                .collect(Collectors.groupingBy(EventList::getPlatform, Collectors.counting()))
+                .collect(Collectors.groupingBy(EventInfo::getPlatform, Collectors.counting()))
                 .entrySet().stream()
                 .max(Map.Entry.comparingByValue());
 
@@ -76,9 +76,9 @@ public class CalculateUtil {
         return metrics;
     }
 
-    public static Map.Entry<String, Long> getMostVisitedPageInfo(List<EventList> eventList) {
+    public static Map.Entry<String, Long> getMostVisitedPageInfo(List<EventInfo> eventList) {
         Map<String, Long> PageViewInfoMap = eventList.stream()
-                .collect(Collectors.groupingBy(EventList::getPageUrl, Collectors.counting()));
+                .collect(Collectors.groupingBy(EventInfo::getPageUrl, Collectors.counting()));
 
         Map.Entry<String, Long> maxEntry = PageViewInfoMap.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
@@ -125,7 +125,7 @@ public class CalculateUtil {
         return ipAddress;
     }
 
-    public List<PageViewInfo> countAndRankPageViews(List<EventList> events) {
+    public List<PageViewInfo> countAndRankPageViews(List<EventInfo> events) {
         Map<String, PageViewInfo> pageViewInfoMap = new HashMap<String, PageViewInfo>();
         events.stream().forEach(event->{
             PageViewInfo current = !ObjectUtils.isEmpty(pageViewInfoMap.get(event.getPageUrl())) ? pageViewInfoMap.get(event.getPageUrl()): new PageViewInfo();
@@ -134,7 +134,7 @@ public class CalculateUtil {
 
         // 使用Map统计每个页面URL出现的次数
         Map<String, Long> PageViewInfos = events.stream()
-                .collect(Collectors.groupingBy(EventList::getPageUrl, Collectors.counting()));
+                .collect(Collectors.groupingBy(EventInfo::getPageUrl, Collectors.counting()));
 
         // 对页面访问次数进行排序（从高到低）
         List<Map.Entry<String, Long>> sortedEntries = new ArrayList<>(PageViewInfos.entrySet());

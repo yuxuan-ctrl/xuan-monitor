@@ -2,7 +2,7 @@ package com.xuan.service.impl.elasticsearch;
 
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.dao.mapper.postgres.MetricsMapper;
-import com.xuan.dao.model.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.service.DataAggregationService;

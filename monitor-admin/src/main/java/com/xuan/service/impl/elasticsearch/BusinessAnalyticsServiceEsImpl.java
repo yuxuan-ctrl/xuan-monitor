@@ -1,10 +1,9 @@
 package com.xuan.service.impl.elasticsearch;
 
-import com.xuan.common.utils.CalculateUtil;
 import com.xuan.common.utils.DateFormatUtils;
-import com.xuan.dao.model.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.model.StoresMetrics;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.entity.Systems;
@@ -84,8 +83,8 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
     }
 
     @Override
-    public ErrorInfoDto getDetailedErrorInfoByIdentifier(String errorIdentifier) throws IOException {
-        return esDocumentService.getById("errors",errorIdentifier,ErrorInfoDto.class);
+    public ErrorInfo getDetailedErrorInfoByIdentifier(String errorIdentifier) throws IOException {
+        return esDocumentService.getById("errors",errorIdentifier,ErrorInfo.class);
     }
 
     private Metrics fetchAggregatedMetricsFromES(String index, String timestampField, Class<EventInfo> clazz, MetricsDTO metricsDTO) throws IOException {
@@ -96,7 +95,7 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
         return esDocumentService.queryPastHours(index, timestampField, clazz, metricsDTO);
     }
 
-    private   Set<String> calculateUsersCount(Instant startTime,Instant endTime,String appId,String userId) throws IOException {
+    private Set<String> calculateUsersCount(Instant startTime,Instant endTime,String appId,String userId) throws IOException {
 
         MetricsDTO metricsDTO = new MetricsDTO(startTime,endTime,appId,userId);
         List<EventInfo> eventList = esDocumentService.queryPastHours("events", "timestamp", EventInfo.class,metricsDTO);

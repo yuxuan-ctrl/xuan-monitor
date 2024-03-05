@@ -1,4 +1,4 @@
-package com.xuan.dao.model;
+package com.xuan.dao.pojo.entity.clickhouse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -16,7 +16,7 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class  EventInfo {
+public class EventInfo {
 
     @JsonProperty("appId")
     String appId;
@@ -37,7 +37,7 @@ public class  EventInfo {
     private String platform;
 
     @JsonProperty("screenResolution")
-    private Map<String, Integer> screenResolution;
+    private String screenResolution;
 
     @JsonProperty("timestamp")
     private Long timestamp;
@@ -61,12 +61,12 @@ public class  EventInfo {
     private String userId;
 
     @JsonProperty("stayDuration")
-    private int stayDuration;
+    private double stayDuration;
 
-    private LocalDateTime createTime;
+    private String createTime;
 
-    private Map<String, Object> metrics;
+    private String metrics;
 
-    private Map<String, List<Map<String, Object>>> slowResources;
+    private String slowResources;
 
 }

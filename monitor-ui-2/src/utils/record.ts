@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-04 09:07:38
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-26 16:54:18
+ * @LastEditTime: 2024-03-05 16:58:43
  * @FilePath: \monitor-ui-2\src\utils\record.ts
  * @Description:
  *
@@ -26,7 +26,7 @@ export default class Record {
   // }
 
   async replay(dom, dataList, config?: RecordReplayConfig) {
-    const parseData = dataList.map((item) => JSON.parse(item));
+    const parseData = JSON.parse(dataList).map((item) => JSON.parse(item));
 
     setTimeout(() => {
       const replayInstance = new rrwebPlayer({

@@ -11,9 +11,9 @@
 package com.xuan.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
+import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.dto.EventsDTO;
-import com.xuan.dao.pojo.entity.Metrics;
 import com.xuan.dao.pojo.vo.ReportVo;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,9 +27,9 @@ import java.io.IOException;
  * @author yuxuan-ctrl
  * @since 2023-06-24
  */
-public interface MonitorService extends IService<Metrics> {
+public interface MonitorService extends IService<EventInfo> {
     ReportVo recordMonitorInfo(EventsDTO eventsDto, HttpServletRequest httpRequest) throws IOException;
 
 
-    Void errorHandler(ErrorInfoDto errorInfoDto) throws Exception;
+    Void errorHandler(ErrorInfo errorInfo) throws Exception;
 }

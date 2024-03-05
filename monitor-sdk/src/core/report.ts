@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-23 11:23:02
+ * @LastEditTime: 2024-03-05 16:36:43
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -148,6 +148,6 @@ export default class Report {
         direction: 'asc',
       }
     );
-    return dataList.map((item) => JSON.stringify(item));
+    return JSON.stringify(dataList.map((item) => JSON.stringify(item)));
   }
 }

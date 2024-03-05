@@ -1,7 +1,7 @@
 package com.xuan.controller;
 
 import com.xuan.common.result.Result;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.dto.EventsDTO;
 import com.xuan.dao.pojo.vo.ReportVo;
 import com.xuan.service.MonitorService;
@@ -17,8 +17,6 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/monitor")
 @Api(value = "监控上报",tags = "MonitorController")
 @Slf4j
-
-
 public class MonitorController {
 
     @Autowired
@@ -36,9 +34,9 @@ public class MonitorController {
 
     @PostMapping("/errorReport")
     @ApiOperation("监控信息上传")
-    public Result<ReportVo> errorReport(@RequestBody ErrorInfoDto errorInfoDto) throws Exception{
+    public Result<ReportVo> errorReport(@RequestBody ErrorInfo errorInfo) throws Exception{
 
-        monitorService.errorHandler(errorInfoDto);
+        monitorService.errorHandler(errorInfo);
 
         return Result.success(null,"上传成功");
     }

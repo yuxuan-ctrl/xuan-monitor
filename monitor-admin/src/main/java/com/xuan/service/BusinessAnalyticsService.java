@@ -1,14 +1,13 @@
 package com.xuan.service;
 
 import com.xuan.dao.model.StoresMetrics;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.vo.AppsDashboardVo;
 import com.xuan.dao.pojo.vo.MetricsVo;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 public interface BusinessAnalyticsService {
     /**
@@ -43,5 +42,5 @@ public interface BusinessAnalyticsService {
      * @param errorIdentifier 错误唯一标识符
      * @return 错误详细信息对象
      */
-    ErrorInfoDto getDetailedErrorInfoByIdentifier(String errorIdentifier) throws IOException;
+    ErrorInfo getDetailedErrorInfoByIdentifier(String errorIdentifier) throws IOException;
 }

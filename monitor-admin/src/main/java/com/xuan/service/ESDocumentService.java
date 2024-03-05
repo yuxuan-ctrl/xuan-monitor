@@ -5,12 +5,11 @@ import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xuan.common.result.PageResult;
-import com.xuan.dao.model.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;

@@ -71,7 +71,7 @@ export default class ErrorTracker {
         direction: 'asc',
       }
     );
-    return dataList.map((item) => JSON.stringify(item));
+    return JSON.stringify(dataList.map((item) => JSON.stringify(item)));
   }
 
   async collectError(error: Error | string | HttpError) {

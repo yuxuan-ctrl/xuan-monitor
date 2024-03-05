@@ -1,12 +1,9 @@
 package com.xuan.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.xuan.common.result.PageResult;
 import com.xuan.common.result.Result;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
-import com.xuan.dao.pojo.dto.PageDTO;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.entity.Errors;
-import com.xuan.dao.pojo.entity.Users;
 import com.xuan.service.ErrorsService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -37,8 +34,8 @@ public class ErrorsController {
 
     @GetMapping("/getDetails")
     @ApiOperation("错误详情获取")
-    public Result<ErrorInfoDto> getDetails(@RequestParam String id) throws IOException {
-        ErrorInfoDto detail = errorsService.getDetails(id);
+    public Result<ErrorInfo> getDetails(@RequestParam String id) throws IOException {
+        ErrorInfo detail = errorsService.getDetails(id);
         return Result.success(detail);
     }
 }

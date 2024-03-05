@@ -1,15 +1,31 @@
-CREATE TABLE errors (
-                        errorType String,
-                        errorMessage String,
-                        stackTrace String,
-                        userAgent String,
-                        timestamp DateTime64(3), -- Assuming Timestamp is in milliseconds
-                        createTime DateTime, -- If 'JsonFormat' annotation implies this is also a timestamp in yyyy-MM-dd HH:mm:ss format
-                        appId String,
-                        userId String,
-                        url String,
-                        requestUrl String,
-                        record Array(String)
-) ENGINE = MergeTree()
-PARTITION BY toYYYYMMDD(createTime) -- Optionally partition by date if that's useful for your queries
-ORDER BY (createTime);
+CREATE TABLE IF NOT EXISTS error_info
+(
+    error_type
+    String,
+    error_message
+    String,
+    stack_trace
+    String,
+    user_agent
+    String,
+    timestamp
+    DateTime
+(
+    'Asia/Shanghai'
+),
+    create_time DateTime
+(
+    'Asia/Shanghai'
+),
+    app_id String,
+    user_id String,
+    url String,
+    request_url String,
+    record_data String -- 假设record已经被转换为JSON字符串存储在这里
+    ) ENGINE = MergeTree
+(
+)
+    ORDER BY
+(
+    timestamp
+);

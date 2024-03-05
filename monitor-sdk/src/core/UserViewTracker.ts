@@ -7,10 +7,6 @@ interface UVData {
   userAgent?: string;
   language?: string;
   timeZoneOffset?: number;
-  screenResolution?: {
-    width: number;
-    height: number;
-  };
   // 添加更多可能感兴趣的用户信息字段
 }
 
@@ -59,10 +55,6 @@ export default class UvTracker {
       userAgent: navigator.userAgent,
       language: navigator.language,
       timeZoneOffset: new Date().getTimezoneOffset(),
-      screenResolution: {
-        width: window.screen.width,
-        height: window.screen.height,
-      },
     };
 
     return userInfo;

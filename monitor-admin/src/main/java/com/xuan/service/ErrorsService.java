@@ -2,9 +2,7 @@ package com.xuan.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.xuan.common.result.PageResult;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
-import com.xuan.dao.pojo.dto.PageDTO;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Users;
 
@@ -22,7 +20,7 @@ import java.util.List;
 public interface ErrorsService extends IService<Errors> {
 
     IPage<Errors> selectPage(int pageIndex,int pageSize,String userId);
-    ErrorInfoDto getDetails(String id) throws IOException;
+    ErrorInfo getDetails(String id) throws IOException;
     List<Users> selectList();
     Users selectById(String id);
 }

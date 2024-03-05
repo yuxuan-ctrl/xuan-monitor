@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.xuan.dao.mapper.postgres.ErrorMapper;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Users;
@@ -40,7 +40,7 @@ public class ErrorsServiceImpl extends ServiceImpl<ErrorMapper, Errors> implemen
     }
 
     @Override
-    public ErrorInfoDto getDetails(String id) throws IOException {
+    public ErrorInfo getDetails(String id) throws IOException {
         return businessAnalyticsService.getDetailedErrorInfoByIdentifier(id);
     }
 

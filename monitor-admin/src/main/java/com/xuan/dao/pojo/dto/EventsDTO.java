@@ -2,11 +2,11 @@ package com.xuan.dao.pojo.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.model.Location;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.geo.Point;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -35,11 +35,11 @@ public class  EventsDTO {
     private Timestamp timestamp;;
 
     @JsonProperty("eventList")
-    List<Map<String, Object>> eventList;
+    List<EventInfo> eventList;
 
     @JsonProperty("actionList")
     private List<Map<String, Object>> actionList;
 
-    List<String> record;
+    String record;
 
 }

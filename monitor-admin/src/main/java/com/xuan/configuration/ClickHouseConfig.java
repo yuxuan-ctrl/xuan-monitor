@@ -28,23 +28,14 @@ public class ClickHouseConfig extends AbstractDataSourceCreator implements DataS
     @Value("${spring.clickhouse.password}")
     private String password;
 
-//    @Bean
-//    @Qualifier("clickhouseDataSource") // 添加Qualifier注解以标识这是ClickHouse的数据源
-//    public DataSource clickhouseDataSource() {
-//        ClickHouseProperties properties = new ClickHouseProperties();
-//        properties.setUser(username);
-//        properties.setPassword(password);
-//
-//        return new ClickHouseDataSource(url,properties);
-//    }
     @Override
-public DataSource doCreateDataSource(DataSourceProperty dataSourceProperty) {
-    Properties properties = new Properties();
-    // 使用clickHouse
-    properties.setProperty("user",dataSourceProperty.getUsername());
-    properties.setProperty("password",dataSourceProperty.getPassword());
-    return new BalancedClickhouseDataSource(dataSourceProperty.getUrl(), properties);
-}
+    public DataSource doCreateDataSource(DataSourceProperty dataSourceProperty) {
+        Properties properties = new Properties();
+        // 使用clickHouse
+        properties.setProperty("user", dataSourceProperty.getUsername());
+        properties.setProperty("password", dataSourceProperty.getPassword());
+        return new BalancedClickhouseDataSource(dataSourceProperty.getUrl(), properties);
+    }
 
     @Override
     public boolean support(DataSourceProperty dataSourceProperty) {

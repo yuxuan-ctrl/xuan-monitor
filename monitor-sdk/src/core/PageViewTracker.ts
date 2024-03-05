@@ -144,18 +144,20 @@ export default class PageViewTracker {
         ? this.currentPageUrl
         : document.referrer;
 
+    const screenResolution = {
+      width: window.screen.width,
+      height: window.screen.height,
+    };
+
     const pvData: AnalysisData = {
       // title: document.title,
       pageUrl: normalizeUrlForPath(window.location.href),
       userAgent: navigator.userAgent,
       platform: navigator.platform,
-      screenResolution: {
-        width: window.screen.width,
-        height: window.screen.height,
-      },
+      screenResolution: JSON.stringify(screenResolution),
       timestamp: getCurrentUnix(),
-      metrics,
-      slowResources,
+      metrics: JSON.stringify(metrics),
+      slowResources: JSON.stringify(slowResources),
       referrer,
     };
     console.log('🚀 ~ PageViewTracker ~ updatePageViewTime ~ pvData:', pvData);

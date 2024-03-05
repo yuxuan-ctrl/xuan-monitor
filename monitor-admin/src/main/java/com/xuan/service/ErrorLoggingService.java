@@ -1,6 +1,6 @@
 package com.xuan.service;
 
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 
 public interface ErrorLoggingService {
     /**
@@ -9,6 +9,6 @@ public interface ErrorLoggingService {
      * @param errorInfoDto 错误信息实体
      * @throws Exception 当处理过程中发生异常时抛出
      */
-    void logAndPersistError(ErrorInfoDto errorInfoDto) throws Exception;
+    void logAndPersistError(ErrorInfo errorInfo) throws Exception;
 
 }

@@ -15,11 +15,12 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.utils.CalculateUtil;
-import com.xuan.dao.mapper.postgres.MetricsMapper;
+import com.xuan.dao.mapper.clickhouse.EventsMapper;
 import com.xuan.dao.mapper.postgres.SystemsMapper;
 import com.xuan.dao.mapper.postgres.UserMapper;
+import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.model.Location;
-import com.xuan.dao.pojo.dto.ErrorInfoDto;
+import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.dto.EventsDTO;
 import com.xuan.dao.pojo.entity.*;
 import com.xuan.dao.pojo.vo.ReportVo;
@@ -29,7 +30,7 @@ import com.xuan.service.MonitoringDataStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -48,10 +49,11 @@ import java.util.List;
  */
 @Service
 @Slf4j
-public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> implements MonitorService {
+public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> implements MonitorService {
 
     @Autowired
     private MonitoringDataStorageService monitoringDataStorageService;
+
     @Autowired
     private ErrorLoggingService errorLoggingService;
     @Autowired
@@ -60,7 +62,6 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
     public SystemsMapper systemsMapper;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public ReportVo recordMonitorInfo(EventsDTO eventsDto, HttpServletRequest httpRequest) throws IOException {
         String appId = eventsDto.getAppId();
         String userId = eventsDto.getUserId();
@@ -69,7 +70,7 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
         String ipAddress = CalculateUtil.getIpAddress(httpRequest);
         Location location = eventsDto.getLocation();
         List<Map<String, Object>> actionList = eventsDto.getActionList();
-        List<Map<String, Object>> eventList = eventsDto.getEventList();
+        List<EventInfo> eventList = eventsDto.getEventList();
 
         if(!systemsMapper.exists(new LambdaQueryWrapper<Systems>().eq(Systems::getAppId,appId))){
             systemsMapper.insert(Systems.builder()
@@ -118,8 +119,8 @@ public class MonitorServiceImpl extends ServiceImpl<MetricsMapper, Metrics> impl
 
 
     @Override
-    public Void errorHandler(ErrorInfoDto errorInfoDto) throws Exception {
-        errorLoggingService.logAndPersistError(errorInfoDto);
+    public Void errorHandler(ErrorInfo errorInfo) throws Exception {
+        errorLoggingService.logAndPersistError(errorInfo);
         return null;
     }
 }

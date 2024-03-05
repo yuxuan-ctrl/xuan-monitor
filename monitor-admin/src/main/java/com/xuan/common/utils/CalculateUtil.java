@@ -2,7 +2,7 @@ package com.xuan.common.utils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xuan.dao.mapper.postgres.UserMapper;
-import com.xuan.dao.model.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.model.PageViewInfo;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.Metrics;
@@ -46,16 +46,16 @@ public class CalculateUtil {
                 .entrySet().stream()
                 .max(Map.Entry.comparingByValue());
 
-        // 屏幕分辨率出现次数最多的情况
-        Map<String, Integer> screenResolutionCounts = eventList.stream()
-                .flatMap(event -> event.getScreenResolution().entrySet().stream())
-                .collect(Collectors.groupingBy(
-                        resolutionEntry -> resolutionEntry.getKey() + "x" + resolutionEntry.getValue(),
-                        Collectors.summingInt(Map.Entry::getValue)
-                ));
+//        // 屏幕分辨率出现次数最多的情况
+//        Map<String, Integer> screenResolutionCounts = eventList.stream()
+//                .flatMap(event -> event.getScreenResolution().entrySet().stream())
+//                .collect(Collectors.groupingBy(
+//                        resolutionEntry -> resolutionEntry.getKey() + "x" + resolutionEntry.getValue(),
+//                        Collectors.summingInt(Map.Entry::getValue)
+//                ));
 
-        Optional<Map.Entry<String, Integer>> mostFrequentScreenResolution = screenResolutionCounts.entrySet().stream()
-                .max(Map.Entry.comparingByValue());
+//        Optional<Map.Entry<String, Integer>> mostFrequentScreenResolution = screenResolutionCounts.entrySet().stream()
+//                .max(Map.Entry.comparingByValue());
 
 //        // 聚合昨天的数据
         Metrics metrics = Metrics.builder()
@@ -69,7 +69,7 @@ public class CalculateUtil {
                 .allUsersLength(allUsersLength)
                 .createTime(DateFormatUtils.format(LocalDateTime.now()))
                 .mostFrequentPlatform(mostFrequentPlatform.get().getKey())
-                .mostFrequentScreenResolution(mostFrequentScreenResolution.get().getKey())
+//                .mostFrequentScreenResolution(mostFrequentScreenResolution.get().getKey())
                 .build();
 
 

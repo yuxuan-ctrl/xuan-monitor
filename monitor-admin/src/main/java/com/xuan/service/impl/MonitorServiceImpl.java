@@ -18,6 +18,7 @@ import com.xuan.common.utils.CalculateUtil;
 import com.xuan.dao.mapper.clickhouse.EventsMapper;
 import com.xuan.dao.mapper.postgres.SystemsMapper;
 import com.xuan.dao.mapper.postgres.UserMapper;
+import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.model.Location;
 import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
@@ -69,7 +70,7 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
         String userAgent = eventsDto.getUserAgent();
         String ipAddress = CalculateUtil.getIpAddress(httpRequest);
         Location location = eventsDto.getLocation();
-        List<Map<String, Object>> actionList = eventsDto.getActionList();
+        List<ActionInfo> actionList = eventsDto.getActionList();
         List<EventInfo> eventList = eventsDto.getEventList();
 
         if(!systemsMapper.exists(new LambdaQueryWrapper<Systems>().eq(Systems::getAppId,appId))){

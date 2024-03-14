@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-01-31 17:54:23
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-20 11:23:42
  * @FilePath: \monitor-sdk\src\core\interaction\input.ts
  * @Description:
@@ -11,7 +11,7 @@
 
 export let state = [];
 
-import {  getCurrentUnix,target } from '../../utils';
+import { getCurrentUnix, getTime, target, formatDate } from '../../utils';
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
@@ -57,7 +57,14 @@ export default class InputTracker extends EventManager {
       }
 
       this.messageWrapper.enqueue(
-        { ...data, session: new Date().getDate() },
+        {
+          timestamp: getCurrentUnix(),
+          createTime: formatDate(new Date()),
+          // event: event,
+          type: this.type,
+          data: JSON.stringify(data),
+          session: new Date().getDate(),
+        },
         DB_CONFIG.ACTION_STORE_NAME
       );
       // state.push({ time: getTime(event), event: Event.Input, data });

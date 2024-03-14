@@ -3,6 +3,7 @@ package com.xuan.service.impl.elasticsearch;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.alibaba.fastjson.JSON;
 import com.xuan.common.utils.DateFormatUtils;
+import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.service.ESDocumentService;
 import com.xuan.service.MonitoringDataStorageService;
@@ -22,7 +23,7 @@ public class MonitoringDataStorageServiceEsImpl implements MonitoringDataStorage
     private ESDocumentService esDocumentService;
 
     @Override
-    public void recordMonitoringData(String appId, String userId, List<Map<String, Object>> actionDataList, List<EventInfo> eventDataList) throws IOException {
+    public void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList) throws IOException {
         esDocumentService.ensureIndexExists("events", "actions");
 
         for (EventInfo eventInfo : eventDataList) {
@@ -43,10 +44,9 @@ public class MonitoringDataStorageServiceEsImpl implements MonitoringDataStorage
         }
 
         // 对于 actionsList，由于仍是 Map 类型，保持不变
-        for (Map<String, Object> actionData : actionDataList) {
-            actionData.put("createTime", LocalDateTime.now());
-            actionData.put("appId", appId);
-            actionData.put("userId", userId);
+        for (ActionInfo actionData : actionDataList) {
+            actionData.setAppId(appId);
+            actionData.setUserId(userId);
 
             try {
                 IndexResponse response = esDocumentService.createByJson(

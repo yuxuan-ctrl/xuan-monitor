@@ -16,7 +16,7 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventInfo {
+public class EventInfo implements BaseInfo{
 
     @JsonProperty("appId")
     String appId;

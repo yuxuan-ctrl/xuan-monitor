@@ -14,9 +14,15 @@ dependencies:
   '@ant-design/pro-components':
     specifier: ^2.6.48
     version: 2.6.48(antd@5.13.2)(rc-field-form@1.41.0)(react-dom@18.2.0)(react@18.2.0)
+  '@antv/l7':
+    specifier: ^2.20.20
+    version: 2.20.20
+  '@antv/l7-maps':
+    specifier: ^2.20.20
+    version: 2.20.20
   '@antv/l7-react':
     specifier: ^2.4.3
-    version: 2.4.3(@antv/l7@2.20.18)(mapbox-gl@1.13.3)(react-dom@18.2.0)(react@18.2.0)
+    version: 2.4.3(@antv/l7@2.20.20)(mapbox-gl@1.13.3)(react-dom@18.2.0)(react@18.2.0)
   '@umijs/route-utils':
     specifier: ^2.2.2
     version: 2.2.2
@@ -1126,11 +1132,11 @@ packages:
       '@antv/g-web-animations-api': 1.2.22
     dev: false
 
-  /@antv/l7-component@2.20.18:
-    resolution: {integrity: sha512-6M7IRZpdEvD4fVYDNlIqkm2RW7Vz2Sefpv4XhH2I2G4NuXsDNa8AgMB27JTs27B3rGYUdhA8zg7cRd4RWTku5A==}
+  /@antv/l7-component@2.20.20:
+    resolution: {integrity: sha512-NT7zGJLo4Y/33QyVuUca34WaaYAO3ZNBErt5Diqji5ARNwN7ukwgV2kbFfb93G7I4GilYkQjHweanThYXYCQow==}
     dependencies:
-      '@antv/l7-core': 2.20.18
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-core': 2.20.20
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       eventemitter3: 4.0.7
       inversify: 5.1.1
@@ -1138,11 +1144,11 @@ packages:
       supercluster: 7.1.5
     dev: false
 
-  /@antv/l7-core@2.20.18:
-    resolution: {integrity: sha512-iYEtSwz5KR84ZqLt7D7SXr7p3miKIBN7XS4wCI4ujFwjAe/SmSY3QoMnuF9rnkqdYJFl2vC7JKlBpn8h2NTI/Q==}
+  /@antv/l7-core@2.20.20:
+    resolution: {integrity: sha512-7HLetc8FzyrGu62o2Y7OzlnmwiVNBekxsLNLfkbE+bFhLztvFir2t48yN6XJMA7JCMlCtIToflnj+39uoCV2/g==}
     dependencies:
       '@antv/async-hook': 2.2.9
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       '@mapbox/tiny-sdf': 1.2.5
       '@turf/helpers': 6.5.0
@@ -1157,14 +1163,14 @@ packages:
       viewport-mercator-project: 6.2.3
     dev: false
 
-  /@antv/l7-layers@2.20.18:
-    resolution: {integrity: sha512-ZPGlFtI13DsUH/w/7KdkYvzy0USKjdfq7ZInrGlssfj6OVvsJ8Dl4Vs/283KYx9SV4KeiuwMrvCi0ZWuH8azMA==}
+  /@antv/l7-layers@2.20.20:
+    resolution: {integrity: sha512-nHQ4SsbxxOCByJ99ga40nySMlww7i5P18KrEFaNUyfl58O3QeGZ8nY45dyeSMLN7OaaE+c8s/8fwKTWD+KADEg==}
     dependencies:
       '@antv/async-hook': 2.2.9
-      '@antv/l7-core': 2.20.18
-      '@antv/l7-maps': 2.20.18
-      '@antv/l7-source': 2.20.18
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-core': 2.20.20
+      '@antv/l7-maps': 2.20.20
+      '@antv/l7-source': 2.20.20
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       '@mapbox/martini': 0.2.0
       '@turf/clone': 6.5.0
@@ -1186,10 +1192,10 @@ packages:
       reflect-metadata: 0.1.14
     dev: false
 
-  /@antv/l7-map@2.20.18:
-    resolution: {integrity: sha512-Sap7Ay/K/k4biwa2dpR16w//nLJ0t/L2x2LMLC1BILr9PFHWOk4yl/lPzJ1befr4MRN1U151YsfHvwwMThew7w==}
+  /@antv/l7-map@2.20.20:
+    resolution: {integrity: sha512-pC0/Ge+sFpXIfkvrHAzo2ZAlt5d0da0gZDq+ChBLrip115QHA1/hYDQAO8e7brHGQUOnyLrQWABNXLq6LmLNBg==}
     dependencies:
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       '@mapbox/point-geometry': 0.1.0
       '@mapbox/unitbezier': 0.0.0
@@ -1198,13 +1204,13 @@ packages:
       lodash-es: 4.17.21
     dev: false
 
-  /@antv/l7-maps@2.20.18:
-    resolution: {integrity: sha512-fI/JkU51Rv78jdbb9ijhmUd5UvzMbx0KAV/fRqUz/9uqjLXJbh5juLcj3FNAe5d9NcMuq1ZOtKcsPw90KYpHsg==}
+  /@antv/l7-maps@2.20.20:
+    resolution: {integrity: sha512-XmaarfwtDHDh1npbx+Mrz8ROQdzuD40uVOEBvxmMn/HCF3+/bOz3fM8lQEGHyfT3fQCsLj2DumP/BhJkQ2Hq8w==}
     dependencies:
       '@amap/amap-jsapi-loader': 1.0.1
-      '@antv/l7-core': 2.20.18
-      '@antv/l7-map': 2.20.18
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-core': 2.20.20
+      '@antv/l7-map': 2.20.20
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       gl-matrix: 3.4.3
       inversify: 5.1.1
@@ -1214,7 +1220,7 @@ packages:
       viewport-mercator-project: 6.2.3
     dev: false
 
-  /@antv/l7-react@2.4.3(@antv/l7@2.20.18)(mapbox-gl@1.13.3)(react-dom@18.2.0)(react@18.2.0):
+  /@antv/l7-react@2.4.3(@antv/l7@2.20.20)(mapbox-gl@1.13.3)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-TwKDhvR5Pv82/7sB00I1B5GXefxZ2P9UvnR28f/w7+kmsZXShlGv8NoBeb20DM9jRCf5MQ78fRkqXM3W2tWlVg==}
     requiresBuild: true
     peerDependencies:
@@ -1223,7 +1229,7 @@ packages:
       react: ^16.8.6 || ^17.0.2
       react-dom: ^16.8.6 || ^17.0.2
     dependencies:
-      '@antv/l7': 2.20.18
+      '@antv/l7': 2.20.20
       '@babel/runtime': 7.23.8
       '@types/eslint': 8.56.2
       '@types/lodash': 4.14.202
@@ -1236,27 +1242,27 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
     dev: false
 
-  /@antv/l7-renderer@2.20.18:
-    resolution: {integrity: sha512-R9xOiBMl0nxBCJ51uHblb54DY6sL6Fb1BZr2rlVu71v2M/P/t841R75TnN4mfXxue3s4GQuLK2U5OQR7sTHhcQ==}
+  /@antv/l7-renderer@2.20.20:
+    resolution: {integrity: sha512-jXf8iho9VyaxjK9Vg39lUOLYmix3aGKkhJzf0nC1Sx5n0h6RBNKoDCzSKLVKb/qm71aiSeRaJwMFx1X6Qt0qhw==}
     dependencies:
       '@antv/g-device-api': 1.6.4
-      '@antv/l7-core': 2.20.18
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-core': 2.20.20
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       inversify: 5.1.1
       reflect-metadata: 0.2.1
       regl: 1.6.1
     dev: false
 
-  /@antv/l7-scene@2.20.18:
-    resolution: {integrity: sha512-SY8BmS9mm5aOP0mZT+FpkijCbFu5bd9+1HB6dtwGlLeGeXZ/9vqLKLH/jFvVnn65YbgLLxHtcQinooyqv72wiw==}
+  /@antv/l7-scene@2.20.20:
+    resolution: {integrity: sha512-Mogl2Jreq+LK3enu/SF1c8p4PMU0uluxfXSexqw2ELxC1uN4jLA4Mw1EPupPudZmyz2xJJGHw0ZtEiBqzsd7rg==}
     dependencies:
-      '@antv/l7-component': 2.20.18
-      '@antv/l7-core': 2.20.18
-      '@antv/l7-layers': 2.20.18
-      '@antv/l7-maps': 2.20.18
-      '@antv/l7-renderer': 2.20.18
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-component': 2.20.20
+      '@antv/l7-core': 2.20.20
+      '@antv/l7-layers': 2.20.20
+      '@antv/l7-maps': 2.20.20
+      '@antv/l7-renderer': 2.20.20
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       eventemitter3: 4.0.7
       inversify: 5.1.1
@@ -1264,12 +1270,12 @@ packages:
       reflect-metadata: 0.1.14
     dev: false
 
-  /@antv/l7-source@2.20.18:
-    resolution: {integrity: sha512-uv6W8HbiXkUTjnxFP4rW1uj0R479zjgfBi8tDQ/3GqfHy51Vv97XJaPpZIwrW4Q3Fo0UaOhPbKrlf5lsBwpZ3A==}
+  /@antv/l7-source@2.20.20:
+    resolution: {integrity: sha512-ZLlt+y+Rk0C+Gre6qd1Y0snRmVH98TGHCpcuWg9327R2vj8s38jZZD1uDXniaC6yquXGunFjHjcNe6cYoWysUg==}
     dependencies:
       '@antv/async-hook': 2.2.9
-      '@antv/l7-core': 2.20.18
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-core': 2.20.20
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       '@mapbox/geojson-rewind': 0.5.2
       '@mapbox/vector-tile': 1.3.1
@@ -1286,8 +1292,8 @@ packages:
       supercluster: 7.1.5
     dev: false
 
-  /@antv/l7-utils@2.20.18:
-    resolution: {integrity: sha512-htMHJAh3XpPA2gFRQuv7FedZ+AKEN22u9TLtMXF3OCn9SYxKs9PD/c52aLM2W5Srv5dTGVEv4N4MJ3aWNInNMw==}
+  /@antv/l7-utils@2.20.20:
+    resolution: {integrity: sha512-xO9k3oMafnzTH8O8F/TfooXYwvYcP7DJ0sX3RvjA2WkzgjfqmfH47dXy52ctvL1RE12Eg1V950q/arhJvT2Wkg==}
     dependencies:
       '@babel/runtime': 7.23.8
       '@turf/bbox': 6.5.0
@@ -1301,16 +1307,16 @@ packages:
       web-worker-helper: 0.0.3
     dev: false
 
-  /@antv/l7@2.20.18:
-    resolution: {integrity: sha512-Pz/kkabu+MVIwcL3VRcftArPAi8j+sKuj0dvZ77umy70Y2NU4IzFKkj6okc4FXdACfk23z7bfLP+azrspLkd8Q==}
+  /@antv/l7@2.20.20:
+    resolution: {integrity: sha512-K3Oo8TULDmJxzafePDQCIjZ/+H6wyM4PmvmVhIJz6Xh3nyXQ4ZtGvFWwo6KV/PkaO90XUnKeSjPeiyUo0+lhkw==}
     dependencies:
-      '@antv/l7-component': 2.20.18
-      '@antv/l7-core': 2.20.18
-      '@antv/l7-layers': 2.20.18
-      '@antv/l7-maps': 2.20.18
-      '@antv/l7-scene': 2.20.18
-      '@antv/l7-source': 2.20.18
-      '@antv/l7-utils': 2.20.18
+      '@antv/l7-component': 2.20.20
+      '@antv/l7-core': 2.20.20
+      '@antv/l7-layers': 2.20.20
+      '@antv/l7-maps': 2.20.20
+      '@antv/l7-scene': 2.20.20
+      '@antv/l7-source': 2.20.20
+      '@antv/l7-utils': 2.20.20
       '@babel/runtime': 7.23.8
       webpack-bundle-analyzer: 4.10.1
     transitivePeerDependencies:
@@ -10766,7 +10772,6 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
     dev: true
-    bundledDependencies: false
 
   /create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}

@@ -1,5 +1,5 @@
 import { Listener, EventManager } from '../../decorator';
-import { getTime,  getCurrentUnix,layout, link, target, text } from '../../utils';
+import { getTime,  getCurrentUnix,layout, link, target, text, formatDate } from '../../utils';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 
@@ -50,18 +50,19 @@ export default class ClipboardTracker extends EventManager {
     // 输出事件相关信息
     if (dataObject) {
       console.log({
-        time: getTime(event),
+        // time: getTime(event),
         // event: event,
-        type: this.type,
-        data: {
+        // type: this.type,
+        data: JSON.stringify({
           target: JSON.stringify(event.target),
           clipboardData: dataObject,
-        },
+        }),
       });
       this.messageWrapper.enqueue(
         {
-          time: getTime(event),
-          // event: event,
+          timestamp: getCurrentUnix(),
+        createTime: formatDate(new Date()),
+        // event: event,
           type: this.type,
           data: {
             // target: JSON.stringify(event.target),

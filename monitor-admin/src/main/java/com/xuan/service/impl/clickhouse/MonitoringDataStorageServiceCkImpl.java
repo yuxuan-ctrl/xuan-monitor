@@ -2,7 +2,9 @@ package com.xuan.service.impl.clickhouse;
 
 
 import com.xuan.common.utils.DateFormatUtils;
+import com.xuan.dao.mapper.clickhouse.ActionsMapper;
 import com.xuan.dao.mapper.clickhouse.EventsMapper;
+import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.service.MonitoringDataStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -20,14 +23,21 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
     @Autowired
     public EventsMapper eventsMapper;
 
+    @Autowired
+    public ActionsMapper actionsMapper;
+
     @Override
-    public void recordMonitoringData(String appId, String userId, List<Map<String, Object>> actionDataList, List<EventInfo> eventDataList) throws IOException {
+    public void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList) throws IOException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+// 使用此格式器来格式化当前时间
+        String createTime = LocalDateTime.now().format(formatter);
+
         eventDataList.forEach(event -> {
             EventInfo eventInfo = EventInfo.builder()
                     .createTime(DateFormatUtils.format(LocalDateTime.now()))
                     .appId(appId)
                     .userId(userId)
-                    .metrics( event.getMetrics())
+                    .metrics(event.getMetrics())
                     .language(event.getLanguage())
                     .pageUrl(event.getPageUrl())
                     .platform(event.getPlatform())
@@ -43,5 +53,17 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
             eventsMapper.insert(eventInfo);
         });
 
+        actionDataList.forEach(action -> {
+            ActionInfo actionInfo = ActionInfo.builder()
+                    .createTime(createTime)
+                    .appId(appId)
+                    .userId(userId)
+                    .type(action.getType())
+                    .timestamp(action.getTimestamp())
+                    .data(action.getData())
+                    .build();
+
+            actionsMapper.insert(actionInfo);
+        });
     }
 }

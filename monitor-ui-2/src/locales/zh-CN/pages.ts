@@ -1,3 +1,13 @@
+/*
+ * @Author: yuxuan-ctrl
+ * @Date: 2024-02-22 16:11:42
+ * @LastEditors: yuxuan-ctrl
+ * @LastEditTime: 2024-03-14 15:08:11
+ * @FilePath: \monitor-ui-2\src\locales\zh-CN\pages.ts
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
+ */
 export default {
   'pages.layouts.userLayout.title': 'Ant Design 是西湖区最具影响力的 Web 设计规范',
   'pages.login.accountLogin.tab': '账户密码登录',
@@ -64,4 +74,11 @@ export default {
   'pages.searchTable.tenThousand': '万',
   'pages.searchTable.batchDeletion': '批量删除',
   'pages.searchTable.batchApproval': '批量审批',
+  'pages.searchTable.updateForm.userIdLabel': '用户ID',
+  'pages.searchTable.createTimeLabel': '创建时间',
+  'pages.searchTable.lastLoginTimeLabel': '最后登录时间',
+  'pages.searchTable.ipAddressLabel': 'IP地址',
+  'pages.searchTable.platformLabel': '平台',
+  'pages.searchTable.userAgentLabel': '用户代理',
+  'pages.searchTable.locationLabel': '位置（经度 & 纬度）',
 };

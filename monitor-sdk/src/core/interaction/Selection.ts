@@ -11,7 +11,7 @@
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
-import {  getCurrentUnix } from '../../utils';
+import { getCurrentUnix, getTime,formatDate } from '../../utils';
 
 export let data = null;
 
@@ -66,7 +66,14 @@ export default class SelectTracker extends EventManager {
     };
     console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data);
     this.messageWrapper.enqueue(
-      { ...data, session: new Date().getDate() },
+      {
+        timestamp: getCurrentUnix(),
+        createTime: formatDate(new Date()),
+        // event: event,
+        type: this.type,
+        data: JSON.stringify(data),
+        session: new Date().getDate(),
+      },
       DB_CONFIG.ACTION_STORE_NAME
     );
   }

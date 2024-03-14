@@ -8,7 +8,15 @@
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
-import { getCurrentUnix, getTime, layout, link, target, text } from '../../utils';
+import {
+  formatDate,
+  getCurrentUnix,
+  getTime,
+  layout,
+  link,
+  target,
+  text,
+} from '../../utils';
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
@@ -57,20 +65,21 @@ export default class ClickTracker extends EventManager {
 
     if (pageCoords.x !== null && pageCoords.y !== null) {
       const eventData = {
-        time: getTime(event),
+        timestamp: getCurrentUnix(),
+        createTime: formatDate(new Date()),
         type: this.type,
         // event,
-        data: {
-          // target: JSON.stringify(targetElement),
-          x: pageCoords.x,
-          y: pageCoords.y,
-          timestamp: getCurrentUnix(),
-          ...relativeCoords,
-          button: event.button,
-          text: text(targetElement),
-          link: linkElement?.href ?? null,
-          hash: null,
-        },
+          data:JSON.stringify({
+            // target: JSON.stringify(targetElement),
+            x: pageCoords.x,
+            y: pageCoords.y,
+            timestamp: getCurrentUnix(),
+            ...relativeCoords,
+            button: event.button,
+            text: text(targetElement),
+            link: linkElement?.href ?? null,
+            hash: null,
+          }),
       };
       console.log('🚀 ~ ClickTracker ~ handler ~ eventData:', eventData);
 

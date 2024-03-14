@@ -2,6 +2,7 @@ package com.xuan.dao.pojo.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.model.Location;
 import lombok.AllArgsConstructor;
@@ -38,7 +39,7 @@ public class  EventsDTO {
     List<EventInfo> eventList;
 
     @JsonProperty("actionList")
-    private List<Map<String, Object>> actionList;
+    private List<ActionInfo> actionList;
 
     String record;
 

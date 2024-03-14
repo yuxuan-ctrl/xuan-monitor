@@ -84,7 +84,7 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
 
     @Override
     public ErrorInfo getDetailedErrorInfoByIdentifier(String errorIdentifier) throws IOException {
-        return esDocumentService.getById("errors",errorIdentifier,ErrorInfo.class);
+        return esDocumentService.getById("errors", errorIdentifier, ErrorInfo.class);
     }
 
     private Metrics fetchAggregatedMetricsFromES(String index, String timestampField, Class<EventInfo> clazz, MetricsDTO metricsDTO) throws IOException {
@@ -95,23 +95,23 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
         return esDocumentService.queryPastHours(index, timestampField, clazz, metricsDTO);
     }
 
-    private Set<String> calculateUsersCount(Instant startTime,Instant endTime,String appId,String userId) throws IOException {
+    private Set<String> calculateUsersCount(Instant startTime, Instant endTime, String appId, String userId) throws IOException {
 
-        MetricsDTO metricsDTO = new MetricsDTO(startTime,endTime,appId,userId);
-        List<EventInfo> eventList = esDocumentService.queryPastHours("events", "timestamp", EventInfo.class,metricsDTO);
-        List<Object> actionList = esDocumentService.queryPastHours("actions", "timestamp", Object.class,metricsDTO);
+        MetricsDTO metricsDTO = new MetricsDTO(startTime, endTime, appId, userId);
+        List<EventInfo> eventList = esDocumentService.queryPastHours("events", "timestamp", EventInfo.class, metricsDTO);
+        List<Object> actionList = esDocumentService.queryPastHours("actions", "timestamp", Object.class, metricsDTO);
         // 提取并合并用户ID
         Set<String> allUserIdsFromEvents = extractUserIdsFromEventList(eventList);
         Set<String> allUserIdsFromActions = extractUserIdsFromActionList(actionList);
 
-// 合并两个集合中的不重复用户ID
+        // 合并两个集合中的不重复用户ID
         Set<String> combinedUserIds = new HashSet<>(allUserIdsFromEvents);
         combinedUserIds.addAll(allUserIdsFromActions);
         return combinedUserIds;
     }
 
     // 定义两个方法来提取用户ID
-    private  Set<String> extractUserIdsFromEventList(List<EventInfo> list) {
+    private Set<String> extractUserIdsFromEventList(List<EventInfo> list) {
         return list.stream()
                 .map(EventInfo::getUserId) // 假设EventList类有一个getUserID()方法来获取用户ID
                 .collect(Collectors.toSet());

@@ -291,13 +291,13 @@ public class ESDocumentServiceImpl implements ESDocumentService {
             boolQueryBuilder.filter(termQuery);
         }
 
-        if (userId != null && !userId.isEmpty()) {
-            Query termQuery = QueryBuilders.match()
-                    .field("userId")
-                    .query(appId)
-                    .build()._toQuery();
-            boolQueryBuilder.filter(termQuery);
-        }
+//        if (userId != null && !userId.isEmpty()) {
+//            Query termQuery = QueryBuilders.match()
+//                    .field("userId")
+//                    .query(appId)
+//                    .build()._toQuery();
+//            boolQueryBuilder.filter(termQuery);
+//        }
 
         BoolQuery boolQuery = boolQueryBuilder.build();
         return new SearchRequest.Builder()

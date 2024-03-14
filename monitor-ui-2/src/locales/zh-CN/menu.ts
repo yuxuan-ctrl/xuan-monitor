@@ -1,17 +1,31 @@
+/*
+ * @Author: yuxuan-ctrl
+ * @Date: 2024-02-22 16:11:42
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-03-14 16:43:17
+ * @FilePath: \monitor-ui-2\src\locales\zh-CN\menu.ts
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
+ */
 export default {
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',
   'menu.home': '首页',
   'menu.admin': '管理页',
   'menu.errors': '错误管理页',
-  'menu.errors.errorsList': '错误列表',
-  'menu.errors.errorsDetails': '错误详情',
+  'menu.users': '用户管理页',
+  'menu.errors.errors-list': '错误列表',
+  'menu.errors.errors-details': '错误详情',
+  'menu.users.users-list': '用户列表',
+  'menu.users.users-details': '用户详情',
   'menu.admin.sub-page': '二级管理页',
   'menu.login': '登录',
   'menu.register': '注册',
   'menu.register-result': '注册结果',
   'menu.dashboard': 'Dashboard',
   'menu.dashboard.analysis': '分析页',
+  'menu.dashboard.region': '地域分布',
   'menu.dashboard.monitor': '监控页',
   'menu.dashboard.workplace': '工作台',
   'menu.exception.403': '403',

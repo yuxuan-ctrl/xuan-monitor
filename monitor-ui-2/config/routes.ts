@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-26 09:20:54
+ * @LastEditTime: 2024-03-14 14:30:31
  * @FilePath: \monitor-ui-2\config\routes.ts
  * @Description:
  *
@@ -53,6 +53,12 @@ export default [
         path: '/dashboard/analysis',
         component: './dashboard/analysis',
       },
+      {
+        name: 'region',
+        icon: 'smile',
+        path: '/dashboard/region',
+        component: './dashboard/region',
+      },
       // ,
       // {
       //   name: 'monitor',
@@ -80,13 +86,36 @@ export default [
       },
       {
         path: '/errors/list',
-        name: 'errorsList',
+        name: 'errors-list',
         component: './Errors',
       },
       {
         path: '/errors/details',
-        name: 'errorsDetails',
+        name: 'errors-details',
         component: './Errors/details',
+        hideInMenu: true,
+      },
+    ],
+  },
+  {
+    path: '/users',
+    name: 'users',
+    icon: 'crown',
+    access: false,
+    routes: [
+      {
+        path: '/users',
+        redirect: '/users/list',
+      },
+      {
+        path: '/users/list',
+        name: 'users-list',
+        component: './Users',
+      },
+      {
+        path: '/users/details',
+        name: 'users-details',
+        component: './Users/details',
         hideInMenu: true,
       },
     ],

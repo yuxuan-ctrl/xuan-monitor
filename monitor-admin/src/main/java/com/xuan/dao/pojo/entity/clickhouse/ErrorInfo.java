@@ -14,7 +14,7 @@ import java.sql.Timestamp;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorInfo {
+public class ErrorInfo implements BaseInfo{
 
     /**
      * 错误id，标识错误的id

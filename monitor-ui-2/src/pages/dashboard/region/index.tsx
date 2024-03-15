@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-03-14 16:09:42
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-03-14 18:18:25
+ * @LastEditTime: 2024-03-15 11:23:39
  * @FilePath: \monitor-ui-2\src\pages\dashboard\region\index.tsx
  * @Description:
  *
@@ -70,9 +70,9 @@ const init = () => {
 
     map: new Map({
       center: [112, 30],
-
-      // zoom: 12,
       zoom: 3,
+      pitch: 0,
+      style: 'light', //light或darl
     }),
   });
 
@@ -81,60 +81,58 @@ const init = () => {
     'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json';
   fetch(url).then(async (res) => {
     const data = await res.json();
-    console.log("🚀 ~ fetch ~ data:", data)
+    console.log('🚀 ~ fetch ~ data:', data);
     const source = new Source(data);
-  
-    scene.on('loaded', () => {
-      // 绿地
-      const fill = new PolygonLayer({
-        sourceLayer: 'CHN_Cities',
-      })
-        .source(source)
-        .shape('fill')
-        .active(true)
-        .color('adcode_pro', getColorByDGP);
-  
-      fill.on('mousemove', (e) => {
-        console.log(1111111111111);
-  
-        const popup = new Popup({
-          offsets: [0, 0],
-          closeButton: false,
-        }).setLnglat(e.lngLat);
-        // .setHTML(`<span>${e.feature.properties.name}: ${e.feature.properties.density}</span>`);
-        scene.addPopup(popup);
-      });
-  
-      const line = new LineLayer({
-        sourceLayer: 'CHN_Cities_L',
-      })
-        .source(source)
-        .shape('line')
-        .color('#FFA500');
-  
-      const line2 = new LineLayer({
-        sourceLayer: 'CHN_L',
-      })
-        .source(source)
-        .shape('line')
-        .size(0.6)
-        .color('#053061');
-  
-      const text = new PointLayer({
-        sourceLayer: 'CHN_Cities',
-        blend: 'normal',
-      })
-        .source(source)
-        .shape('id', 'text')
-        .size(12)
-        .color('#000');
-      scene.addLayer(fill);
-      // scene.addLayer(line);
-      scene.addLayer(line2);
-      scene.addLayer(text);
+    console.log('🚀 ~ fetch ~ source:', source);
+
+    const fill = new PolygonLayer({
+      sourceLayer: 'CHN_Cities',
+    })
+      .source(source)
+      .shape('fill')
+      .active(true)
+      .color('adcode_pro', getColorByDGP);
+
+    fill.on('mousemove', (e) => {
+      const popup = new Popup({
+        offsets: [0, 0],
+        closeButton: false,
+      }).setLnglat(e.lngLat);
+      // .setHTML(`<span>${e.feature.properties.name}: ${e.feature.properties.density}</span>`);
+      scene.addPopup(popup);
     });
+
+    const line = new LineLayer({
+      sourceLayer: 'CHN_Cities_L',
+    })
+      .source(source)
+      .shape('line')
+      .color('#FFA500');
+
+    const line2 = new LineLayer({
+      sourceLayer: 'CHN_L',
+    })
+      .source(source)
+      .shape('line')
+      .size(0.6)
+      .color('#053061');
+
+    const text = new PointLayer({
+      blend: 'normal',
+    })
+      .source(source)
+      .shape('name', 'text')
+      .size(8)
+      .color('#000')
+      .style({
+        fontWeight:800,
+      })
+
+    scene.addLayer(fill);
+    scene.addLayer(line);
+    // scene.addLayer(line2);
+    scene.addLayer(text);
   });
- 
 };
 
 const Region: React.FC = () => {

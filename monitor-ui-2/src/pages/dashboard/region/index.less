@@ -2,3 +2,25 @@
   width:100%;
   height: 1000px;
 }
+
+.labelclass {
+  position: relative; /* 用于定位内部数字标签 */
+  display: inline-block;
+  width: 24px; /* 根据需求调整Marker的宽度 */
+  height: 24px; /* 根据需求调整Marker的高度 */
+  background-color: #1890FF; /* Marker主体颜色 */
+  border-radius: 50%; /* 圆形Marker */
+  border: 2px solid #fff; /* 白色边框 */
+  text-align: center;
+  line-height: 20px; /* 根据高度调整行高以使数字居中 */
+}
+
+/* 数字标签样式 */
+.labelclass::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px; /* 字体大小 */
+  color: #fff; /* 文字颜色 */
+}

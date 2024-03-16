@@ -21,17 +21,17 @@ import java.time.LocalDateTime;
 //@ApiModel(value="Users", description="")
 public class Users extends Model<Users> {
 
-     String userId;
-     LocalDateTime createTime; // 更名为create_time对应的字段
-     LocalDateTime lastLoginTime; // 对应last_login字段
+    String userId;
+    LocalDateTime createTime; // 更名为create_time对应的字段
+    LocalDateTime lastLoginTime; // 对应last_login字段
 
-     String ipAddress;
-     String platform;
-     String userAgent;
+    String ipAddress;
+    String platform;
+    String userAgent;
 
     // 如果存储经纬度信息
-     String location;
-
+    String location;
+    String belongCity;
 
 
 }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xuan.dao.mapper.postgres.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.xuan.dao.pojo.entity.Users">
+        <id column="user_id" property="userId" />
+        <result column="create_time" property="createTime" />
+        <result column="ip_address" property="ipAddress" />
+        <result column="platform" property="platform" />
+        <result column="user_agent" property="userAgent" />
+        <result column="last_login_time" property="lastLoginTime" />
+        <result column="location" property="location" />
+        <result column="all_users_length" property="allUsersLength" />
+        <result column="belong_city" property="belongCity" /> <!-- 地区字段映射 -->
+
+    </resultMap>
+
+    <!-- 定义统计不同地区用户数量的方法 -->
+    <select id="countUsersByRegion" resultType="map">
+        SELECT belong_city AS regionName, COUNT(*) AS userCount
+        FROM users
+        WHERE app_id = #{appId}
+        GROUP BY belong_city
+    </select>
+
+    <!-- 若有必要，保留原有的查询方法 -->
+    <!-- 定义selectNewList方法的SQL查询语句 -->
+    <!-- 此处假设Systems表与问题无关，故省略 -->
+    <!-- <select id="selectNewList" resultType="com.xuan.dao.pojo.entity.Systems"> -->
+    <!--     SELECT * FROM systems -->
+    <!--     ORDER BY create_time DESC -->
+    <!-- </select> -->
+
+</mapper>

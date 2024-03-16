@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-03-14 16:43:17
  * @FilePath: \monitor-ui-2\src\locales\zh-CN\menu.ts
  * @Description:

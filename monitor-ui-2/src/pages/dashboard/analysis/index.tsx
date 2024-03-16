@@ -80,7 +80,6 @@ const Analysis: FC<AnalysisProps> = () => {
 
   //useEffect
   useEffect(() => {
-    console.log('🚀 ~ systemList:', systemList);
     setSystemOptions(
       Array.isArray(systemList)
         ? systemList.map((item) => {
@@ -88,7 +87,6 @@ const Analysis: FC<AnalysisProps> = () => {
           })
         : [],
     );
-    console.log('🚀 ~ useEffect ~ systemOptions:', systemOptions);
     if (systemList && systemList.length > 0 && systemList[0]) {
       setAppId(systemList[0].appId as string);
     }

@@ -1,12 +1,25 @@
 declare namespace API {
-  type ErrorInfoDto = {
+  type ActionInfo = {
     appId?: string;
     createTime?: string;
+    data?: string;
+    timestamp?: number;
+    type?: string;
+    userId?: string;
+  };
+
+  type AppsDashboardVo = {
+    activeUserMap?: Record<string, any>;
+    todayUserMap?: Record<string, any>;
+  };
+
+  type ErrorInfo = {
+    appId?: string;
+    createTime?: string;
+    errorId?: string;
     errorMessage?: string;
     errorType?: string;
-    pageIndex?: number;
-    pageSize?: number;
-    record?: string[];
+    record?: string;
     requestUrl?: string;
     stackTrace?: string;
     timestamp?: Timestamp;
@@ -27,13 +40,34 @@ declare namespace API {
     userId?: string;
   };
 
-  type EventsDTO = {
-    actionList?: Record<string, any>[];
+  type EventInfo = {
     appId?: string;
-    eventList?: Record<string, any>[];
+    createTime?: string;
+    language?: string;
+    metrics?: string;
+    mostVisitedPageId?: string;
+    mostVisitedPageViews?: number;
+    name?: string;
+    pageUrl?: string;
+    platform?: string;
+    referrer?: string;
+    screenResolution?: string;
+    slowResources?: string;
+    stayDuration?: number;
+    timeZoneOffset?: number;
+    timestamp?: number;
+    uniqueKey?: string;
+    userAgent?: string;
+    userId?: string;
+  };
+
+  type EventsDTO = {
+    actionList?: ActionInfo[];
+    appId?: string;
+    eventList?: EventInfo[];
     location?: Location;
     platform?: string;
-    record?: string[];
+    record?: string;
     timestamp?: Timestamp;
     userAgent?: string;
     userId?: string;
@@ -95,18 +129,15 @@ declare namespace API {
     userName?: string;
   };
 
+  type getUsersByRegionUsingGETParams = {
+    /** appId */
+    appId: string;
+  };
+
   type IPageErrors = {
     current?: number;
     pages?: number;
     records?: Errors[];
-    size?: number;
-    total?: number;
-  };
-
-  type IPageUsers = {
-    current?: number;
-    pages?: number;
-    records?: Users[];
     size?: number;
     total?: number;
   };
@@ -151,11 +182,40 @@ declare namespace API {
     uniqueVisitors?: number;
   };
 
+  type Pageable = {
+    offset?: number;
+    pageNumber?: number;
+    pageSize?: number;
+    paged?: boolean;
+    sort?: Sort;
+    unpaged?: boolean;
+  };
+
+  type PageUsersVo = {
+    content?: UsersVo[];
+    empty?: boolean;
+    first?: boolean;
+    last?: boolean;
+    number?: number;
+    numberOfElements?: number;
+    pageable?: Pageable;
+    size?: number;
+    sort?: Sort;
+    totalElements?: number;
+    totalPages?: number;
+  };
+
   type PageViewInfo = {
     averageStayDuration?: number;
     pageUrl?: string;
     totalStayDuration?: number;
     viewCount?: number;
+  };
+
+  type RegionUserVO = {
+    regionCode?: string;
+    regionName?: string;
+    userCount?: number;
   };
 
   type ReportVo = {
@@ -165,21 +225,21 @@ declare namespace API {
     time?: string;
   };
 
-  type ResultErrorInfoDto = {
+  type ResultAppsDashboardVo = {
     code?: number;
-    data?: ErrorInfoDto;
+    data?: AppsDashboardVo;
+    msg?: string;
+  };
+
+  type ResultErrorInfo = {
+    code?: number;
+    data?: ErrorInfo;
     msg?: string;
   };
 
   type ResultIPageErrors = {
     code?: number;
     data?: IPageErrors;
-    msg?: string;
-  };
-
-  type ResultIPageUsers = {
-    code?: number;
-    data?: IPageUsers;
     msg?: string;
   };
 
@@ -201,6 +261,12 @@ declare namespace API {
     msg?: string;
   };
 
+  type ResultPageUsersVo = {
+    code?: number;
+    data?: PageUsersVo;
+    msg?: string;
+  };
+
   type ResultReportVo = {
     code?: number;
     data?: ReportVo;
@@ -213,10 +279,10 @@ declare namespace API {
     msg?: string;
   };
 
-  type ResultWebpvuv = {
-    code?: number;
-    data?: Webpvuv;
-    msg?: string;
+  type Sort = {
+    empty?: boolean;
+    sorted?: boolean;
+    unsorted?: boolean;
   };
 
   type Systemsduixiang = {
@@ -224,26 +290,6 @@ declare namespace API {
     appName?: string;
     appType?: string;
     createTime?: string;
-  };
-
-  type testreportUsingGETParams = {
-    appId?: string;
-    'location.latitude'?: number;
-    'location.longitude'?: number;
-    platform?: string;
-    record?: string[];
-    'timestamp.date'?: number;
-    'timestamp.day'?: number;
-    'timestamp.hours'?: number;
-    'timestamp.minutes'?: number;
-    'timestamp.month'?: number;
-    'timestamp.nanos'?: number;
-    'timestamp.seconds'?: number;
-    'timestamp.time'?: number;
-    'timestamp.timezoneOffset'?: number;
-    'timestamp.year'?: number;
-    userAgent?: string;
-    userId?: string;
   };
 
   type Timestamp = {
@@ -263,6 +309,7 @@ declare namespace API {
   };
 
   type Users = {
+    belongCity?: string;
     createTime?: string;
     ipAddress?: string;
     lastLoginTime?: string;
@@ -272,12 +319,13 @@ declare namespace API {
     userId?: string;
   };
 
-  type Webpvuv = {
-    appId?: string;
+  type UsersVo = {
     createTime?: string;
-    pageUrl?: string;
-    pv?: number;
-    type?: string;
-    uv?: number;
+    ipAddress?: string;
+    lastLoginTime?: string;
+    location?: string;
+    platform?: string;
+    userAgent?: string;
+    userId?: string;
   };
 }

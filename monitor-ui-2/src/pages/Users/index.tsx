@@ -1,4 +1,10 @@
-import { ActionType, PageContainer, ProColumns, ProList, ProTable } from '@ant-design/pro-components';
+import {
+  ActionType,
+  PageContainer,
+  ProColumns,
+  ProList,
+  ProTable,
+} from '@ant-design/pro-components';
 import { useRequest, history, FormattedMessage, useIntl } from '@umijs/max';
 import { useState, type FC, useRef } from 'react';
 import api from '@/services/monitor';
@@ -102,7 +108,7 @@ const Errors: FC = () => {
   };
   return (
     <PageContainer>
-      <ProTable<API.Users, API.ResultIPageUsers>
+      <ProTable<API.Users, API.getUserPageUsingGETParams>
         headerTitle={intl.formatMessage({
           id: 'pages.searchTable.title',
           defaultMessage: 'Enquiry form',

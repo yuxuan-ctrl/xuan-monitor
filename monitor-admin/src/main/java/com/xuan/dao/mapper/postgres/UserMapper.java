@@ -7,6 +7,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xuan.dao.pojo.entity.Users;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  * Mapper 接口
@@ -18,6 +21,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface UserMapper extends BaseMapper<Users> {
 
+    List<Map<String, Object>> countUsersByRegion(String appId);
 
 
 }

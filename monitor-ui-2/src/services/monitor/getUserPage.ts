@@ -8,7 +8,7 @@ export async function getUserPageUsingGet(
   params: API.getUserPageUsingGETParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.ResultIPageUsers>(`${process.env.DEV}/user/getUserPage`, {
+  return request<API.ResultPageUsersVo>(`${process.env.DEV}/user/getUserPage`, {
     method: 'GET',
     params: {
       ...params,

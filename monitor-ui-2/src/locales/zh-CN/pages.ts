@@ -81,4 +81,6 @@ export default {
   'pages.searchTable.platformLabel': '平台',
   'pages.searchTable.userAgentLabel': '用户代理',
   'pages.searchTable.locationLabel': '位置（经度 & 纬度）',
+  'pages.region.regionName': '区域名',
+  'pages.region.userCount': '用户数',
 };

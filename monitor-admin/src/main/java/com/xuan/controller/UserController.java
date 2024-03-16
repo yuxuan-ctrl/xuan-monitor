@@ -9,6 +9,7 @@ import com.xuan.dao.pojo.entity.Users;
 import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.result.Result;
+import com.xuan.dao.pojo.vo.RegionUserVO;
 import com.xuan.dao.pojo.vo.UsersVo;
 import com.xuan.service.UserService;
 import io.swagger.annotations.Api;
@@ -80,6 +81,12 @@ public class UserController {
         return userService.selectById(id);
     }
 
+    @GetMapping("/getUsersByRegion")
+    @ApiOperation("用户地域分布数量")
+    public Result<List<RegionUserVO>> getUsersByRegion(@RequestParam String appId) {
+        return Result.success(userService.getUsersByRegion(appId));
+    }
+
 //    @GetMapping("/getPageData")
 //    @ApiOperation("手写分页查询用户列表")
 //    public Result<PageResult<Users>> getPageData(PageUserDTO pageUserDto){
@@ -102,5 +109,6 @@ public class UserController {
 //        return Result.success(loginVo);
 
     }
+
 }
 

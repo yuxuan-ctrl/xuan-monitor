@@ -9,12 +9,15 @@ import com.xuan.dao.mapper.postgres.UserMapper;
 import com.xuan.dao.pojo.dto.PageUserDTO;
 import com.xuan.dao.pojo.dto.UserDTO;
 import com.xuan.dao.pojo.entity.Users;
+import com.xuan.dao.pojo.vo.RegionUserVO;
 import com.xuan.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -58,6 +61,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
     @Override
     public Users selectById(String id) {
         return userMapper.selectById(id);
+    }
+
+    @Override
+    public List<RegionUserVO> getUsersByRegion(String appId) {
+        // 假设根据appId筛选用户，并按belong_city分组统计
+        List<Map<String, Object>> result = userMapper.countUsersByRegion(appId);
+
+        List<RegionUserVO> regionUserVOS = new ArrayList<>();
+        for (Map<String, Object> record : result) {
+            String regionName = (String) record.get("regionname");
+            Long userCount = (Long) record.get("usercount");
+
+            RegionUserVO regionUserVO = RegionUserVO.builder()
+                    .regionName(regionName)
+                    .userCount(userCount)
+                    .build();
+
+            regionUserVOS.add(regionUserVO);
+        }
+
+        return regionUserVOS;
     }
 
     @Override

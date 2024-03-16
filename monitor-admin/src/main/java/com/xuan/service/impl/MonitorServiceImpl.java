@@ -15,6 +15,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.utils.CalculateUtil;
+import com.xuan.common.utils.IpUtil;
 import com.xuan.dao.mapper.clickhouse.EventsMapper;
 import com.xuan.dao.mapper.postgres.SystemsMapper;
 import com.xuan.dao.mapper.postgres.UserMapper;
@@ -99,6 +100,7 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
                     .createTime(LocalDateTime.now())
                     .lastLoginTime(LocalDateTime.now())
                     .location(JSON.toJSONString(location))
+                    .belongCity(IpUtil.getIpRegion(ipAddress))
                     .build();
             userMapper.insert(currentUser);
         }

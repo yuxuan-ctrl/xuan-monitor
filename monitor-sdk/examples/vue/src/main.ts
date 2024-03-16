@@ -19,7 +19,7 @@ let app: AppInstance | null = null;
 // 将渲染操作放入 mount 函数
 function mount() {
   // Monitor.start(window);
-  const monitor = new Monitor({ appId: '1', baseUrl: '/api',userId:'222' });
+  const monitor = new Monitor({ appId: '1', baseUrl: '/api' });
   monitor.start(window);
   Behavior.start();
   app = createApp(App);

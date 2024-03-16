@@ -30,7 +30,7 @@ public class IpUtil {
     @PostConstruct
     private static void initIp2Region() {
         try {
-            InputStream inputStream = new ClassPathResource("/ipdb/ip2region.xdb").getInputStream();
+            InputStream inputStream = new ClassPathResource("/static/ip2region.xdb").getInputStream();
             byte[] bytes = FileCopyUtils.copyToByteArray(inputStream);
             searcher = Searcher.newWithBuffer(bytes);
         } catch (Exception exception) {

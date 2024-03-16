@@ -109,6 +109,9 @@ public class CalculateUtil {
                     }
                     ipAddress = inet.getHostAddress();
                 }
+                else if ("0:0:0:0:0:0:0:1".equals(ipAddress)) {
+                    ipAddress = "127.0.0.1";
+                }
             }
             // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
             if (ipAddress != null && ipAddress.length() > 15) { // "***.***.***.***".length()

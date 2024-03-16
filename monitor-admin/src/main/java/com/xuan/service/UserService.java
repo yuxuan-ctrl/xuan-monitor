@@ -6,12 +6,13 @@ import com.xuan.common.result.PageResult;
 import com.xuan.dao.pojo.dto.PageUserDTO;
 import com.xuan.dao.pojo.dto.UserDTO;
 import com.xuan.dao.pojo.entity.Users;
+import com.xuan.dao.pojo.vo.RegionUserVO;
 
 import java.util.List;
 
 /**
  * <p>
- *  服务类
+ * 服务类
  * </p>
  *
  * @author yuxuan-ctrl
@@ -22,12 +23,14 @@ public interface UserService extends IService<Users> {
     IPage<Users> selectPage(PageUserDTO pageUserDto);
 
     /**
-     *
      * @return
      */
 //    PageResult<Users> getPageData(PageUserDTO pageUserDto);
     List<Users> selectList();
+
     Users selectById(String id);
+
+    List<RegionUserVO> getUsersByRegion(String appId);
 
     Users login(UserDTO userDto);
 }

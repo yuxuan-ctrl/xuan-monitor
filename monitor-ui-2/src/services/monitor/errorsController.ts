@@ -8,7 +8,7 @@ export async function getDetailsUsingGet(
   params: API.getDetailsUsingGETParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.ResultErrorInfoDto>(`${process.env.DEV}/errors/getDetails`, {
+  return request<API.ResultErrorInfo>(`${process.env.DEV}/errors/getDetails`, {
     method: 'GET',
     params: {
       ...params,

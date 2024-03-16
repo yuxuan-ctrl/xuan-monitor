@@ -15,7 +15,7 @@ public class IpUtilTest {
      */
     @Test
     public void testGetIpRegion() {
-        String ip = "36.155.132.76"; // IpRegion:上海
+        String ip = "172.18.192.1"; // IpRegion:上海
 //        String ip = "47.52.236.180"; // IpRegion:香港
 //        String ip = "172.22.12.123"; // IpRegion:内网IP
 //        String ip = "164.114.53.60"; // IpRegion:美国

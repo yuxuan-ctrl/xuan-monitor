@@ -8,7 +8,7 @@ export async function getAppsDashboardDataUsingGet(
   params: API.getAppsDashboardDataUsingGETParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.ResultMetricsVo>(`${process.env.DEV}/Metrics/getAppsDashboardData`, {
+  return request<API.ResultAppsDashboardVo>(`${process.env.DEV}/Metrics/getAppsDashboardData`, {
     method: 'GET',
     params: {
       ...params,

@@ -31,7 +31,22 @@ export async function getUserPageUsingGet(
   params: API.getUserPageUsingGETParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.ResultIPageUsers>(`${process.env.DEV}/user/getUserPage`, {
+  return request<API.ResultPageUsersVo>(`${process.env.DEV}/user/getUserPage`, {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 用户地域分布数量 GET /user/getUsersByRegion */
+export async function getUsersByRegionUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getUsersByRegionUsingGETParams,
+  options?: { [key: string]: any },
+) {
+  return request<API.RegionUserVO[]>(`${process.env.DEV}/user/getUsersByRegion`, {
     method: 'GET',
     params: {
       ...params,

@@ -48,9 +48,10 @@ const Basic: FC = () => {
           }}
         >
           <Descriptions.Item label="用户ID">{data?.userId}</Descriptions.Item>
-          <Descriptions.Item label="系统ID">{data?.appId}</Descriptions.Item>
-          <Descriptions.Item label="发生页面">{data?.url}</Descriptions.Item>
-          <Descriptions.Item label="UA">{data?.userAgent}</Descriptions.Item>
+          <Descriptions.Item label="ip地址">{data?.ipAddress}</Descriptions.Item>
+          <Descriptions.Item label="用户平台">{data?.platform}</Descriptions.Item>
+          <Descriptions.Item label="系统信息">{data?.userAgent}</Descriptions.Item>
+          <Descriptions.Item label="所在地区">{data?.belongCity}</Descriptions.Item>
         </Descriptions>
         <Divider
           style={{

@@ -1,6 +1,9 @@
 package com.xuan.service.impl.elasticsearch;
 
+import com.xuan.common.result.PageResult;
 import com.xuan.common.utils.DateFormatUtils;
+import com.xuan.dao.model.UserAction;
+import com.xuan.dao.pojo.dto.UserDetailsDTO;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import com.xuan.dao.model.StoresMetrics;
 import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
@@ -85,6 +88,11 @@ public class BusinessAnalyticsServiceEsImpl implements BusinessAnalyticsService 
     @Override
     public ErrorInfo getDetailedErrorInfoByIdentifier(String errorIdentifier) throws IOException {
         return esDocumentService.getById("errors", errorIdentifier, ErrorInfo.class);
+    }
+
+    @Override
+    public PageResult<UserAction> getUserActionList(UserDetailsDTO userDetailsDTO) {
+        return null;
     }
 
     private Metrics fetchAggregatedMetricsFromES(String index, String timestampField, Class<EventInfo> clazz, MetricsDTO metricsDTO) throws IOException {

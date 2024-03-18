@@ -1,10 +1,13 @@
 package com.xuan.service.impl.clickhouse;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.xuan.common.result.PageResult;
 import com.xuan.common.utils.DateFormatUtils;
 import com.xuan.dao.mapper.clickhouse.ActionsMapper;
 import com.xuan.dao.mapper.clickhouse.ErrorsCkMapper;
 import com.xuan.dao.mapper.clickhouse.EventsMapper;
+import com.xuan.dao.model.UserAction;
+import com.xuan.dao.pojo.dto.UserDetailsDTO;
 import com.xuan.dao.pojo.entity.clickhouse.BaseInfo;
 import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
@@ -63,11 +66,11 @@ public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService 
         String endStr = DateFormatUtils.format(analysisEndTime.atZone(ZoneId.of("Asia/Shanghai")).toLocalDateTime());
 
         List<EventInfo> todayEventList = eventsMapper.selectList(
-                new LambdaQueryWrapper<EventInfo>()
-                        .eq(StringUtils.isNoneBlank(appId), EventInfo::getAppId, appId)
-                        .gt(EventInfo::getCreateTime, startStr)
-                        .lt(EventInfo::getCreateTime, endStr))
-                        .stream().toList();
+                        new LambdaQueryWrapper<EventInfo>()
+                                .eq(StringUtils.isNoneBlank(appId), EventInfo::getAppId, appId)
+                                .gt(EventInfo::getCreateTime, startStr)
+                                .lt(EventInfo::getCreateTime, endStr))
+                .stream().toList();
 
         return new StoresMetrics(aggregatedMetrics, todayEventList);
     }
@@ -142,4 +145,83 @@ public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService 
         ErrorInfo errorInfo = errorsCkMapper.selectOne(new LambdaQueryWrapper<ErrorInfo>().eq(ErrorInfo::getErrorId, errorIdentifier));
         return errorInfo;
     }
+
+    @Override
+    public PageResult<UserAction> getUserActionList(UserDetailsDTO userDetailsDTO) {
+        List<EventInfo> eventInfos = eventsMapper.selectList(new LambdaQueryWrapper<EventInfo>()
+                .eq(EventInfo::getUserId, userDetailsDTO.getUserId())
+                .lt(EventInfo::getCreateTime, userDetailsDTO.getEndTime())
+                .gt(EventInfo::getCreateTime, userDetailsDTO.getStartTime()));
+
+        List<ActionInfo> actionInfos = actionsMapper.selectList(new LambdaQueryWrapper<ActionInfo>()
+                .eq(ActionInfo::getUserId, userDetailsDTO.getUserId())
+                .lt(ActionInfo::getCreateTime, userDetailsDTO.getEndTime())
+                .gt(ActionInfo::getCreateTime, userDetailsDTO.getStartTime()));
+
+        List<ErrorInfo> errorInfos = errorsCkMapper.selectList(new LambdaQueryWrapper<ErrorInfo>()
+                .eq(ErrorInfo::getUserId, userDetailsDTO.getUserId())
+                .lt(ErrorInfo::getCreateTime, userDetailsDTO.getEndTime())
+                .gt(ErrorInfo::getCreateTime, userDetailsDTO.getStartTime()));
+
+
+        List<UserAction> userActions = consolidateActionInfos(eventInfos, actionInfos, errorInfos);
+
+        // 分页处理
+        int startIndex = (userDetailsDTO.getPageIndex() - 1) * userDetailsDTO.getPageSize();
+        int endIndex = Math.min(startIndex + userDetailsDTO.getPageSize(), userActions.size());
+        List<UserAction> paginatedUserActions = userActions.subList(startIndex, endIndex);
+
+        // 创建并返回分页结果对象
+        PageResult<UserAction> userActionPageResult = new PageResult<>();
+        userActionPageResult.setTotal(userActions.size()); // 设置总记录数
+        userActionPageResult.setRecords(paginatedUserActions); // 设置当前页数据
+
+        return userActionPageResult;
+    }
+
+    private List<UserAction> consolidateActionInfos(List<EventInfo> eventInfos,
+                                                    List<ActionInfo> actionInfos,
+                                                    List<ErrorInfo> errorInfos) {
+        List<UserAction> userActions = new ArrayList<>();
+
+        for (EventInfo event : eventInfos) {
+            UserAction userAction = new UserAction();
+            userAction.setType("Event");
+            userAction.setPageUrl(event.getPageUrl());
+            userAction.setId(event.getId());
+            userAction.setCreateTime(event.getCreateTime());
+            userAction.setDescription(event.getPageUrl()); // 假设这些实体类都有description字段
+            userActions.add(userAction);
+        }
+
+        for (ActionInfo action : actionInfos) {
+            UserAction userAction = new UserAction();
+            userAction.setType(action.getType());
+            userAction.setId(action.getId());
+            userAction.setPageUrl(action.getPageUrl());
+            userAction.setCreateTime(action.getCreateTime());
+            userAction.setDescription(action.getData());
+            userActions.add(userAction);
+        }
+
+        for (ErrorInfo error : errorInfos) {
+            UserAction userAction = new UserAction();
+            userAction.setType("Error");
+            userAction.setPageUrl(error.getPageUrl());
+            userAction.setId(error.getErrorId());
+            userAction.setCreateTime(error.getCreateTime());
+            userAction.setDescription(error.getErrorMessage());
+            userActions.add(userAction);
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        return userActions.stream().sorted((a1, a2) -> {
+                    LocalDateTime time1 = LocalDateTime.parse(a1.getCreateTime(), formatter);
+                    LocalDateTime time2 = LocalDateTime.parse(a2.getCreateTime(), formatter);
+                    return time1.compareTo(time2);
+                })
+                .collect(Collectors.toList());
+    }
+
 }

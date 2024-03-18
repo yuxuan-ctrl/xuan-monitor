@@ -1,23 +1,24 @@
-CREATE TABLE IF NOT EXISTS action_info
+-- `default`.action_info definition
+
+CREATE TABLE default.action_info
 (
-    app_id
-    String,
-    user_id
-    String,
-    `type`
-    String,
-    data
-    String, -- 假设data已经被转换为JSON字符串存储在这里
-    timestamp
-    DateTime
-(
-    'Asia/Shanghai'
-),
-    create_time DateTime
-    ) ENGINE = MergeTree
-(
+
+    `app_id` String,
+
+    `user_id` String,
+
+    `type` String,
+
+    `data` String,
+
+    `timestamp` DateTime('Asia/Shanghai'),
+
+    `create_time` DateTime,
+
+    `id` String,
+
+    `page_url` String
 )
-    ORDER BY
-(
-    timestamp
-);
+    ENGINE = MergeTree
+ORDER BY timestamp
+SETTINGS index_granularity = 8192;

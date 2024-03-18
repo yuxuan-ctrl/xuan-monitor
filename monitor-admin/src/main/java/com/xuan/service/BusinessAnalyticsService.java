@@ -1,6 +1,9 @@
 package com.xuan.service;
 
+import com.xuan.common.result.PageResult;
 import com.xuan.dao.model.StoresMetrics;
+import com.xuan.dao.model.UserAction;
+import com.xuan.dao.pojo.dto.UserDetailsDTO;
 import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.vo.AppsDashboardVo;
 import com.xuan.dao.pojo.vo.MetricsVo;
@@ -43,4 +46,6 @@ public interface BusinessAnalyticsService {
      * @return 错误详细信息对象
      */
     ErrorInfo getDetailedErrorInfoByIdentifier(String errorIdentifier) throws IOException;
+
+    PageResult<UserAction> getUserActionList(UserDetailsDTO userDetailsDTO);
 }

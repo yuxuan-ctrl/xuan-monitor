@@ -1,15 +1,22 @@
 package com.xuan.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.properties.JwtProperties;
+import com.xuan.common.result.PageResult;
 import com.xuan.dao.mapper.postgres.UserMapper;
+import com.xuan.dao.model.UserAction;
 import com.xuan.dao.pojo.dto.PageUserDTO;
 import com.xuan.dao.pojo.dto.UserDTO;
+import com.xuan.dao.pojo.dto.UserDetailsDTO;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.dao.pojo.vo.RegionUserVO;
+import com.xuan.dao.pojo.vo.UserDetailsVO;
+import com.xuan.service.BusinessAnalyticsService;
+import com.xuan.service.DataAggregationService;
 import com.xuan.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +43,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
 
     @Autowired
     JwtProperties jwtProperties;
+
+    @Autowired
+    BusinessAnalyticsService businessAnalyticsService;
+
+    @Override
+    public UserDetailsVO getUserDetails(UserDetailsDTO userDetailsDTO) {
+        Users users = userMapper.selectOne(new LambdaQueryWrapper<Users>().eq(Users::getUserId, userDetailsDTO.getUserId()));
+        PageResult<UserAction> userActionList = businessAnalyticsService.getUserActionList(userDetailsDTO);
+        UserDetailsVO userDetailsVO = new UserDetailsVO(users,userActionList);
+
+        return userDetailsVO;
+    }
 
     @Override
     public IPage<Users> selectPage(PageUserDTO pageUserDto) {

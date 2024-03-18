@@ -18,6 +18,10 @@ import java.util.Map;
 @AllArgsConstructor
 public class EventInfo implements BaseInfo{
 
+
+    @JsonProperty("id")
+    String id;
+
     @JsonProperty("appId")
     String appId;
 
@@ -40,7 +44,7 @@ public class EventInfo implements BaseInfo{
     private String screenResolution;
 
     @JsonProperty("timestamp")
-    private Long timestamp;
+    private String timestamp;
 
     @JsonProperty("referrer")
     private String referrer;

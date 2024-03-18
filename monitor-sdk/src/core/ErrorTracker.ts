@@ -1,4 +1,4 @@
-import { normalizeUrlForPath, formatDate,getCurrentUnix } from '../utils';
+import { normalizeUrlForPath, formatDate, getCurrentUnix } from '../utils';
 import MessageQueueDBWrapper from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
 import HttpError from '../model/HttpError';
@@ -9,7 +9,7 @@ interface ErrorInfo {
   cause?: string;
   timestamp: string;
   userAgent: string;
-  url: string;
+  pageUrl: string;
   operationSequence: any[];
   logContext: any;
   method?: string;
@@ -88,23 +88,22 @@ export default class ErrorTracker {
       const startTime = getCurrentUnix() - 120000;
       const endTime = getCurrentUnix() + 300000;
       errorInfo.record = await this.getRange(startTime, endTime);
-    } catch (screenshotError) {
-    }
+    } catch (screenshotError) {}
 
     return errorInfo as ErrorInfo; // 如果ErrorInfo是一个接口或类型，请确保它包含了所有可能的属性
   }
 
   private getCommonErrorInfo(error: Error | string): Partial<ErrorInfo> {
     return {
-      errorType: (error instanceof Error) ? error.name : 'Non-JavaScript Error',
-      errorMessage: (error instanceof Error) ? error.message : error,
-      stackTrace: (error instanceof Error) ? error.stack : undefined,
-      cause: (error instanceof Error && error.cause) as string || '',
+      errorType: error instanceof Error ? error.name : 'Non-JavaScript Error',
+      errorMessage: error instanceof Error ? error.message : error,
+      stackTrace: error instanceof Error ? error.stack : undefined,
+      cause: ((error instanceof Error && error.cause) as string) || '',
       timestamp: formatDate(new Date()),
       userAgent: navigator.userAgent,
-      url: normalizeUrlForPath(window.location.href),
       operationSequence: this.operationSequence.slice(),
       logContext: this.logContext,
+      pageUrl: normalizeUrlForPath(window.location.href),
     };
   }
 }

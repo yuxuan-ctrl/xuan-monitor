@@ -11,7 +11,7 @@
 
 export let state = [];
 
-import { getCurrentUnix, getTime, target, formatDate } from '../../utils';
+import { getCurrentUnix, getTime, target, formatDate,normalizeUrlForPath } from '../../utils';
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
@@ -60,6 +60,7 @@ export default class InputTracker extends EventManager {
         {
           timestamp: getCurrentUnix(),
           createTime: formatDate(new Date()),
+          pageUrl: normalizeUrlForPath(window.location.href), 
           // event: event,
           type: this.type,
           data: JSON.stringify(data),

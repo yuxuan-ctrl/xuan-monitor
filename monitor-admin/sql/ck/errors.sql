@@ -1,31 +1,32 @@
-CREATE TABLE IF NOT EXISTS error_info
+-- `default`.error_info definition
+
+CREATE TABLE default.error_info
 (
-    error_type
-    String,
-    error_message
-    String,
-    stack_trace
-    String,
-    user_agent
-    String,
-    timestamp
-    DateTime
-(
-    'Asia/Shanghai'
-),
-    create_time DateTime
-(
-    'Asia/Shanghai'
-),
-    app_id String,
-    user_id String,
-    url String,
-    request_url String,
-    record_data String -- 假设record已经被转换为JSON字符串存储在这里
-    ) ENGINE = MergeTree
-(
+
+    `error_type` String,
+
+    `error_message` String,
+
+    `stack_trace` String,
+
+    `user_agent` String,
+
+    `timestamp` DateTime('Asia/Shanghai'),
+
+    `create_time` DateTime('Asia/Shanghai'),
+
+    `app_id` String,
+
+    `user_id` String,
+
+    `request_url` String,
+
+    `error_id` String,
+
+    `record` String,
+
+    `page_url` String
 )
-    ORDER BY
-(
-    timestamp
-);
+    ENGINE = MergeTree
+ORDER BY timestamp
+SETTINGS index_granularity = 8192;

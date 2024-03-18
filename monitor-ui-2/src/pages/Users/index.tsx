@@ -3,7 +3,7 @@ import { useRequest, history, FormattedMessage, useIntl } from '@umijs/max';
 import { useState, type FC, useRef } from 'react';
 import api from '@/services/monitor';
 
-const Errors: FC = () => {
+const Users: FC = () => {
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -35,7 +35,7 @@ const Errors: FC = () => {
     console.log('🚀 ~ gotoFun ~ row:', row);
     switch (type) {
       case 'details':
-        history.push('/users/details', { id: row.esErrorId });
+        history.push('/users/details', { userId: row.userId });
         break;
     }
   };
@@ -82,17 +82,6 @@ const Errors: FC = () => {
       hideInForm: true,
     },
     {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.locationLabel"
-          defaultMessage="Location (Latitude & Longitude)"
-        />
-      ),
-      dataIndex: 'location',
-      // 对经纬度字段，这里假设它是一个字符串，如"经度,纬度"的形式，可根据实际情况调整valueType
-      // 若经纬度分开存储，此处dataIndex应分别设置为'longitude'和'latitude'，并创建两个不同的列
-    },
-    {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
@@ -127,4 +116,4 @@ const Errors: FC = () => {
   );
 };
 
-export default Errors;
+export default Users;

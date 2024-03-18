@@ -17,6 +17,21 @@ export async function getUserByIdUsingGet(
   });
 }
 
+/** 获取用户详情信息 GET /user/getUserDetails */
+export async function getUserDetailsUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getUserDetailsUsingGETParams,
+  options?: { [key: string]: any },
+) {
+  return request<API.ResultUserDetailsVO>(`${process.env.DEV}/user/getUserDetails`, {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
 /** 用户列表查询 GET /user/getUserList */
 export async function getUserListUsingGet(options?: { [key: string]: any }) {
   return request<API.Users[]>(`${process.env.DEV}/user/getUserList`, {
@@ -46,7 +61,7 @@ export async function getUsersByRegionUsingGet(
   params: API.getUsersByRegionUsingGETParams,
   options?: { [key: string]: any },
 ) {
-  return request<API.RegionUserVO[]>(`${process.env.DEV}/user/getUsersByRegion`, {
+  return request<API.ResultListRegionUserVO>(`${process.env.DEV}/user/getUsersByRegion`, {
     method: 'GET',
     params: {
       ...params,

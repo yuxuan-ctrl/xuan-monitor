@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.xuan.common.utils.DateFormatUtils;
 import com.xuan.dao.pojo.dto.PageUserDTO;
 import com.xuan.dao.pojo.dto.UserDTO;
+import com.xuan.dao.pojo.dto.UserDetailsDTO;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.common.properties.JwtProperties;
 import com.xuan.common.result.PageResult;
 import com.xuan.common.result.Result;
 import com.xuan.dao.pojo.vo.RegionUserVO;
+import com.xuan.dao.pojo.vo.UserDetailsVO;
 import com.xuan.dao.pojo.vo.UsersVo;
 import com.xuan.service.UserService;
 import io.swagger.annotations.Api;
@@ -87,12 +89,12 @@ public class UserController {
         return Result.success(userService.getUsersByRegion(appId));
     }
 
-//    @GetMapping("/getPageData")
-//    @ApiOperation("手写分页查询用户列表")
-//    public Result<PageResult<Users>> getPageData(PageUserDTO pageUserDto){
-//        PageResult<Users> pageResult  = userService.getPageData(pageUserDto);
-//        return Result.success(pageResult);
-//    }
+    @GetMapping("/getUserDetails")
+    @ApiOperation("获取用户详情信息")
+    public Result<UserDetailsVO> getUserDetails(UserDetailsDTO userDetailsDTO){
+        UserDetailsVO userDetailsVO  = userService.getUserDetails(userDetailsDTO);
+        return Result.success(userDetailsVO);
+    }
 
     @PostMapping("/login")
     @ApiOperation("用戶登录")

@@ -79,9 +79,9 @@ export interface AnalysisData{
   pageUrl?: string;
   screenResolution?: any;
   referrer?: string;
-  metrics?:object;
+  metrics?:string;
   timestamp?: any;
-  slowResources?:Record<string, PerformanceResources[]>
+  slowResources?:string
 }
  export interface PerformanceResources{
     name: string;

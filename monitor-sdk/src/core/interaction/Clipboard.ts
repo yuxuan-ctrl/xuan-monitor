@@ -1,5 +1,14 @@
 import { Listener, EventManager } from '../../decorator';
-import { getTime,  getCurrentUnix,layout, link, target, text, formatDate } from '../../utils';
+import {
+  getTime,
+  getCurrentUnix,
+  layout,
+  link,
+  target,
+  text,
+  formatDate,
+  normalizeUrlForPath,
+} from '../../utils';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 
@@ -61,8 +70,9 @@ export default class ClipboardTracker extends EventManager {
       this.messageWrapper.enqueue(
         {
           timestamp: getCurrentUnix(),
-        createTime: formatDate(new Date()),
-        // event: event,
+          createTime: formatDate(new Date()),
+          pageUrl: normalizeUrlForPath(window.location.href), 
+          // event: event,
           type: this.type,
           data: {
             // target: JSON.stringify(event.target),

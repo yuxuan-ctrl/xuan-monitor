@@ -9,7 +9,7 @@
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
 import { Listener, EventManager } from '../../decorator';
-import { getTime, target, getCurrentUnix, formatDate } from '../../utils';
+import { getTime, target, getCurrentUnix, formatDate,normalizeUrlForPath } from '../../utils';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
 export let data = null;
@@ -36,7 +36,8 @@ export default class SubmitTracker extends EventManager {
       this.messageWrapper.enqueue(
         {
           timestamp: getCurrentUnix(),
-          createTime: formatDate(new Date()),
+          pageUrl: normalizeUrlForPath(window.location.href), 
+        createTime: formatDate(new Date()),
           type: this.type,
           data:JSON.stringify(data),
           session: new Date().getDate(),

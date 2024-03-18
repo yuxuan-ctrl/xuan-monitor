@@ -1,6 +1,10 @@
 package com.xuan.service;
 
+import com.xuan.dao.model.UserAction;
+import com.xuan.dao.pojo.dto.UserDetailsDTO;
+
 import java.io.IOException;
+import java.util.List;
 
 public interface DataAggregationService {
 
@@ -10,4 +14,6 @@ public interface DataAggregationService {
      * @throws IOException 当处理Elasticsearch数据时可能出现的IO异常
      */
     void processAndAggregateYesterdayData() throws IOException;
-}
+
+
+    }

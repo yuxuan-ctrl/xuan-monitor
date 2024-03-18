@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuan.common.result.PageResult;
 import com.xuan.dao.pojo.dto.PageUserDTO;
 import com.xuan.dao.pojo.dto.UserDTO;
+import com.xuan.dao.pojo.dto.UserDetailsDTO;
 import com.xuan.dao.pojo.entity.Users;
 import com.xuan.dao.pojo.vo.RegionUserVO;
+import com.xuan.dao.pojo.vo.UserDetailsVO;
 
 import java.util.List;
 
@@ -19,6 +21,7 @@ import java.util.List;
  * @since 2023-06-24
  */
 public interface UserService extends IService<Users> {
+    UserDetailsVO getUserDetails(UserDetailsDTO userDetailsDTO);
 
     IPage<Users> selectPage(PageUserDTO pageUserDto);
 

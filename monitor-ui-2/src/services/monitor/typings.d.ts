@@ -122,6 +122,14 @@ declare namespace API {
     id: string;
   };
 
+  type getUserDetailsUsingGETParams = {
+    endTime?: string;
+    pageIndex?: number;
+    pageSize?: number;
+    startTime?: string;
+    userId?: string;
+  };
+
   type getUserPageUsingGETParams = {
     id?: number;
     pageIndex?: number;
@@ -249,6 +257,12 @@ declare namespace API {
     msg?: string;
   };
 
+  type ResultListRegionUserVO = {
+    code?: number;
+    data?: RegionUserVO[];
+    msg?: string;
+  };
+
   type ResultListSystemsduixiang = {
     code?: number;
     data?: Systemsduixiang[];
@@ -279,6 +293,12 @@ declare namespace API {
     msg?: string;
   };
 
+  type ResultUserDetailsVO = {
+    code?: number;
+    data?: UserDetailsVO;
+    msg?: string;
+  };
+
   type Sort = {
     empty?: boolean;
     sorted?: boolean;
@@ -301,6 +321,17 @@ declare namespace API {
     seconds?: number;
     time?: number;
     year?: number;
+  };
+
+  type UserAction = {
+    createTime?: string;
+    description?: string;
+    type?: string;
+  };
+
+  type UserDetailsVO = {
+    user?: Users;
+    userActionLogs?: UserAction[];
   };
 
   type UserDTO = {

@@ -1,6 +1,7 @@
 package com.xuan.dao.pojo.entity.clickhouse;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xuan.dao.pojo.dto.PageDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -66,7 +67,7 @@ public class ErrorInfo implements BaseInfo{
     /**
      * 请求URL，错误发生时请求的原始URL
      */
-    private String url;
+    private String pageUrl;
 
     /**
      * 请求的具体资源地址

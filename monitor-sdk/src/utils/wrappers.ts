@@ -1,6 +1,30 @@
 import { debounce } from './debounce';
 import HttpError from '../model/HttpError';
+import MessageQueueDBWrapper from '../core/Message';
+import { DB_CONFIG } from '../config/dbconfig';
+import { formatDate, getCurrentUnix, normalizeUrlForPath } from '../utils';
 
+const messageWrapper = MessageQueueDBWrapper.getInstance({
+  dbName: 'monitorxq',
+  dbVersion: 1,
+  storeName: DB_CONFIG.ACTION_STORE_NAME,
+});
+
+const enqueueHttpRequest = (data) => {
+  const eventData = {
+    timestamp: getCurrentUnix(),
+    createTime: formatDate(new Date()),
+    pageUrl: normalizeUrlForPath(window.location.href), 
+    type: 'HttpRequest',
+    data: JSON.stringify(data),
+  };
+  console.log('🚀 ~ enqueueHttpRequest ~ eventData:', eventData);
+
+  messageWrapper.enqueue(
+    { ...eventData, session: new Date().getDate() },
+    DB_CONFIG.ACTION_STORE_NAME
+  );
+};
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
   return function wrappedFetch(...args) {
@@ -10,6 +34,10 @@ function wrapFetch(originalFetch, callback) {
       return originalFetch
         .apply(this, args)
         .then(async (response) => {
+          enqueueHttpRequest({
+            method,
+            response,
+          });
           if (!response.ok) {
             const error = new HttpError(
               response.status,
@@ -190,6 +218,12 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       try {
         data = args[0];
         originalSend.apply(this, args);
+        enqueueHttpRequest({
+          method,
+          requestUrl,
+          data,
+          originalRequest,
+        });
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
         callback(error); // 调用回调函数，将错误传递给上层处理

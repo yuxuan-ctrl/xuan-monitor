@@ -16,6 +16,7 @@ import {
   link,
   target,
   text,
+  normalizeUrlForPath
 } from '../../utils';
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
@@ -68,18 +69,19 @@ export default class ClickTracker extends EventManager {
         timestamp: getCurrentUnix(),
         createTime: formatDate(new Date()),
         type: this.type,
+        pageUrl: normalizeUrlForPath(window.location.href),
         // event,
-          data:JSON.stringify({
-            // target: JSON.stringify(targetElement),
-            x: pageCoords.x,
-            y: pageCoords.y,
-            timestamp: getCurrentUnix(),
-            ...relativeCoords,
-            button: event.button,
-            text: text(targetElement),
-            link: linkElement?.href ?? null,
-            hash: null,
-          }),
+        data: JSON.stringify({
+          // target: JSON.stringify(targetElement),
+          x: pageCoords.x,
+          y: pageCoords.y,
+          timestamp: getCurrentUnix(),
+          ...relativeCoords,
+          button: event.button,
+          text: text(targetElement),
+          link: linkElement?.href ?? null,
+          hash: null,
+        }),
       };
       console.log('🚀 ~ ClickTracker ~ handler ~ eventData:', eventData);
 

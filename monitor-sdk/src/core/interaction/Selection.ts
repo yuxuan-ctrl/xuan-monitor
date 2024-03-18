@@ -11,7 +11,7 @@
 import { Listener, EventManager } from '../../decorator';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
-import { getCurrentUnix, getTime,formatDate } from '../../utils';
+import { getCurrentUnix, getTime,formatDate,normalizeUrlForPath } from '../../utils';
 
 export let data = null;
 
@@ -69,6 +69,7 @@ export default class SelectTracker extends EventManager {
       {
         timestamp: getCurrentUnix(),
         createTime: formatDate(new Date()),
+        pageUrl: normalizeUrlForPath(window.location.href), 
         // event: event,
         type: this.type,
         data: JSON.stringify(data),

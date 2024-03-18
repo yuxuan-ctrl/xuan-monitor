@@ -14,6 +14,9 @@ import java.util.Map;
 @AllArgsConstructor
 public class ActionInfo implements BaseInfo{
 
+    @JsonProperty("id")
+    String id;
+
     @JsonProperty("appId")
     String appId;
 
@@ -27,10 +30,10 @@ public class ActionInfo implements BaseInfo{
     private String data;
 
     @JsonProperty("timestamp")
-    private Long timestamp;
+    private String timestamp;
 
     @JsonProperty("createTime")
     private String createTime;
 
-
+    private String pageUrl;
 }

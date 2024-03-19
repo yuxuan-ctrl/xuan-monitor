@@ -11,19 +11,24 @@ const messageWrapper = MessageQueueDBWrapper.getInstance({
 });
 
 const enqueueHttpRequest = (data) => {
-  const eventData = {
-    timestamp: getCurrentUnix(),
-    createTime: formatDate(new Date()),
-    pageUrl: normalizeUrlForPath(window.location.href), 
-    type: 'HttpRequest',
-    data: JSON.stringify(data),
-  };
-  console.log('🚀 ~ enqueueHttpRequest ~ eventData:', eventData);
+  if (
+    !data.requestUrl.contains('/monitor/report') ||
+    !data.requestUrl.contains('/monitor/errorReport')
+  ) {
+    const eventData = {
+      timestamp: getCurrentUnix(),
+      createTime: formatDate(new Date()),
+      pageUrl: normalizeUrlForPath(window.location.href),
+      type: 'HttpRequest',
+      data: JSON.stringify(data),
+    };
+    console.log('🚀 ~ enqueueHttpRequest ~ eventData:', eventData);
 
-  messageWrapper.enqueue(
-    { ...eventData, session: new Date().getDate() },
-    DB_CONFIG.ACTION_STORE_NAME
-  );
+    messageWrapper.enqueue(
+      { ...eventData, session: new Date().getDate() },
+      DB_CONFIG.ACTION_STORE_NAME
+    );
+  }
 };
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
@@ -37,6 +42,7 @@ function wrapFetch(originalFetch, callback) {
           enqueueHttpRequest({
             method,
             response,
+            requestUrl: args[0],
           });
           if (!response.ok) {
             const error = new HttpError(
@@ -190,6 +196,13 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     const originalOnReadyStateChange = originalRequest.onreadystatechange;
     originalRequest.onreadystatechange = function (event) {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
+        enqueueHttpRequest({
+          method,
+          requestUrl,
+          originalRequest,
+          XMLHttpRequest,
+        });
+
         if (originalRequest.status >= 400) {
           const error = new HttpError(
             originalRequest.status,
@@ -218,12 +231,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       try {
         data = args[0];
         originalSend.apply(this, args);
-        enqueueHttpRequest({
-          method,
-          requestUrl,
-          data,
-          originalRequest,
-        });
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
         callback(error); // 调用回调函数，将错误传递给上层处理

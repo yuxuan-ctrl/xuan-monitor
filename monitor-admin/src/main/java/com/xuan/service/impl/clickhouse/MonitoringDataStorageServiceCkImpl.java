@@ -32,10 +32,8 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
 // 使用此格式器来格式化当前时间
         String createTime = LocalDateTime.now().format(formatter);
 
-        String eventId = UUID.randomUUID().toString();
-        String actionId = UUID.randomUUID().toString();
-
         eventDataList.forEach(event -> {
+            String eventId = UUID.randomUUID().toString();
             EventInfo eventInfo = EventInfo.builder()
                     .createTime(DateFormatUtils.format(LocalDateTime.now()))
                     .id(eventId)
@@ -58,6 +56,7 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
         });
 
         actionDataList.forEach(action -> {
+            String actionId = UUID.randomUUID().toString();
             ActionInfo actionInfo = ActionInfo.builder()
                     .id(actionId)
                     .createTime(createTime)

@@ -3,7 +3,9 @@ declare namespace API {
     appId?: string;
     createTime?: string;
     data?: string;
-    timestamp?: number;
+    id?: string;
+    pageUrl?: string;
+    timestamp?: string;
     type?: string;
     userId?: string;
   };
@@ -19,11 +21,11 @@ declare namespace API {
     errorId?: string;
     errorMessage?: string;
     errorType?: string;
+    pageUrl?: string;
     record?: string;
     requestUrl?: string;
     stackTrace?: string;
     timestamp?: Timestamp;
-    url?: string;
     userAgent?: string;
     userId?: string;
   };
@@ -43,6 +45,7 @@ declare namespace API {
   type EventInfo = {
     appId?: string;
     createTime?: string;
+    id?: string;
     language?: string;
     metrics?: string;
     mostVisitedPageId?: string;
@@ -55,7 +58,7 @@ declare namespace API {
     slowResources?: string;
     stayDuration?: number;
     timeZoneOffset?: number;
-    timestamp?: number;
+    timestamp?: string;
     uniqueKey?: string;
     userAgent?: string;
     userId?: string;
@@ -199,6 +202,13 @@ declare namespace API {
     unpaged?: boolean;
   };
 
+  type PageResultUserAction = {
+    pageIndex?: number;
+    pageSize?: number;
+    records?: UserAction[];
+    total?: number;
+  };
+
   type PageUsersVo = {
     content?: UsersVo[];
     empty?: boolean;
@@ -326,12 +336,14 @@ declare namespace API {
   type UserAction = {
     createTime?: string;
     description?: string;
+    id?: string;
+    pageUrl?: string;
     type?: string;
   };
 
   type UserDetailsVO = {
     user?: Users;
-    userActionLogs?: UserAction[];
+    userActionLogs?: PageResultUserAction;
   };
 
   type UserDTO = {

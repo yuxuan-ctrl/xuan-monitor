@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class PageUserDTO implements Serializable {
     private  int pageSize;
     private  int pageIndex;
-    private  String userName ;
+    private  String userId ;
     private  int id;
 
 }

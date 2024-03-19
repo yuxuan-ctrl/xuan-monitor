@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-03-05 16:36:43
+ * @LastEditTime: 2024-03-19 16:28:48
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -41,7 +41,7 @@ export default class Report {
   constructor(config: MonitorConfig, uvTracker: UvTracker) {
     this.uvTracker = uvTracker;
     this.config = config;
-    this.timeInterval = config?.reportFrequency || 10000;
+    this.timeInterval = config?.reportFrequency || 5000;
     this.dataRetentionHours = config?.dataRetentionHours || 1;
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
       dbName: 'monitorxq',
@@ -61,9 +61,11 @@ export default class Report {
       const trafficList = await this.messageWrapper.dequeue(
         DB_CONFIG.TRAFFIC_STORE_NAME
       );
+      console.log("🚀 ~ Report ~ recursiveTimeout ~ trafficList:", trafficList)
       const actionList = await this.messageWrapper.dequeue(
         DB_CONFIG.ACTION_STORE_NAME
       );
+      console.log("🚀 ~ Report ~ recursiveTimeout ~ actionList:", actionList)
       if (isArray(trafficList) || isArray(actionList)) {
         const reportData = {
           appId: this.config.appId,
@@ -78,7 +80,7 @@ export default class Report {
           actionList: isArray(actionList)
             ? actionList.map((item) => item.data)
             : [],
-          record: await this.getRange(startTime, endTime),
+          // record: await this.getRange(startTime, endTime),
         };
         if (useWebSocket && this.websocketManager) {
           this.webSocketReport(reportData);

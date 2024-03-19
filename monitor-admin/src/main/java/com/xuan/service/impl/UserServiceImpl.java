@@ -19,6 +19,7 @@ import com.xuan.service.BusinessAnalyticsService;
 import com.xuan.service.DataAggregationService;
 import com.xuan.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +52,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
     public UserDetailsVO getUserDetails(UserDetailsDTO userDetailsDTO) {
         Users users = userMapper.selectOne(new LambdaQueryWrapper<Users>().eq(Users::getUserId, userDetailsDTO.getUserId()));
         PageResult<UserAction> userActionList = businessAnalyticsService.getUserActionList(userDetailsDTO);
-        UserDetailsVO userDetailsVO = new UserDetailsVO(users,userActionList);
+        UserDetailsVO userDetailsVO = new UserDetailsVO(users, userActionList);
 
         return userDetailsVO;
     }
@@ -60,7 +61,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
     public IPage<Users> selectPage(PageUserDTO pageUserDto) {
         log.info("用戶傳來的DTO：{}", pageUserDto);
         Page<Users> page = new Page<Users>(pageUserDto.getPageIndex(), pageUserDto.getPageSize());
-        IPage<Users> userPage = userMapper.selectPage(page, this.getQueryMapper(pageUserDto));
+        IPage<Users> userPage = userMapper.selectPage(page, new LambdaQueryWrapper<Users>().eq(StringUtils.isNoneBlank(pageUserDto.getUserId()), Users::getUserId, pageUserDto.getUserId()));
         return userPage;
     }
 
@@ -128,11 +129,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, Users> implements U
     private QueryWrapper getQueryMapper(PageUserDTO pageUserDto) {
         QueryWrapper<Users> userQueryWrapper = new QueryWrapper<Users>();
         if (pageUserDto.getId() != 0) {
-            userQueryWrapper.eq("id", pageUserDto.getId());
+            userQueryWrapper.eq("userId", pageUserDto.getUserId());
         }
-        if (pageUserDto.getUserName() != null && pageUserDto.getUserName() != "") {
-            userQueryWrapper.like("user_name", pageUserDto.getUserName());
-        }
+//        if (pageUserDto.getUserName() != null && pageUserDto.getUserName() != "") {
+//            userQueryWrapper.like("user_name", pageUserDto.getUserName());
+//        }
         return userQueryWrapper;
     }
 

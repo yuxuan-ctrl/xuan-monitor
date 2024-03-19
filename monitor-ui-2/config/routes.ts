@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-14 14:30:31
+ * @LastEditTime: 2024-03-19 18:17:38
  * @FilePath: \monitor-ui-2\config\routes.ts
  * @Description:
  *
@@ -118,6 +118,34 @@ export default [
         component: './Users/details',
         hideInMenu: true,
       },
+    ],
+  },
+  {
+    path: '/performance',
+    name: 'performance',
+    icon: 'crown',
+    access: false,
+    routes: [
+      {
+        path: '/performance',
+        redirect: '/performance/list',
+      },
+      {
+        path: '/performance/page',
+        name: 'performance-page',
+        component: './Performance/page',
+      },
+      {
+        path: '/performance/api',
+        name: 'performance-api',
+        component: './Performance/api',
+      },
+      // {
+      //   path: '/users/details',
+      //   name: 'users-details',
+      //   component: './Users/details',
+      //   hideInMenu: true,
+      // },
     ],
   },
   {

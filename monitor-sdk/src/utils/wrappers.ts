@@ -11,9 +11,10 @@ const messageWrapper = MessageQueueDBWrapper.getInstance({
 });
 
 const enqueueHttpRequest = (data) => {
+  console.log("🚀 ~ enqueueHttpRequest ~ data:", data)
   if (
-    !data.requestUrl.contains('/monitor/report') ||
-    !data.requestUrl.contains('/monitor/errorReport')
+    !data?.requestUrl.includes('/monitor/report') &&
+    !data?.requestUrl.includes('/monitor/errorReport')
   ) {
     const eventData = {
       timestamp: getCurrentUnix(),

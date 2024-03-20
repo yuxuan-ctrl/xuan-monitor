@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl 
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-26 10:36:33
+ * @LastEditTime: 2024-03-20 18:02:43
  * @FilePath: \monitor-sdk\examples\vue\src\views\page2.vue
  * @Description: 
  * 
@@ -17,7 +17,7 @@ import { reactive, toRefs, onBeforeMount, onMounted } from "vue";
 //   reject({ a: 1 });
 // });
 onMounted(() => {
-  console.log("".join());
+  // console.log("".join());
 });
 </script>
 <style lang="scss" scoped>

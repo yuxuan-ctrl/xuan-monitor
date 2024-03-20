@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl 
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-02 17:07:30
+ * @LastEditTime: 2024-03-20 17:06:09
  * @FilePath: \monitor-sdk\examples\vue\src\views\page1.vue
  * @Description: 
  * 
@@ -25,7 +25,7 @@ const pageRef = ref();
 onMounted(() => {
   // Click.start();
   // Resize.start(window);
-
+fetch("/api/user/getUserList")
   console.log(fetch("www.a.com"));
 });
 

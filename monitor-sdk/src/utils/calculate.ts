@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-05 17:09:13
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-23 11:38:34
+ * @LastEditTime: 2024-03-20 17:19:36
  * @FilePath: \monitor-sdk\src\utils\calculate.ts
  * @Description:
  *
@@ -138,6 +138,7 @@ export async function collectSlowResources(SLOW_RESOURCE_THRESHOLD: number): Pro
 
   if (typeof window !== 'undefined' && 'PerformanceObserver' in window && 'performance' in window) {
     const observer = new PerformanceObserver((list, observer) => {
+      console.log("🚀 ~ observer ~ list:", list)
       list.getEntries().forEach((entry: PerformanceResourceTiming) => {
         if (entry.entryType === 'resource' && entry.duration > SLOW_RESOURCE_THRESHOLD) {
           if (!slowResources[entry.name]) {

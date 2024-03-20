@@ -11,7 +11,7 @@ const messageWrapper = MessageQueueDBWrapper.getInstance({
 });
 
 const enqueueHttpRequest = (data) => {
-  console.log("🚀 ~ enqueueHttpRequest ~ data:", data)
+  console.log('🚀 ~ enqueueHttpRequest ~ data:', data);
   if (
     !data?.requestUrl.includes('/monitor/report') &&
     !data?.requestUrl.includes('/monitor/errorReport')
@@ -34,16 +34,21 @@ const enqueueHttpRequest = (data) => {
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
   return function wrappedFetch(...args) {
+    let startTimeFetch = performance.now();
     const method = args.length > 1 ? args[1]?.method : 'GET';
     let errorContext = new Error().stack;
     try {
       return originalFetch
         .apply(this, args)
         .then(async (response) => {
+          let endTimeFetch = performance.now();
+          let durationFetch = endTimeFetch - startTimeFetch;
+          console.log("🚀 ~ .then ~ durationFetch:", durationFetch)
           enqueueHttpRequest({
             method,
-            response,
             requestUrl: args[0],
+            duration: durationFetch.toFixed(2),
+            response,
           });
           if (!response.ok) {
             const error = new HttpError(
@@ -176,6 +181,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   let data = null;
   let errorContext = '';
   function wrappedXMLHttpRequest() {
+    let startTime = performance.now();
     const originalRequest = new OriginalXMLHttpRequest();
 
     // 包裹 open 方法
@@ -197,9 +203,13 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     const originalOnReadyStateChange = originalRequest.onreadystatechange;
     originalRequest.onreadystatechange = function (event) {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
+        let endTime = performance.now();
+        let duration = endTime - startTime;
+        console.log(`请求和响应耗时: ${duration.toFixed(2)} 毫秒`);
         enqueueHttpRequest({
           method,
           requestUrl,
+          duration: duration.toFixed(2),
           originalRequest,
           XMLHttpRequest,
         });

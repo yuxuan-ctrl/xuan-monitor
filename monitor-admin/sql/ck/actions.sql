@@ -20,5 +20,10 @@ CREATE TABLE default.action_info
     `page_url` String
 )
     ENGINE = MergeTree
-ORDER BY timestamp
-SETTINGS index_granularity = 8192;
+PARTITION BY toYYYYMMDD(timestamp)
+ORDER BY (timestamp,
+ app_id,
+ user_id)
+SETTINGS index_granularity = 8192,
+    parts_to_delay_insert = 600,
+ parts_to_throw_insert = 600;

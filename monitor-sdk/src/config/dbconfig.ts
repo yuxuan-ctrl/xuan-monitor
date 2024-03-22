@@ -4,4 +4,5 @@ export const DB_CONFIG = {
   Error_STORE_NAME: 'errors',
   ACTION_STORE_NAME: 'actions',
   RECORD_STORE_NAME: 'records',
+  INTERFACE_STORE_NAME: 'interfaces',
 };

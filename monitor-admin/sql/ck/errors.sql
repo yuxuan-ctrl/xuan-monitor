@@ -29,4 +29,6 @@ CREATE TABLE default.error_info
 )
     ENGINE = MergeTree
 ORDER BY timestamp
-SETTINGS index_granularity = 8192;
+SETTINGS index_granularity = 8192,
+ parts_to_delay_insert = 600,
+ parts_to_throw_insert = 600;

@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-03-19 16:28:48
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
@@ -16,7 +16,7 @@ import {
   isArray,
   normalizeUrlForPath,
   recursiveTimeout,
-  getCurrentUnix
+  getCurrentUnix,
 } from '../utils';
 import { MonitorConfig } from '../types';
 import MessageQueueDBWrapper from './Message';
@@ -61,12 +61,17 @@ export default class Report {
       const trafficList = await this.messageWrapper.dequeue(
         DB_CONFIG.TRAFFIC_STORE_NAME
       );
-      console.log("🚀 ~ Report ~ recursiveTimeout ~ trafficList:", trafficList)
       const actionList = await this.messageWrapper.dequeue(
         DB_CONFIG.ACTION_STORE_NAME
       );
-      console.log("🚀 ~ Report ~ recursiveTimeout ~ actionList:", actionList)
-      if (isArray(trafficList) || isArray(actionList)) {
+      const interfaceList = await this.messageWrapper.dequeue(
+        DB_CONFIG.INTERFACE_STORE_NAME
+      );
+      if (
+        isArray(trafficList) ||
+        isArray(actionList) ||
+        isArray(interfaceList)
+      ) {
         const reportData = {
           appId: this.config.appId,
           userId: await this.uvTracker.getUniqueKey(),
@@ -79,6 +84,9 @@ export default class Report {
             : [],
           actionList: isArray(actionList)
             ? actionList.map((item) => item.data)
+            : [],
+          interfaceList: isArray(interfaceList)
+            ? interfaceList.map((item) => item.data)
             : [],
           // record: await this.getRange(startTime, endTime),
         };

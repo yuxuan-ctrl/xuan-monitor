@@ -7,7 +7,7 @@ import { formatDate, getCurrentUnix, normalizeUrlForPath } from '../utils';
 const messageWrapper = MessageQueueDBWrapper.getInstance({
   dbName: 'monitorxq',
   dbVersion: 1,
-  storeName: DB_CONFIG.ACTION_STORE_NAME,
+  storeName: DB_CONFIG.INTERFACE_STORE_NAME,
 });
 
 const enqueueHttpRequest = (data) => {
@@ -21,13 +21,12 @@ const enqueueHttpRequest = (data) => {
       createTime: formatDate(new Date()),
       pageUrl: normalizeUrlForPath(window.location.href),
       type: 'HttpRequest',
-      data: JSON.stringify(data),
+      ...data
     };
-    console.log('🚀 ~ enqueueHttpRequest ~ eventData:', eventData);
 
     messageWrapper.enqueue(
       { ...eventData, session: new Date().getDate() },
-      DB_CONFIG.ACTION_STORE_NAME
+      DB_CONFIG.INTERFACE_STORE_NAME
     );
   }
 };
@@ -43,14 +42,13 @@ function wrapFetch(originalFetch, callback) {
         .then(async (response) => {
           let endTimeFetch = performance.now();
           let durationFetch = endTimeFetch - startTimeFetch;
-          console.log("🚀 ~ .then ~ durationFetch:", durationFetch)
+          console.log('🚀 ~ .then ~ durationFetch:', durationFetch);
           enqueueHttpRequest({
             method,
             requestUrl: args[0],
             duration: durationFetch.toFixed(2),
-            response,
           });
-          if (!response.ok) {
+          if (!response.ok && !response.url.includes('/monitor/errorReport')) {
             const error = new HttpError(
               response.status,
               method,
@@ -210,11 +208,9 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
           method,
           requestUrl,
           duration: duration.toFixed(2),
-          originalRequest,
-          XMLHttpRequest,
         });
 
-        if (originalRequest.status >= 400) {
+        if (originalRequest.status >= 400 && !requestUrl.includes('/monitor/errorReport')) {
           const error = new HttpError(
             originalRequest.status,
             method,

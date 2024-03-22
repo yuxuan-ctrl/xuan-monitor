@@ -76,6 +76,7 @@ export default class Monitor extends EventManager {
       DB_CONFIG.Error_STORE_NAME,
       DB_CONFIG.ACTION_STORE_NAME,
       DB_CONFIG.RECORD_STORE_NAME,
+      DB_CONFIG.INTERFACE_STORE_NAME,
     ]);
   }
 

@@ -3,7 +3,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-26 16:15:36
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-19 17:29:32
+ * @LastEditTime: 2024-03-21 17:29:31
  * @FilePath: \monitor-ui-2\src\pages\Users\details\index.tsx
  * @Description:
  *
@@ -67,8 +67,7 @@ const Basic: FC = () => {
         description = <span>跳转到了{row.description}</span>;
         break;
       case 'HttpRequest':
-        const requestData = JSON.parse(row.description);
-        description = <span>请求了{requestData.requestUrl}</span>;
+        description = <span>{row.description}</span>;
         break;
       case 'click':
         const clickData = JSON.parse(row.description);
@@ -153,10 +152,6 @@ const Basic: FC = () => {
               dataIndex: 'description',
               search: false,
               render: (_, row) => {
-                const text =
-                  row.type === 'HttpRequest'
-                    ? JSON.parse(row.description).requestUrl
-                    : row.description;
                 return (
                   <div
                     style={{

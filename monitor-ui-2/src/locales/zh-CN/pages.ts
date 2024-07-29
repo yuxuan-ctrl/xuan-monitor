@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-14 15:08:11
+ * @LastEditTime: 2024-03-22 14:13:06
  * @FilePath: \monitor-ui-2\src\locales\zh-CN\pages.ts
  * @Description:
  *
@@ -83,4 +83,8 @@ export default {
   'pages.searchTable.locationLabel': '位置（经度 & 纬度）',
   'pages.region.regionName': '区域名',
   'pages.region.userCount': '用户数',
+  'pages.performance.api.requestUrl': '请求地址',
+  'pages.performance.api.method': '请求方法',
+  'pages.performance.api.duration': '平均耗时',
+
 };

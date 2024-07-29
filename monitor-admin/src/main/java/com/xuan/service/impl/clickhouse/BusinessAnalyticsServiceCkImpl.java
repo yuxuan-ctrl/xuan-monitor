@@ -6,13 +6,11 @@ import com.xuan.common.utils.DateFormatUtils;
 import com.xuan.dao.mapper.clickhouse.ActionsMapper;
 import com.xuan.dao.mapper.clickhouse.ErrorsCkMapper;
 import com.xuan.dao.mapper.clickhouse.EventsMapper;
+import com.xuan.dao.mapper.clickhouse.InterfaceCkMapper;
 import com.xuan.dao.model.UserAction;
 import com.xuan.dao.pojo.dto.UserDetailsDTO;
-import com.xuan.dao.pojo.entity.clickhouse.BaseInfo;
-import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
-import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.*;
 import com.xuan.dao.model.StoresMetrics;
-import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 
 import com.xuan.dao.pojo.dto.MetricsDTO;
 import com.xuan.dao.pojo.entity.Metrics;
@@ -48,6 +46,9 @@ public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService 
 
     @Autowired
     public EventsMapper eventsMapper;
+
+    @Autowired
+    public InterfaceCkMapper interfaceCkMapper;
 
     @Autowired
     public ActionsMapper actionsMapper;
@@ -153,6 +154,11 @@ public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService 
                 .lt(EventInfo::getCreateTime, userDetailsDTO.getEndTime())
                 .gt(EventInfo::getCreateTime, userDetailsDTO.getStartTime()));
 
+        List<InterfaceInfo> interfaceInfos = interfaceCkMapper.selectList(new LambdaQueryWrapper<InterfaceInfo>()
+                .eq(InterfaceInfo::getUserId, userDetailsDTO.getUserId())
+                .lt(InterfaceInfo::getCreateTime, userDetailsDTO.getEndTime())
+                .gt(InterfaceInfo::getCreateTime, userDetailsDTO.getStartTime()));
+
         List<ActionInfo> actionInfos = actionsMapper.selectList(new LambdaQueryWrapper<ActionInfo>()
                 .eq(ActionInfo::getUserId, userDetailsDTO.getUserId())
                 .lt(ActionInfo::getCreateTime, userDetailsDTO.getEndTime())
@@ -164,7 +170,7 @@ public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService 
                 .gt(ErrorInfo::getCreateTime, userDetailsDTO.getStartTime()));
 
 
-        List<UserAction> userActions = consolidateActionInfos(eventInfos, actionInfos, errorInfos);
+        List<UserAction> userActions = consolidateActionInfos(eventInfos, actionInfos, errorInfos, interfaceInfos);
 
         // 分页处理
         int startIndex = (userDetailsDTO.getPageIndex() - 1) * userDetailsDTO.getPageSize();
@@ -181,7 +187,8 @@ public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService 
 
     private List<UserAction> consolidateActionInfos(List<EventInfo> eventInfos,
                                                     List<ActionInfo> actionInfos,
-                                                    List<ErrorInfo> errorInfos) {
+                                                    List<ErrorInfo> errorInfos,
+                                                    List<InterfaceInfo> interfaceInfos) {
         List<UserAction> userActions = new ArrayList<>();
 
         for (EventInfo event : eventInfos) {
@@ -214,12 +221,22 @@ public class BusinessAnalyticsServiceCkImpl implements BusinessAnalyticsService 
             userActions.add(userAction);
         }
 
+        for (InterfaceInfo interfaceInfo : interfaceInfos) {
+            UserAction userAction = new UserAction();
+            userAction.setType("HttpRequest");
+            userAction.setPageUrl(interfaceInfo.getPageUrl());
+            userAction.setId(interfaceInfo.getId());
+            userAction.setCreateTime(interfaceInfo.getCreateTime());
+            userAction.setDescription("接口路径：" + interfaceInfo.getRequestUrl() + "，接口耗时：" + interfaceInfo.getDuration());
+            userActions.add(userAction);
+        }
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         return userActions.stream().sorted((a1, a2) -> {
                     LocalDateTime time1 = LocalDateTime.parse(a1.getCreateTime(), formatter);
                     LocalDateTime time2 = LocalDateTime.parse(a2.getCreateTime(), formatter);
-                    return time1.compareTo(time2);
+                    return time2.compareTo(time1);
                 })
                 .collect(Collectors.toList());
     }

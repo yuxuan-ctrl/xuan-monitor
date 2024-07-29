@@ -17,10 +17,10 @@ const Users: FC = () => {
   const [userId, setUserId] = useState('');
   // Request
   const { loading, data } = useRequest(
-    () => api.userController.getUserPageUsingGet({ ...pagination }),
+    () => api.userController.getUserPageUsingGet({ ...pagination,userId }),
     {
       // 这里设置默认请求时使用的参数
-      refreshDeps: [pagination.pageIndex],
+      refreshDeps: [pagination.pageIndex,userId],
     },
   );
 
@@ -55,6 +55,7 @@ const Users: FC = () => {
       dataIndex: 'createTime',
       sorter: true,
       valueType: 'dateTime',
+      search: false,
     },
     {
       title: (
@@ -66,20 +67,24 @@ const Users: FC = () => {
       dataIndex: 'lastLoginTime',
       sorter: true,
       valueType: 'dateTime',
+      search: false,
     },
     {
       title: <FormattedMessage id="pages.searchTable.ipAddressLabel" defaultMessage="IP Address" />,
       dataIndex: 'ipAddress',
       hideInForm: true,
+      search: false,
     },
     {
       title: <FormattedMessage id="pages.searchTable.platformLabel" defaultMessage="Platform" />,
       dataIndex: 'platform',
+      search: false,
     },
     {
       title: <FormattedMessage id="pages.searchTable.userAgentLabel" defaultMessage="User Agent" />,
       dataIndex: 'userAgent',
       hideInForm: true,
+      search: false,
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -92,7 +97,7 @@ const Users: FC = () => {
             gotoFun('details', row);
           }}
         >
-          <FormattedMessage id="pages.searchTable.userDetail" defaultMessage="用户细查" />
+          <FormattedMessage id="pages.searchTable.userDetail" defaultMessage="详情" />
         </a>,
       ],
     },
@@ -108,6 +113,9 @@ const Users: FC = () => {
         rowKey="userId"
         search={{
           labelWidth: 120,
+        }}
+        beforeSearchSubmit={async (params) => {
+          setUserId(params.userId)
         }}
         dataSource={data?.content}
         columns={columns}

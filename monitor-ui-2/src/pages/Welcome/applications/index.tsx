@@ -122,32 +122,9 @@ export const Applications: FC<Record<string, any>> = () => {
             run(values);
           }}
         >
-          <StandardFormRow title="筛选项" grid last>
-            <Row gutter={24}>
-              <Col lg={20} md={20} sm={20} xs={24}>
-                <Form.Item {...formItemLayout} name="author" label="用户">
-                  <Select
-                    placeholder="不限"
-                    style={{
-                      maxWidth: 200,
-                      width: '100%',
-                    }}
-                    options={[
-                      {
-                        label: '王昭君',
-                        value: 'lisa',
-                      },
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-              <Col lg={4} md={4} sm={4} xs={24}>
-                <Button type="primary" onClick={showModal}>
+        <Button type="primary" onClick={showModal}>
                   新建应用
                 </Button>
-              </Col>
-            </Row>
-          </StandardFormRow>
         </Form>
       </Card>
       <br />

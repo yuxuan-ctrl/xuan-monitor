@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-14 16:43:17
+ * @LastEditTime: 2024-03-19 18:16:49
  * @FilePath: \monitor-ui-2\src\locales\zh-CN\menu.ts
  * @Description:
  *
@@ -15,10 +15,13 @@ export default {
   'menu.admin': '管理页',
   'menu.errors': '错误管理页',
   'menu.users': '用户管理页',
+  'menu.performance': '性能分析',
   'menu.errors.errors-list': '错误列表',
   'menu.errors.errors-details': '错误详情',
   'menu.users.users-list': '用户列表',
   'menu.users.users-details': '用户详情',
+  'menu.performance.performance-page': '页面分析',
+  'menu.performance.performance-api': '接口分析',
   'menu.admin.sub-page': '二级管理页',
   'menu.login': '登录',
   'menu.register': '注册',

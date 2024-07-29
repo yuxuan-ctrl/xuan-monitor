@@ -7,38 +7,48 @@ import { formatDate, getCurrentUnix, normalizeUrlForPath } from '../utils';
 const messageWrapper = MessageQueueDBWrapper.getInstance({
   dbName: 'monitorxq',
   dbVersion: 1,
-  storeName: DB_CONFIG.ACTION_STORE_NAME,
+  storeName: DB_CONFIG.INTERFACE_STORE_NAME,
 });
 
 const enqueueHttpRequest = (data) => {
-  const eventData = {
-    timestamp: getCurrentUnix(),
-    createTime: formatDate(new Date()),
-    pageUrl: normalizeUrlForPath(window.location.href),
-    type: 'HttpRequest',
-    data: JSON.stringify(data),
-  };
-  console.log('🚀 ~ enqueueHttpRequest ~ eventData:', eventData);
+  console.log('🚀 ~ enqueueHttpRequest ~ data:', data);
+  if (
+    !data?.requestUrl.includes('/monitor/report') &&
+    !data?.requestUrl.includes('/monitor/errorReport')
+  ) {
+    const eventData = {
+      timestamp: getCurrentUnix(),
+      createTime: formatDate(new Date()),
+      pageUrl: normalizeUrlForPath(window.location.href),
+      type: 'HttpRequest',
+      ...data,
+    };
 
-  messageWrapper.enqueue(
-    { ...eventData, session: new Date().getDate() },
-    DB_CONFIG.ACTION_STORE_NAME
-  );
+    messageWrapper.enqueue(
+      { ...eventData, session: new Date().getDate() },
+      DB_CONFIG.INTERFACE_STORE_NAME
+    );
+  }
 };
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
   return function wrappedFetch(...args) {
+    let startTimeFetch = performance.now();
     const method = args.length > 1 ? args[1]?.method : 'GET';
     let errorContext = new Error().stack;
     try {
       return originalFetch
         .apply(this, args)
         .then(async (response) => {
+          let endTimeFetch = performance.now();
+          let durationFetch = endTimeFetch - startTimeFetch;
+          console.log('🚀 ~ .then ~ durationFetch:', durationFetch);
           enqueueHttpRequest({
             method,
-            response,
+            requestUrl: args[0],
+            duration: durationFetch.toFixed(2),
           });
-          if (!response.ok) {
+          if (!response.ok && !response.url.includes('/monitor/errorReport')) {
             const error = new HttpError(
               response.status,
               method,
@@ -169,6 +179,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   let data = null;
   let errorContext = '';
   function wrappedXMLHttpRequest() {
+    let startTime = performance.now();
     const originalRequest = new OriginalXMLHttpRequest();
 
     // 包裹 open 方法
@@ -190,7 +201,19 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     const originalOnReadyStateChange = originalRequest.onreadystatechange;
     originalRequest.onreadystatechange = function (event) {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
-        if (originalRequest.status >= 400) {
+        let endTime = performance.now();
+        let duration = endTime - startTime;
+        console.log(`请求和响应耗时: ${duration.toFixed(2)} 毫秒`);
+        enqueueHttpRequest({
+          method,
+          requestUrl,
+          duration: duration.toFixed(2),
+        });
+
+        if (
+          originalRequest.status >= 400 &&
+          !requestUrl.includes('/monitor/errorReport')
+        ) {
           const error = new HttpError(
             originalRequest.status,
             method,
@@ -218,12 +241,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       try {
         data = args[0];
         originalSend.apply(this, args);
-        enqueueHttpRequest({
-          method,
-          requestUrl,
-          data,
-          originalRequest,
-        });
       } catch (error) {
         // 在这里收集错误信息，例如记录到日志或发送到服务器
         callback(error); // 调用回调函数，将错误传递给上层处理

@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.xuan.common.utils.DateFormatUtils;
 import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.InterfaceInfo;
 import com.xuan.service.ESDocumentService;
 import com.xuan.service.MonitoringDataStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class MonitoringDataStorageServiceEsImpl implements MonitoringDataStorage
     private ESDocumentService esDocumentService;
 
     @Override
-    public void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList) throws IOException {
+    public void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList, List<InterfaceInfo> interfaceDataList) throws IOException {
         esDocumentService.ensureIndexExists("events", "actions");
 
         for (EventInfo eventInfo : eventDataList) {
@@ -53,6 +54,21 @@ public class MonitoringDataStorageServiceEsImpl implements MonitoringDataStorage
                         "actions",
                         UUID.randomUUID().toString(),
                         JSON.toJSONString(actionData));
+                System.out.printf("response-> %s%n", response);
+                // 可能需要对响应进行处理或记录错误
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to save action data to index 'actions'", e);
+            }
+        }
+
+        for (InterfaceInfo interfaceInfo : interfaceDataList) {
+            interfaceInfo.setAppId(appId);
+            interfaceInfo.setCreateTime(DateFormatUtils.format(LocalDateTime.now()));
+            try {
+                IndexResponse response = esDocumentService.createByJson(
+                        "interfaceInfo",
+                        UUID.randomUUID().toString(),
+                        JSON.toJSONString(interfaceInfo));
                 System.out.printf("response-> %s%n", response);
                 // 可能需要对响应进行处理或记录错误
             } catch (Exception e) {

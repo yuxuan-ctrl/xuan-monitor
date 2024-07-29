@@ -35,8 +35,10 @@ const Basic: FC = () => {
   );
   console.log('🚀 ~ data:', data);
 
-  if (data?.record?.length > 2) {
-    recordPlayer.replay(document.getElementById('player'), data?.record);
+  const record = data?.record ?JSON.parse(data?.record) : [];
+
+  if (record?.length > 2) {
+    recordPlayer.replay(document.getElementById('player'), record);
   }
   return (
     <PageContainer content="">
@@ -83,7 +85,7 @@ const Basic: FC = () => {
       >
         <Descriptions title="录像回放"></Descriptions>
         <div id="player"></div>
-        {(data?.record?.length < 2 || !data?.record) && (
+        {(record?.length < 2 || !record) && (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             imageStyle={{ height: 60 }}

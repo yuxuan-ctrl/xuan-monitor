@@ -3,7 +3,9 @@ declare namespace API {
     appId?: string;
     createTime?: string;
     data?: string;
-    timestamp?: number;
+    id?: string;
+    pageUrl?: string;
+    timestamp?: string;
     type?: string;
     userId?: string;
   };
@@ -19,11 +21,11 @@ declare namespace API {
     errorId?: string;
     errorMessage?: string;
     errorType?: string;
+    pageUrl?: string;
     record?: string;
     requestUrl?: string;
     stackTrace?: string;
     timestamp?: Timestamp;
-    url?: string;
     userAgent?: string;
     userId?: string;
   };
@@ -43,6 +45,7 @@ declare namespace API {
   type EventInfo = {
     appId?: string;
     createTime?: string;
+    id?: string;
     language?: string;
     metrics?: string;
     mostVisitedPageId?: string;
@@ -55,7 +58,7 @@ declare namespace API {
     slowResources?: string;
     stayDuration?: number;
     timeZoneOffset?: number;
-    timestamp?: number;
+    timestamp?: string;
     uniqueKey?: string;
     userAgent?: string;
     userId?: string;
@@ -65,6 +68,7 @@ declare namespace API {
     actionList?: ActionInfo[];
     appId?: string;
     eventList?: EventInfo[];
+    interfaceList?: InterfaceInfo[];
     location?: Location;
     platform?: string;
     record?: string;
@@ -92,6 +96,19 @@ declare namespace API {
   type getDetailsUsingGETParams = {
     /** id */
     id: string;
+  };
+
+  type getInterfacePageUsingGETParams = {
+    /** appId */
+    appId?: string;
+    /** pageIndex */
+    pageIndex?: number;
+    /** pageSize */
+    pageSize?: number;
+    /** userId */
+    userId?: string;
+    /** timeStep */
+    timeStep?: string;
   };
 
   type getMetricsUsingGETParams = {
@@ -134,12 +151,24 @@ declare namespace API {
     id?: number;
     pageIndex?: number;
     pageSize?: number;
-    userName?: string;
+    userId?: string;
   };
 
   type getUsersByRegionUsingGETParams = {
     /** appId */
     appId: string;
+  };
+
+  type InterfaceInfo = {
+    appId?: string;
+    createTime?: string;
+    duration?: number;
+    id?: string;
+    method?: string;
+    pageUrl?: string;
+    requestUrl?: string;
+    timestamp?: number;
+    userId?: string;
   };
 
   type IPageErrors = {
@@ -190,6 +219,11 @@ declare namespace API {
     uniqueVisitors?: number;
   };
 
+  type OrderItem = {
+    asc?: boolean;
+    column?: string;
+  };
+
   type Pageable = {
     offset?: number;
     pageNumber?: number;
@@ -197,6 +231,26 @@ declare namespace API {
     paged?: boolean;
     sort?: Sort;
     unpaged?: boolean;
+  };
+
+  type PageInterfaceInfo = {
+    countId?: string;
+    current?: number;
+    maxLimit?: number;
+    optimizeCountSql?: boolean;
+    orders?: OrderItem[];
+    pages?: number;
+    records?: InterfaceInfo[];
+    searchCount?: boolean;
+    size?: number;
+    total?: number;
+  };
+
+  type PageResultUserAction = {
+    pageIndex?: number;
+    pageSize?: number;
+    records?: UserAction[];
+    total?: number;
   };
 
   type PageUsersVo = {
@@ -275,6 +329,12 @@ declare namespace API {
     msg?: string;
   };
 
+  type ResultPageInterfaceInfo = {
+    code?: number;
+    data?: PageInterfaceInfo;
+    msg?: string;
+  };
+
   type ResultPageUsersVo = {
     code?: number;
     data?: PageUsersVo;
@@ -326,12 +386,14 @@ declare namespace API {
   type UserAction = {
     createTime?: string;
     description?: string;
+    id?: string;
+    pageUrl?: string;
     type?: string;
   };
 
   type UserDetailsVO = {
     user?: Users;
-    userActionLogs?: UserAction[];
+    userActionLogs?: PageResultUserAction;
   };
 
   type UserDTO = {

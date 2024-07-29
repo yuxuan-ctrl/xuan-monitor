@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xuan.dao.mapper.clickhouse.InterfaceCkMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.xuan.dao.pojo.entity.clickhouse.InterfaceInfo">
+        <id column="id" property="id" />
+        <result column="app_id" property="appId" />
+        <result column="user_id" property="userId" />
+        <result column="method" property="method" />
+        <result column="request_url" property="requestUrl" />
+        <result column="page_url" property="pageUrl" />
+        <result column="timestamp" property="timestamp" />
+        <result column="duration" property="duration" />
+        <result column="create_time" property="createTime" />
+
+    </resultMap>
+
+    <select id="getAggregatedInterfaceList" resultType="com.xuan.dao.pojo.entity.clickhouse.InterfaceInfo">
+        SELECT
+        request_url,
+        AVG(duration) AS avg_duration
+        FROM
+        interface_info
+        WHERE
+        <if test="performanceDTO.appId != null and performanceDTO.appId != ''">
+            app_id = #{performanceDTO.appId}
+        </if>
+        <if test="performanceDTO.method != null and performanceDTO.method != ''">
+            AND method = #{performanceDTO.method}
+        </if>
+        <if test="performanceDTO.requestUrl != null and performanceDTO.requestUrl != ''">
+            AND request_url = #{performanceDTO.requestUrl}
+        </if>
+        GROUP BY
+        request_url
+    </select>
+</mapper>

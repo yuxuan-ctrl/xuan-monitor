@@ -10,7 +10,6 @@
         <result column="user_agent" property="userAgent" />
         <result column="last_login_time" property="lastLoginTime" />
         <result column="location" property="location" />
-        <result column="all_users_length" property="allUsersLength" />
         <result column="belong_city" property="belongCity" /> <!-- 地区字段映射 -->
 
     </resultMap>

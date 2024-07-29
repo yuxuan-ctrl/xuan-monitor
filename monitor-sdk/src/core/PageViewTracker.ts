@@ -118,7 +118,7 @@ export default class PageViewTracker {
    * @param pageId 页面 ID。
    */
   private async updatePageViewTime(pageId: string) {
-    const { fcp, lcp, ttfb, cls, fid } = await collectWebVitals(3000);
+    const { fcp, lcp, ttfb, cls, fid } = await collectWebVitals(10000);
     const slowResources = await collectSlowResources(3000);
     const metrics = {};
     [fcp, lcp, ttfb, fid, cls].forEach((metric: metricType) => {

@@ -25,6 +25,7 @@ import com.xuan.dao.model.Location;
 import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.dto.EventsDTO;
 import com.xuan.dao.pojo.entity.*;
+import com.xuan.dao.pojo.entity.clickhouse.InterfaceInfo;
 import com.xuan.dao.pojo.vo.ReportVo;
 import com.xuan.service.ErrorLoggingService;
 import com.xuan.service.MonitorService;
@@ -73,6 +74,7 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
         Location location = eventsDto.getLocation();
         List<ActionInfo> actionList = eventsDto.getActionList();
         List<EventInfo> eventList = eventsDto.getEventList();
+        List<InterfaceInfo> interfaceList = eventsDto.getInterfaceList();
 
         if(!systemsMapper.exists(new LambdaQueryWrapper<Systems>().eq(Systems::getAppId,appId))){
             systemsMapper.insert(Systems.builder()
@@ -105,7 +107,7 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
             userMapper.insert(currentUser);
         }
 
-        monitoringDataStorageService.recordMonitoringData(appId,userId,actionList,eventList);
+        monitoringDataStorageService.recordMonitoringData(appId,userId,actionList,eventList,interfaceList);
 
         return null; // 根据实际业务需求填充返回值
     }

@@ -2,6 +2,7 @@ package com.xuan.service;
 
 import com.xuan.dao.pojo.entity.clickhouse.ActionInfo;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
+import com.xuan.dao.pojo.entity.clickhouse.InterfaceInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,6 +18,6 @@ public interface MonitoringDataStorageService {
      * @param eventDataList  事件数据列表
      * @throws IOException 当存储过程出现IO异常时抛出
      */
-     void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList) throws IOException ;
+     void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList, List<InterfaceInfo> interfaceDataList) throws IOException ;
 
 }

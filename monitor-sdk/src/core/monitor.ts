@@ -10,7 +10,7 @@
  */
 import PageViewTracker from './PageViewTracker';
 import UvTracker from './UserViewTracker';
-import ErrorTracker from './ErrorTracker';
+import ErrorTracker, { ErrorInfo } from './ErrorTracker';
 import MessageQueueDBWrapper from './Message';
 import { UVData, MonitorConfig, AnalysisData, IMessage } from '../types';
 import { DB_CONFIG } from '../config/dbconfig';
@@ -20,6 +20,7 @@ import {
   wrapSetTimeout,
   wrapXMLHttpRequest,
   getCurrentUnix,
+  shouldProcessErrorReport,
 } from '../utils';
 import { Listener, EventManager } from '../decorator';
 import Report from './Report';
@@ -188,6 +189,12 @@ export default class Monitor extends EventManager {
 
   public async reportError(error: Error) {
     const errorInfo = await this.errorTracker.collectError(error);
+    if (
+      errorInfo?.requestUrl &&
+      !shouldProcessErrorReport(errorInfo.requestUrl)
+    ) {
+      return;
+    }
     this.report.fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
       ...errorInfo,
       ...this.baseInfo,

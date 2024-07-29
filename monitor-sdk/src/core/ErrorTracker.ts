@@ -2,7 +2,7 @@ import { normalizeUrlForPath, formatDate, getCurrentUnix } from '../utils';
 import MessageQueueDBWrapper from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
 import HttpError from '../model/HttpError';
-interface ErrorInfo {
+export interface ErrorInfo {
   errorType: string;
   errorMessage: string;
   stackTrace?: string;

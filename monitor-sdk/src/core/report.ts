@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-03-05 16:36:43
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
@@ -16,7 +16,7 @@ import {
   isArray,
   normalizeUrlForPath,
   recursiveTimeout,
-  getCurrentUnix
+  getCurrentUnix,
 } from '../utils';
 import { MonitorConfig } from '../types';
 import MessageQueueDBWrapper from './Message';
@@ -105,7 +105,9 @@ export default class Report {
 
   async fetchReport(url, data) {
     const req = new Request();
-    const response = await req.post(url, data);
+    try {
+      req.post(url, data);
+    } catch (e) {}
   }
 
   async webSocketReport(data: any) {

@@ -1,3 +1,5 @@
+import { shouldProcessErrorReport } from '.';
+
 export class Request {
   defaultHeaders: any;
   constructor(defaultHeaders = {}) {
@@ -25,15 +27,21 @@ export class Request {
             let response = JSON.parse(xhr.responseText);
             resolve(response);
           } catch (error) {
-            reject(error);
+            if (shouldProcessErrorReport(xhr.responseURL)) {
+              reject(error);
+            }
           }
         } else {
-          reject(xhr.statusText);
+          if (shouldProcessErrorReport(xhr.responseURL)) {
+            reject(xhr.statusText);
+          }
         }
       };
 
       xhr.onerror = function () {
-        reject('Network Error');
+        if (shouldProcessErrorReport(xhr.responseURL)) {
+          reject('Network Error');
+        }
       };
 
       // 根据HTTP方法设置请求体
@@ -46,7 +54,9 @@ export class Request {
       } else if (method.toUpperCase() === 'GET') {
         xhr.send(); // GET请求不需要请求体
       } else {
-        reject(`Unsupported request method:${method}`);
+        if (shouldProcessErrorReport(xhr.responseURL)) {
+          reject(`Unsupported request method:${method}`);
+        }
       }
     });
   }

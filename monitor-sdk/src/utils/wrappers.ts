@@ -14,7 +14,7 @@ const enqueueHttpRequest = (data) => {
   const eventData = {
     timestamp: getCurrentUnix(),
     createTime: formatDate(new Date()),
-    pageUrl: normalizeUrlForPath(window.location.href), 
+    pageUrl: normalizeUrlForPath(window.location.href),
     type: 'HttpRequest',
     data: JSON.stringify(data),
   };

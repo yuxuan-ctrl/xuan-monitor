@@ -130,3 +130,17 @@ export function recursiveTimeout(callback, delay) {
     clearTimeout(timeoutId); // 清理定时器
   };
 }
+
+export function shouldProcessErrorReport(url) {
+  const excludeErrReportPath = ['monitor/errorReport', 'monitor/report'];
+
+  // 使用正则表达式来检查路径是否匹配
+  const matchesExcludedPath = excludeErrReportPath.some((path) =>
+    url.includes(path)
+  );
+
+  if (matchesExcludedPath) {
+    return false;
+  }
+  return true;
+}

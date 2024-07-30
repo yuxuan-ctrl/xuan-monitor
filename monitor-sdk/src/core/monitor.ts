@@ -27,6 +27,7 @@ import Report from './Report';
 import { debounce } from '../utils/debounce';
 import 'reflect-metadata';
 
+type historyFunction = (data: any, unused: string, url?: string | URL) => void;
 export default class Monitor extends EventManager {
   static instance: Monitor | null = null;
 
@@ -36,16 +37,8 @@ export default class Monitor extends EventManager {
   public uvData: UVData;
   public pvData: AnalysisData;
   public stayDuration: number;
-  public originalPushState: (
-    data: any,
-    unused: string,
-    url?: string | URL
-  ) => void;
-  public originalReplaceState: (
-    data: any,
-    unused: string,
-    url?: string | URL
-  ) => void;
+  public originalPushState: historyFunction;
+  public originalReplaceState: historyFunction;
   public Events: Object = {};
   errorLock = 0; // 错误上报上锁 0-可用 1-占用
   originalFetch: any;

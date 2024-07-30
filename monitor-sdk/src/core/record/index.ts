@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-04 09:07:38
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-20 11:19:26
  * @FilePath: \monitor-sdk\src\core\record\index.ts
  * @Description:
@@ -13,9 +13,10 @@ import rrwebPlayer, { RRwebPlayerOptions } from 'rrweb-player';
 // import 'rrweb-player/dist/style.css';
 import MessageQueueDBWrapper from '../Message';
 import { DB_CONFIG } from '../../config/dbconfig';
-import { normalizeUrlForPath ,getCurrentUnix} from '../../utils';
+import { normalizeUrlForPath, getCurrentUnix } from '../../utils';
 
 interface RecordReplayConfig extends RRwebPlayerOptions {
+  props: any;
   startTime?: number | string;
   endTime?: number | string;
 }
@@ -41,8 +42,6 @@ export default class Record {
         password: true,
         text: true,
       },
-      // slimDOMOptions: true,
-      // blockClass: /^el-/,
       emit(event, checkout) {
         // if(checkout) this.rrwebSessionSet();
         // 保存获取到的 event 数据，event里面是序列号后的DOM和鼠标事件等
@@ -61,18 +60,10 @@ export default class Record {
     return this.stopFn;
   }
 
-  // rrwebSessionSet(){
-
-  // }
-
   async replay(dom, config?: RecordReplayConfig) {
     const startTime = config?.startTime || getCurrentUnix() - 300000;
     const endTime = config?.endTime || getCurrentUnix() + 3000;
     const dataList = await this.getRange(startTime, endTime);
-    console.log(
-      '🚀 ~ Record ~ replay ~  dataList:',
-      dataList.map((item) => item.data)
-    );
 
     setTimeout(() => {
       const replayInstance = new rrwebPlayer({

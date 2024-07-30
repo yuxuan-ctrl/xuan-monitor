@@ -3,7 +3,7 @@ import { RRwebPlayerOptions } from 'rrweb-player';
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-21 14:29:01
  * @FilePath: \monitor-sdk\src\types\index.d.ts
  * @Description:
@@ -34,11 +34,11 @@ interface IMessage {
   id?: number;
   data?: any;
   timestamp?: any;
-  status?: 'pending' | 'consumed';
+  status?: 'pending' | 'consumed' | 'enter';
   pageUrl?: string;
 }
 
-interface AnalysisData{
+interface AnalysisData {
   name?: string;
   age?: number;
   email?: string;
@@ -48,9 +48,9 @@ interface AnalysisData{
   pageUrl?: string;
   screenResolution?: any;
   referrer?: string;
-  metrics?:string;
+  metrics?: string;
   timestamp?: any;
-  slowResources?:string
+  slowResources?: string;
 }
 
 /**
@@ -209,7 +209,8 @@ declare class MessageQueueDBWrapper extends IndexedDBWrapper {
     }): MessageQueueDBWrapper;
     enqueue(data: any, storeName: any): Promise<void>;
     dequeue(storeName: any): Promise<IMessage[] | undefined>;
-    updateStatus(messages: any, storeName: any): void;
+    findLatestPage(storeName: any): Promise<IMessage>;
+    updateStatus(id: any, storeName: any, status: any): void;
     batchDeleteBeforeDate(storeNameList: string[], hoursAgo: number): Promise<void>;
 }
 

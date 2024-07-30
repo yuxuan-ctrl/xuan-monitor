@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-07-30 11:37:08
+ * @LastEditors: yuxuan-ctrl
+ * @LastEditTime: 2024-07-30 17:36:02
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -27,6 +27,14 @@ import Report from './Report';
 import { debounce } from '../utils/debounce';
 import 'reflect-metadata';
 
+const {
+  TRAFFIC_STORE_NAME,
+  Error_STORE_NAME,
+  ACTION_STORE_NAME,
+  RECORD_STORE_NAME,
+  INTERFACE_STORE_NAME,
+} = DB_CONFIG;
+
 type historyFunction = (data: any, unused: string, url?: string | URL) => void;
 export default class Monitor extends EventManager {
   static instance: Monitor | null = null;
@@ -40,7 +48,7 @@ export default class Monitor extends EventManager {
   public originalPushState: historyFunction;
   public originalReplaceState: historyFunction;
   public Events: Object = {};
-  private errorMutex:number = 0; // 错误上报上锁 0-可用 1-占用
+  private errorMutex: number = 0; // 错误上报上锁 0-可用 1-占用
   public originalFetch: any;
   public reportUtils: Report;
   public config: MonitorConfig;
@@ -72,11 +80,11 @@ export default class Monitor extends EventManager {
       storeName: 'monitor_data',
     });
     this.messageWrapper.openDatabase([
-      DB_CONFIG.TRAFFIC_STORE_NAME,
-      DB_CONFIG.Error_STORE_NAME,
-      DB_CONFIG.ACTION_STORE_NAME,
-      DB_CONFIG.RECORD_STORE_NAME,
-      DB_CONFIG.INTERFACE_STORE_NAME,
+      TRAFFIC_STORE_NAME,
+      Error_STORE_NAME,
+      ACTION_STORE_NAME,
+      RECORD_STORE_NAME,
+      INTERFACE_STORE_NAME,
     ]);
   }
 
@@ -169,9 +177,9 @@ export default class Monitor extends EventManager {
         ...this.baseInfo,
         userId: this.uvTracker.uniqueKey,
         timestamp: getCurrentUnix(),
-        name: DB_CONFIG.TRAFFIC_STORE_NAME,
+        name: TRAFFIC_STORE_NAME,
       };
-      this.sendMessage(message, DB_CONFIG.TRAFFIC_STORE_NAME);
+      this.sendMessage(message, TRAFFIC_STORE_NAME);
     }
   }
 
@@ -195,13 +203,13 @@ export default class Monitor extends EventManager {
           ...this.baseInfo,
           userId: this.uvTracker.uniqueKey,
         })
-        .then(()=>(this.errorMutex = 0))
+        .then(() => (this.errorMutex = 0))
         .catch(() => (this.errorMutex = 1));
   }
 
   public async updateDurationMessage(stayDuration) {
-    console.log("stayDuration================================",stayDuration);
-    const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
+    console.log('stayDuration================================', stayDuration);
+    const latestPv = await this.getLastData(TRAFFIC_STORE_NAME);
     if (latestPv) {
       const { data } = latestPv;
       const newData = {
@@ -211,11 +219,15 @@ export default class Monitor extends EventManager {
           stayDuration: stayDuration,
         },
       };
-      this.messageWrapper.update(
-        latestPv.id,
-        newData,
-        DB_CONFIG.TRAFFIC_STORE_NAME
-      );
+      this.messageWrapper
+        .update(latestPv.id, newData, TRAFFIC_STORE_NAME)
+        .then(() => {
+          this.messageWrapper.updateStatus(
+            latestPv.id,
+            TRAFFIC_STORE_NAME,
+            'pending'
+          );
+        });
     }
     return true;
   }

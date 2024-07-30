@@ -22,7 +22,6 @@ const enqueueHttpRequest = debounce(function (data) {
       pageUrl: normalizeUrlForPath(window.location.href),
       type: 'HttpRequest',
       ...data,
-      ...data,
     };
     messageWrapper.enqueue(
       { ...eventData, session: new Date().getDate() },

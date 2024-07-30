@@ -491,7 +491,7 @@ class MessageQueueDBWrapper extends IndexedDBWrapper {
         const message = {
             data,
             timestamp: getCurrentUnix(),
-            status: 'pending',
+            status: 'enter',
             pageUrl: data.pageUrl,
         };
         await this.add(message, storeName);
@@ -510,14 +510,21 @@ class MessageQueueDBWrapper extends IndexedDBWrapper {
         }
         return undefined;
     }
-    updateStatus(messages, storeName) {
+    async findLatestPage(storeName) {
+        const condition = (item) => {
+            return item.status === 'enter';
+        };
+        const messages = await this.query(condition, storeName, {
+            field: 'timestamp',
+            direction: 'desc',
+        }, 1);
         if (messages.length > 0) {
-            messages.forEach(async (mes) => {
-                if (mes.status === 'pending') {
-                    await this.update(mes.id, { status: 'consumed' }, storeName);
-                }
-            });
+            return messages[0];
         }
+        return undefined;
+    }
+    updateStatus(id, storeName, status) {
+        this.update(id, { status }, storeName);
     }
     async batchDeleteBeforeDate(storeNameList, hoursAgo) {
         const db = await this.ensureDatabaseOpen();
@@ -577,7 +584,6 @@ const enqueueHttpRequest = debounce(function (data) {
             createTime: formatDate(new Date()),
             pageUrl: normalizeUrlForPath(window.location.href),
             type: 'HttpRequest',
-            ...data,
             ...data,
         };
         messageWrapper.enqueue({ ...eventData, session: new Date().getDate() }, DB_CONFIG.INTERFACE_STORE_NAME);
@@ -4742,12 +4748,13 @@ function Listener(config) {
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-07-30 10:49:39
+ * @LastEditTime: 2024-07-30 17:56:17
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
  */
+const { TRAFFIC_STORE_NAME: TRAFFIC_STORE_NAME$1, Error_STORE_NAME: Error_STORE_NAME$1, ACTION_STORE_NAME: ACTION_STORE_NAME$1, RECORD_STORE_NAME: RECORD_STORE_NAME$1, INTERFACE_STORE_NAME: INTERFACE_STORE_NAME$1, } = DB_CONFIG;
 class Report {
     baseUrl = '/api';
     reportUrl;
@@ -4771,16 +4778,16 @@ class Report {
         this.messageWrapper = MessageQueueDBWrapper.getInstance({
             dbName: 'monitorxq',
             dbVersion: 1,
-            storeName: DB_CONFIG.RECORD_STORE_NAME,
+            storeName: RECORD_STORE_NAME$1,
         });
     }
     start(baseUrl, useWebSocket = false) {
         this.websocketManager = new WebSocketManager(`ws://${baseUrl}/monitor/report`);
         this.clearIndex();
         recursiveTimeout(async () => {
-            const trafficList = await this.messageWrapper.dequeue(DB_CONFIG.TRAFFIC_STORE_NAME);
-            const actionList = await this.messageWrapper.dequeue(DB_CONFIG.ACTION_STORE_NAME);
-            const interfaceList = await this.messageWrapper.dequeue(DB_CONFIG.INTERFACE_STORE_NAME);
+            const trafficList = await this.messageWrapper.dequeue(TRAFFIC_STORE_NAME$1);
+            const actionList = await this.messageWrapper.dequeue(ACTION_STORE_NAME$1);
+            const interfaceList = await this.messageWrapper.dequeue(INTERFACE_STORE_NAME$1);
             if (isArray(trafficList) ||
                 isArray(actionList) ||
                 isArray(interfaceList)) {
@@ -4794,6 +4801,7 @@ class Report {
                     eventList: mapDataProperties(trafficList),
                     actionList: mapDataProperties(actionList),
                     interfaceList: mapDataProperties(interfaceList),
+                    currentEnterPageUrl: normalizeUrlForPath(window.location.href),
                 };
                 if (useWebSocket && this.websocketManager) {
                     //todo webSocket Methods
@@ -4808,9 +4816,9 @@ class Report {
     }
     setSuccessfulStatus(trafficList, actionList, interfaceList) {
         // 处理每个数组
-        const trafficSuccessfulResult = this.mapWithStoreName(trafficList, DB_CONFIG.TRAFFIC_STORE_NAME);
-        const actionSuccessfulResult = this.mapWithStoreName(actionList, DB_CONFIG.ACTION_STORE_NAME);
-        const interfaceSuccessfulResult = this.mapWithStoreName(interfaceList, DB_CONFIG.INTERFACE_STORE_NAME);
+        const trafficSuccessfulResult = this.mapWithStoreName(trafficList, TRAFFIC_STORE_NAME$1);
+        const actionSuccessfulResult = this.mapWithStoreName(actionList, ACTION_STORE_NAME$1);
+        const interfaceSuccessfulResult = this.mapWithStoreName(interfaceList, INTERFACE_STORE_NAME$1);
         // 合并所有数组
         const combineSuccessfulResult = [
             ...trafficSuccessfulResult,
@@ -4818,20 +4826,22 @@ class Report {
             ...interfaceSuccessfulResult,
         ];
         combineSuccessfulResult.forEach((res) => {
-            this.messageWrapper.updateStatus(res.id.res.storeName);
+            this.messageWrapper.updateStatus(res.id, res.storeName, 'consumed');
         });
     }
     // 创建一个函数来处理数组中的每个元素
     mapWithStoreName(list, storeName) {
-        return list.map((item) => ({ id: item.id, storeName }));
+        return isArray(list)
+            ? list.map((item) => ({ id: item.id, storeName }))
+            : [];
     }
     clearIndex() {
         recursiveTimeout(async () => {
             await this.messageWrapper.batchDeleteBeforeDate([
-                DB_CONFIG.RECORD_STORE_NAME,
-                DB_CONFIG.ACTION_STORE_NAME,
-                DB_CONFIG.Error_STORE_NAME,
-                DB_CONFIG.TRAFFIC_STORE_NAME,
+                RECORD_STORE_NAME$1,
+                ACTION_STORE_NAME$1,
+                Error_STORE_NAME$1,
+                TRAFFIC_STORE_NAME$1,
             ], this.dataRetentionHours);
         }, this.timeInterval);
     }
@@ -4865,7 +4875,7 @@ class Report {
                     item.data.path === normalizeUrlForPath(window.location.href));
             }
             : () => true;
-        const dataList = await this.messageWrapper.query(condition, DB_CONFIG.RECORD_STORE_NAME, {
+        const dataList = await this.messageWrapper.query(condition, RECORD_STORE_NAME$1, {
             field: 'timestamp',
             direction: 'asc',
         });
@@ -6272,6 +6282,7 @@ var Reflect$1;
     });
 })(Reflect$1 || (Reflect$1 = {}));
 
+const { TRAFFIC_STORE_NAME, Error_STORE_NAME, ACTION_STORE_NAME, RECORD_STORE_NAME, INTERFACE_STORE_NAME, } = DB_CONFIG;
 class Monitor extends EventManager {
     static instance = null;
     pvTracker;
@@ -6311,11 +6322,11 @@ class Monitor extends EventManager {
             storeName: 'monitor_data',
         });
         this.messageWrapper.openDatabase([
-            DB_CONFIG.TRAFFIC_STORE_NAME,
-            DB_CONFIG.Error_STORE_NAME,
-            DB_CONFIG.ACTION_STORE_NAME,
-            DB_CONFIG.RECORD_STORE_NAME,
-            DB_CONFIG.INTERFACE_STORE_NAME,
+            TRAFFIC_STORE_NAME,
+            Error_STORE_NAME,
+            ACTION_STORE_NAME,
+            RECORD_STORE_NAME,
+            INTERFACE_STORE_NAME,
         ]);
     }
     async onPopState(event) {
@@ -6380,9 +6391,9 @@ class Monitor extends EventManager {
                 ...this.baseInfo,
                 userId: this.uvTracker.uniqueKey,
                 timestamp: getCurrentUnix(),
-                name: DB_CONFIG.TRAFFIC_STORE_NAME,
+                name: TRAFFIC_STORE_NAME,
             };
-            this.sendMessage(message, DB_CONFIG.TRAFFIC_STORE_NAME);
+            this.sendMessage(message, TRAFFIC_STORE_NAME);
         }
     }
     async sendMessage(message, storeName) {
@@ -6406,8 +6417,8 @@ class Monitor extends EventManager {
                 .catch(() => (this.errorMutex = 1));
     }
     async updateDurationMessage(stayDuration) {
-        console.log("stayDuration================================", stayDuration);
-        const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
+        console.log('stayDuration================================', stayDuration);
+        const latestPv = await this.getLastData(TRAFFIC_STORE_NAME);
         if (latestPv) {
             const { data } = latestPv;
             const newData = {
@@ -6417,7 +6428,11 @@ class Monitor extends EventManager {
                     stayDuration: stayDuration,
                 },
             };
-            this.messageWrapper.update(latestPv.id, newData, DB_CONFIG.TRAFFIC_STORE_NAME);
+            this.messageWrapper
+                .update(latestPv.id, newData, TRAFFIC_STORE_NAME)
+                .then(() => {
+                this.messageWrapper.updateStatus(latestPv.id, TRAFFIC_STORE_NAME, 'pending');
+            });
         }
         return true;
     }

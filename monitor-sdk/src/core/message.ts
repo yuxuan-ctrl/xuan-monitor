@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-07-30 10:49:26
+ * @LastEditTime: 2024-07-30 17:33:35
  * @FilePath: \monitor-sdk\src\core\Message.ts
  * @Description:
  *
@@ -41,7 +41,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
     const message: IMessage = {
       data,
       timestamp: getCurrentUnix(),
-      status: 'pending',
+      status: 'enter',
       pageUrl: data.pageUrl,
     };
     await this.add(message, storeName);
@@ -68,14 +68,28 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
     return undefined;
   }
 
-  public updateStatus(messages,storeName) {
+  public async findLatestPage(storeName){
+    const condition = (item) => {
+      return item.status === 'enter';
+    };
+    const messages = await this.query(
+      condition,
+      storeName,
+      {
+        field: 'timestamp',
+        direction: 'desc',
+      },
+      1
+    );
     if (messages.length > 0) {
-      messages.forEach(async (mes) => {
-        if (mes.status === 'pending') {
-          await this.update(mes.id!, { status: 'consumed' }, storeName);
-        }
-      });
+      return messages[0];
     }
+
+    return undefined;
+  }
+
+  public updateStatus(id,storeName,status) {
+    this.update(id, { status }, storeName);
   }
 
   public async batchDeleteBeforeDate(

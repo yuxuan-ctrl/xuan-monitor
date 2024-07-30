@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-07-30 10:49:39
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-07-30 17:56:17
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -23,6 +23,15 @@ import { MonitorConfig } from '../types';
 import MessageQueueDBWrapper from './Message';
 import { DB_CONFIG } from '../config/dbconfig';
 import UvTracker from './UserViewTracker';
+
+const {
+  TRAFFIC_STORE_NAME,
+  Error_STORE_NAME,
+  ACTION_STORE_NAME,
+  RECORD_STORE_NAME,
+  INTERFACE_STORE_NAME,
+} = DB_CONFIG;
+
 export default class Report {
   baseUrl?: String = '/api';
   reportUrl?: String;
@@ -47,7 +56,7 @@ export default class Report {
     this.messageWrapper = MessageQueueDBWrapper.getInstance({
       dbName: 'monitorxq',
       dbVersion: 1,
-      storeName: DB_CONFIG.RECORD_STORE_NAME,
+      storeName: RECORD_STORE_NAME,
     });
   }
 
@@ -57,15 +66,10 @@ export default class Report {
     );
     this.clearIndex();
     recursiveTimeout(async () => {
-      const trafficList = await this.messageWrapper.dequeue(
-        DB_CONFIG.TRAFFIC_STORE_NAME
-      );
-      const actionList = await this.messageWrapper.dequeue(
-        DB_CONFIG.ACTION_STORE_NAME
-      );
-      const interfaceList = await this.messageWrapper.dequeue(
-        DB_CONFIG.INTERFACE_STORE_NAME
-      );
+      const trafficList = await this.messageWrapper.dequeue(TRAFFIC_STORE_NAME);
+      const actionList = await this.messageWrapper.dequeue(ACTION_STORE_NAME);
+      const interfaceList =
+        await this.messageWrapper.dequeue(INTERFACE_STORE_NAME);
 
       if (
         isArray(trafficList) ||
@@ -82,6 +86,7 @@ export default class Report {
           eventList: mapDataProperties(trafficList),
           actionList: mapDataProperties(actionList),
           interfaceList: mapDataProperties(interfaceList),
+          currentEnterPageUrl: normalizeUrlForPath(window.location.href),
         };
         if (useWebSocket && this.websocketManager) {
           //todo webSocket Methods
@@ -98,15 +103,15 @@ export default class Report {
     // 处理每个数组
     const trafficSuccessfulResult = this.mapWithStoreName(
       trafficList,
-      DB_CONFIG.TRAFFIC_STORE_NAME
+      TRAFFIC_STORE_NAME
     );
     const actionSuccessfulResult = this.mapWithStoreName(
       actionList,
-      DB_CONFIG.ACTION_STORE_NAME
+      ACTION_STORE_NAME
     );
     const interfaceSuccessfulResult = this.mapWithStoreName(
       interfaceList,
-      DB_CONFIG.INTERFACE_STORE_NAME
+      INTERFACE_STORE_NAME
     );
 
     // 合并所有数组
@@ -117,23 +122,25 @@ export default class Report {
     ];
 
     combineSuccessfulResult.forEach((res) => {
-      this.messageWrapper.updateStatus(res.id.res.storeName);
+      this.messageWrapper.updateStatus(res.id, res.storeName, 'consumed');
     });
   }
 
   // 创建一个函数来处理数组中的每个元素
   mapWithStoreName(list, storeName) {
-    return list.map((item) => ({ id: item.id, storeName }));
+    return isArray(list)
+      ? list.map((item) => ({ id: item.id, storeName }))
+      : [];
   }
 
   clearIndex() {
     recursiveTimeout(async () => {
       await this.messageWrapper.batchDeleteBeforeDate(
         [
-          DB_CONFIG.RECORD_STORE_NAME,
-          DB_CONFIG.ACTION_STORE_NAME,
-          DB_CONFIG.Error_STORE_NAME,
-          DB_CONFIG.TRAFFIC_STORE_NAME,
+          RECORD_STORE_NAME,
+          ACTION_STORE_NAME,
+          Error_STORE_NAME,
+          TRAFFIC_STORE_NAME,
         ],
         this.dataRetentionHours
       );
@@ -180,7 +187,7 @@ export default class Report {
         : () => true;
     const dataList = await this.messageWrapper.query(
       condition,
-      DB_CONFIG.RECORD_STORE_NAME,
+      RECORD_STORE_NAME,
       {
         field: 'timestamp',
         direction: 'asc',

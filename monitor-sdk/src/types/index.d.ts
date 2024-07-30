@@ -1,7 +1,7 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl 
+ * @LastEditors: yuxuan-ctrl
  * @LastEditTime: 2024-02-21 14:29:01
  * @FilePath: \monitor-sdk\src\types\index.d.ts
  * @Description:
@@ -65,11 +65,11 @@ export interface IMessage {
   id?: number;
   data?: any;
   timestamp?: any;
-  status?: 'pending' | 'consumed';
+  status?: 'pending' | 'consumed' | 'enter';
   pageUrl?: string;
 }
 
-export interface AnalysisData{
+export interface AnalysisData {
   name?: string;
   age?: number;
   email?: string;
@@ -79,17 +79,17 @@ export interface AnalysisData{
   pageUrl?: string;
   screenResolution?: any;
   referrer?: string;
-  metrics?:string;
+  metrics?: string;
   timestamp?: any;
-  slowResources?:string
+  slowResources?: string;
 }
- export interface PerformanceResources{
-    name: string;
-    startTime: number;
-    duration: number;
-    transferSize: number;
-    decodedBodySize: number;
-    responseStart: number;
-    responseEnd: number;
-    initiatorType: string;
- }
+export interface PerformanceResources {
+  name: string;
+  startTime: number;
+  duration: number;
+  transferSize: number;
+  decodedBodySize: number;
+  responseStart: number;
+  responseEnd: number;
+  initiatorType: string;
+}

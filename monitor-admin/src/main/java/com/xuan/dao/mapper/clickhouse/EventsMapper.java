@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.xuan.dao.pojo.entity.clickhouse.EventInfo;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 @DS("clickhouse")
 public interface EventsMapper extends BaseMapper<EventInfo> {
+    int batchInsert(List<EventInfo> eventInfos);
 }

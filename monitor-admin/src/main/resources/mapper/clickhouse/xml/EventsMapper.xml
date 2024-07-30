@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xuan.dao.mapper.clickhouse.EventsMapper">
+
+    <insert id="batchInsert">
+        INSERT INTO event_info
+        (create_time, id, app_id, user_id, metrics, language, page_url, platform, referrer, stay_duration, slow_resources, screen_resolution, unique_key, timestamp, user_agent)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.createTime}, #{item.id}, #{item.appId}, #{item.userId}, #{item.metrics}, #{item.language}, #{item.pageUrl}, #{item.platform}, #{item.referrer}, #{item.stayDuration}, #{item.slowResources}, #{item.screenResolution}, #{item.uniqueKey}, #{item.timestamp}, #{item.userAgent})
+        </foreach>
+    </insert>
+
+</mapper>

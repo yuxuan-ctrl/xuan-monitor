@@ -35,4 +35,15 @@
         GROUP BY
         request_url
     </select>
+
+
+    <insert id="batchInsert">
+        INSERT INTO interface_info
+        (id, create_time, app_id, request_url, duration, method, page_url, timestamp, user_id)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.createTime}, #{item.appId}, #{item.requestUrl}, #{item.duration}, #{item.method}, #{item.pageUrl}, #{item.timestamp}, #{item.userId})
+        </foreach>
+    </insert>
+
 </mapper>

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @ConditionalOnProperty(name = "spring.datastore.type", havingValue = "clickhouse")
@@ -37,28 +38,28 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
         // 使用此格式器来格式化当前时间
         String createTime = LocalDateTime.now().format(formatter);
 
-        eventDataList.forEach(event -> {
-            String eventId = UUID.randomUUID().toString();
-            EventInfo eventInfo = EventInfo.builder()
-                    .createTime(DateFormatUtils.format(LocalDateTime.now()))
-                    .id(eventId)
-                    .appId(appId)
-                    .userId(userId)
-                    .metrics(event.getMetrics())
-                    .language(event.getLanguage())
-                    .pageUrl(event.getPageUrl())
-                    .platform(event.getPlatform())
-                    .referrer(event.getReferrer())
-                    .stayDuration(event.getStayDuration())
-                    .slowResources(event.getSlowResources())
-                    .screenResolution(event.getScreenResolution())
-                    .uniqueKey(event.getUniqueKey())
-                    .timestamp(event.getTimestamp())
-                    .userAgent(event.getUserAgent())
-                    .build();
+        List<EventInfo> eventInfos = eventDataList.stream()
+                .map(event -> EventInfo.builder()
+                        .createTime(DateFormatUtils.format(LocalDateTime.now()))
+                        .id(UUID.randomUUID().toString())
+                        .appId(appId)
+                        .userId(userId)
+                        .metrics(event.getMetrics())
+                        .language(event.getLanguage())
+                        .pageUrl(event.getPageUrl())
+                        .platform(event.getPlatform())
+                        .referrer(event.getReferrer())
+                        .stayDuration(event.getStayDuration())
+                        .slowResources(event.getSlowResources())
+                        .screenResolution(event.getScreenResolution())
+                        .uniqueKey(event.getUniqueKey())
+                        .timestamp(event.getTimestamp())
+                        .userAgent(event.getUserAgent())
+                        .build())
+                .collect(Collectors.toList());
 
-            eventsMapper.insert(eventInfo);
-        });
+// 假设 `eventsMapper` 支持批量插入
+        eventsMapper.batchInsert(eventInfos);
 
         actionDataList.forEach(action -> {
             String actionId = UUID.randomUUID().toString();
@@ -75,21 +76,20 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
             actionsMapper.insert(actionInfo);
         });
 
-        interfaceDataList.forEach(interfaceInfo -> {
-            String interfaceId = UUID.randomUUID().toString();
-            InterfaceInfo interfaceEntity = InterfaceInfo.builder()
-                    .id(interfaceId)
-                    .createTime(createTime)
-                    .appId(appId)
-                    .requestUrl(interfaceInfo.getRequestUrl())
-                    .duration(interfaceInfo.getDuration())
-                    .method(interfaceInfo.getMethod())
-                    .pageUrl(interfaceInfo.getPageUrl())
-                    .timestamp(interfaceInfo.getTimestamp())
-                    .userId(userId)
-                    .build();
+        List<InterfaceInfo> interfaceInfos = interfaceDataList.stream()
+                .map(interfaceInfo -> InterfaceInfo.builder()
+                        .id(UUID.randomUUID().toString())
+                        .createTime(createTime)
+                        .appId(appId)
+                        .requestUrl(interfaceInfo.getRequestUrl())
+                        .duration(interfaceInfo.getDuration())
+                        .method(interfaceInfo.getMethod())
+                        .pageUrl(interfaceInfo.getPageUrl())
+                        .timestamp(interfaceInfo.getTimestamp())
+                        .userId(userId)
+                        .build())
+                .collect(Collectors.toList());
 
-            interfaceCkMapper.insert(interfaceEntity);
-        });
+        interfaceCkMapper.batchInsert(interfaceInfos);
     }
 }

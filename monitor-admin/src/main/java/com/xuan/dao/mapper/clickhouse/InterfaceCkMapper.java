@@ -16,4 +16,7 @@ import java.util.List;
 @DS("clickhouse")
 public interface InterfaceCkMapper extends BaseMapper<InterfaceInfo> {
     List<InterfaceInfo> getAggregatedInterfaceList(@Param("performanceDTO") PerformanceDTO performanceDTO);
+
+    int batchInsert(List<InterfaceInfo> interfaceInfos);
+
 }

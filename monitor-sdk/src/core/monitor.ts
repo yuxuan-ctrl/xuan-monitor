@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-29 15:34:04
+ * @LastEditTime: 2024-05-08 16:35:47
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -23,6 +23,7 @@ import {
 } from '../utils';
 import { Listener, EventManager } from '../decorator';
 import Report from './Report';
+import { debounce } from '../utils/debounce';
 import 'reflect-metadata';
 
 export default class Monitor extends EventManager {
@@ -45,11 +46,15 @@ export default class Monitor extends EventManager {
     url?: string | URL
   ) => void;
   public Events: Object = {};
+  errorLock = 0; // 错误上报上锁 0-可用 1-占用
   originalFetch: any;
   reportUtils: Report;
   config: MonitorConfig;
   baseInfo: { appId: string; userId: string };
   report: Report;
+  reportError: { cancel: () => void; flush: () => any } & ((
+    ...args: any[]
+  ) => void);
 
   constructor(config: MonitorConfig) {
     super();
@@ -60,6 +65,7 @@ export default class Monitor extends EventManager {
     this.report.start('/api');
     this.baseInfo = { appId: config.appId, userId: config?.userId };
     this.errorTracker = new ErrorTracker();
+    this.reportError = debounce(this.basicReportError, 1000);
     // this.uvTracker.initRefreshInterval(this.sendMessage);
     this.setGlobalProxy();
     this.initializeDatabase();
@@ -187,32 +193,38 @@ export default class Monitor extends EventManager {
     this.messageWrapper.enqueue(message, storeName);
   }
 
-  public async reportError(error: Error) {
+  public async basicReportError(error: Error) {
     const errorInfo = await this.errorTracker.collectError(error);
-    this.report.fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
-      ...errorInfo,
-      ...this.baseInfo,
-      userId: this.uvTracker.uniqueKey,
-    });
+    // 假如errorReport 发生错误就上锁
+    this.errorLock === 0 &&
+      this.report
+        .fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
+          ...errorInfo,
+          ...this.baseInfo,
+          userId: this.uvTracker.uniqueKey,
+        })
+        .then(()=>(this.errorLock = 0))
+        .catch(() => (this.errorLock = 1));
   }
 
   public async updateDurationMessage() {
     console.log(this.stayDuration);
     const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
-    console.log('🚀 ~ Monitor ~ updateDurationMessage ~ latestPv:', latestPv);
-    const { data } = latestPv;
-    const newData = {
-      ...latestPv,
-      data: {
-        ...data,
-        stayDuration: this.stayDuration,
-      },
-    };
-    this.messageWrapper.update(
-      latestPv.id,
-      newData,
-      DB_CONFIG.TRAFFIC_STORE_NAME
-    );
+    if (latestPv) {
+      const { data } = latestPv;
+      const newData = {
+        ...latestPv,
+        data: {
+          ...data,
+          stayDuration: this.stayDuration,
+        },
+      };
+      this.messageWrapper.update(
+        latestPv.id,
+        newData,
+        DB_CONFIG.TRAFFIC_STORE_NAME
+      );
+    }
   }
 
   public async getLastData(storeName: string): Promise<IMessage | undefined> {

@@ -10,9 +10,9 @@ const messageWrapper = MessageQueueDBWrapper.getInstance({
   storeName: DB_CONFIG.INTERFACE_STORE_NAME,
 });
 
-const enqueueHttpRequest = (data) => {
-  console.log('🚀 ~ enqueueHttpRequest ~ data:', data);
+const enqueueHttpRequest = debounce(function (data) {
   if (
+    data &&
     !data?.requestUrl.includes('/monitor/report') &&
     !data?.requestUrl.includes('/monitor/errorReport')
   ) {
@@ -21,15 +21,15 @@ const enqueueHttpRequest = (data) => {
       createTime: formatDate(new Date()),
       pageUrl: normalizeUrlForPath(window.location.href),
       type: 'HttpRequest',
-      ...data
+      ...data,
     };
-
     messageWrapper.enqueue(
       { ...eventData, session: new Date().getDate() },
       DB_CONFIG.INTERFACE_STORE_NAME
     );
   }
-};
+}, 1000);
+
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
   return function wrappedFetch(...args) {
@@ -42,10 +42,11 @@ function wrapFetch(originalFetch, callback) {
         .then(async (response) => {
           let endTimeFetch = performance.now();
           let durationFetch = endTimeFetch - startTimeFetch;
-          console.log('🚀 ~ .then ~ durationFetch:', durationFetch);
+          let requestUrl = typeof args[0] === 'string' ? args[0] : args[0].href;
+
           enqueueHttpRequest({
             method,
-            requestUrl: args[0],
+            requestUrl: requestUrl,
             duration: durationFetch.toFixed(2),
           });
           if (!response.ok && !response.url.includes('/monitor/errorReport')) {
@@ -193,7 +194,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         console.log('🚀 ~ wrappedXMLHttpRequest ~ error:', error);
         // 在这里收集错误信息，例如记录到日志或发送到服务器
         callback(error); // 调用回调函数，将错误传递给上层处理
-        throw error;
       }
     };
 
@@ -209,8 +209,10 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
           requestUrl,
           duration: duration.toFixed(2),
         });
-
-        if (originalRequest.status >= 400 && !requestUrl.includes('/monitor/errorReport')) {
+        if (
+          originalRequest.status >= 400 &&
+          !requestUrl.includes('/monitor/errorReport')
+        ) {
           const error = new HttpError(
             originalRequest.status,
             method,

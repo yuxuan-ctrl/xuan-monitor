@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-19 16:28:48
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-05-08 16:47:32
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -116,6 +116,7 @@ export default class Report {
   async fetchReport(url, data) {
     const req = new Request();
     const response = await req.post(url, data);
+    return response;
   }
 
   async webSocketReport(data: any) {

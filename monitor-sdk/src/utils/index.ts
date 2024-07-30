@@ -144,3 +144,10 @@ export function shouldProcessErrorReport(url) {
   }
   return true;
 }
+
+export function mapDataProperties(list) {
+  if (Array.isArray(list)) {
+    return list.map((item) => item.data);
+  }
+  return [];
+}

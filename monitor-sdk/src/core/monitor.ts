@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-05-08 16:35:47
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-07-30 11:37:08
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -40,13 +40,13 @@ export default class Monitor extends EventManager {
   public originalPushState: historyFunction;
   public originalReplaceState: historyFunction;
   public Events: Object = {};
-  errorLock = 0; // 错误上报上锁 0-可用 1-占用
-  originalFetch: any;
-  reportUtils: Report;
-  config: MonitorConfig;
-  baseInfo: { appId: string; userId: string };
-  report: Report;
-  reportError: { cancel: () => void; flush: () => any } & ((
+  private errorMutex:number = 0; // 错误上报上锁 0-可用 1-占用
+  public originalFetch: any;
+  public reportUtils: Report;
+  public config: MonitorConfig;
+  public baseInfo: { appId: string; userId: string };
+  public report: Report;
+  public reportError: { cancel: () => void; flush: () => any } & ((
     ...args: any[]
   ) => void);
 
@@ -143,14 +143,6 @@ export default class Monitor extends EventManager {
       ) as any;
     }
 
-    // if (typeof window.Promise === "function") {
-    //   const OriginalPromise = window.Promise;
-    //   window.Promise = wrapPromise(
-    //     OriginalPromise,
-    //     this.reportError.bind(this)
-    //   ) as any;
-    // }
-
     if (typeof window.XMLHttpRequest === 'function') {
       const OriginalXMLHttpRequest = window.XMLHttpRequest;
       window.XMLHttpRequest = wrapXMLHttpRequest(
@@ -167,7 +159,8 @@ export default class Monitor extends EventManager {
   }
 
   private async onPageChange(method: string, ...args: any[]) {
-    await this.pvTracker.calculateDuration();
+    const stayDuration = await this.pvTracker.calculateDuration();
+    await this.updateDurationMessage(stayDuration);
     await this.pvTracker.trackPageView(method, ...args);
     if (this.pvData?.pageUrl) {
       const message: AnalysisData = {
@@ -180,7 +173,6 @@ export default class Monitor extends EventManager {
       };
       this.sendMessage(message, DB_CONFIG.TRAFFIC_STORE_NAME);
     }
-    this.updateDurationMessage();
   }
 
   public async sendMessage(message, storeName) {
@@ -196,19 +188,19 @@ export default class Monitor extends EventManager {
       return;
     }
     // 假如errorReport 发生错误就上锁
-    this.errorLock === 0 &&
+    this.errorMutex === 0 &&
       this.report
         .fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
           ...errorInfo,
           ...this.baseInfo,
           userId: this.uvTracker.uniqueKey,
         })
-        .then(()=>(this.errorLock = 0))
-        .catch(() => (this.errorLock = 1));
+        .then(()=>(this.errorMutex = 0))
+        .catch(() => (this.errorMutex = 1));
   }
 
-  public async updateDurationMessage() {
-    console.log(this.stayDuration);
+  public async updateDurationMessage(stayDuration) {
+    console.log("stayDuration================================",stayDuration);
     const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
     if (latestPv) {
       const { data } = latestPv;
@@ -216,7 +208,7 @@ export default class Monitor extends EventManager {
         ...latestPv,
         data: {
           ...data,
-          stayDuration: this.stayDuration,
+          stayDuration: stayDuration,
         },
       };
       this.messageWrapper.update(
@@ -225,6 +217,7 @@ export default class Monitor extends EventManager {
         DB_CONFIG.TRAFFIC_STORE_NAME
       );
     }
+    return true;
   }
 
   public async getLastData(storeName: string): Promise<IMessage | undefined> {

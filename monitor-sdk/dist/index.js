@@ -211,6 +211,16 @@ function debounce(func, wait, options = {}) {
     return debounced;
 }
 
+/*
+ * @Author: yuxuan-ctrl
+ * @Date: 2024-02-20 16:11:51
+ * @LastEditors: yuxuan-ctrl
+ * @LastEditTime: 2024-02-26 15:07:39
+ * @FilePath: \monitor-sdk\src\model\HttpError.ts
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
+ */
 class HttpError extends Error {
     status;
     responseText;
@@ -218,7 +228,8 @@ class HttpError extends Error {
     method;
     requestUrl;
     data;
-    constructor(status, method, requestUrl, data, message, xhr) {
+    stack;
+    constructor(status, method, requestUrl, data, message, xhr, stack) {
         super(message);
         this.name = 'HTTP ERROR';
         this.status = status;
@@ -227,19 +238,371 @@ class HttpError extends Error {
         this.method = method;
         this.requestUrl = requestUrl;
         this.data = data;
+        this.stack = stack;
     }
 }
 
+const DEFAULT_CONFIG = {
+    dbName: 'myDatabase',
+    version: 1,
+    storeName: 'myObjectStore',
+};
+class IndexedDBWrapper {
+    config;
+    db = null;
+    constructor(config) {
+        this.config = { ...DEFAULT_CONFIG, ...config };
+    }
+    async openDatabase(storeNames) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.config.dbName, this.config.version);
+                    request.onerror = (event) => {
+                        reject(`Failed to open database: ${event.target?.error}`);
+                    };
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target?.result;
+                        storeNames.forEach((storeName) => {
+                            if (!db.objectStoreNames.contains(storeName)) {
+                                const objectStore = db.createObjectStore(storeName, {
+                                    keyPath: 'id',
+                                    autoIncrement: true,
+                                });
+                                objectStore.createIndex('id', 'id', { unique: false });
+                                objectStore.createIndex('timestamp', 'timestamp', {
+                                    unique: false,
+                                });
+                            }
+                        });
+                    };
+                    resolve(request);
+                });
+                result.onsuccess = (event) => {
+                    this.db = event.target?.result;
+                    resolve(this.db);
+                };
+            }
+            catch (error) {
+                reject(error);
+            }
+        });
+    }
+    closeDatabase() {
+        if (this.db) {
+            this.db.close();
+            this.db = null;
+        }
+    }
+    async ensureDatabaseOpen() {
+        if (this.db) {
+            return Promise.resolve(this.db);
+        }
+        else {
+            return this.openDatabase(['DEFAULT_CONFIG.storeName']);
+        }
+    }
+    async add(data, storeName) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const objectStore = transaction.objectStore(storeName);
+            const request = objectStore.add(data);
+            request.onsuccess = (event) => {
+                resolve(event.target?.result);
+            };
+            request.onerror = (event) => {
+                reject(`Failed to add data: ${event.target?.error}`);
+            };
+        });
+    }
+    async get(id, storeName) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const objectStore = transaction.objectStore(storeName);
+            const request = objectStore.get(id);
+            request.onsuccess = (event) => {
+                resolve(event.target?.result);
+            };
+            request.onerror = (event) => {
+                reject(`Failed to get data: ${event.target?.error}`);
+            };
+        });
+    }
+    async update(id, newData, storeName) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const objectStore = transaction.objectStore(storeName);
+            const getRequest = objectStore.get(id);
+            getRequest.onsuccess = (event) => {
+                const existingData = event.target?.result;
+                if (existingData) {
+                    const updatedData = { ...existingData, ...newData };
+                    const updateRequest = objectStore.put(updatedData);
+                    updateRequest.onsuccess = () => {
+                        resolve();
+                    };
+                    updateRequest.onerror = (event) => {
+                        reject(`Failed to update data: ${event.target?.error}`);
+                    };
+                }
+                else {
+                    reject(`Data with ID ${id} not found.`);
+                }
+            };
+            getRequest.onerror = (event) => {
+                reject(`Failed to get data for update: ${event.target?.error}`);
+            };
+        });
+    }
+    async delete(id, storeName) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const objectStore = transaction.objectStore(storeName);
+            const request = objectStore.delete(id);
+            request.onsuccess = () => {
+                resolve();
+            };
+            request.onerror = (event) => {
+                reject(`Failed to delete data: ${event.target?.error}`);
+            };
+        });
+    }
+    async getAll(storeName) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const objectStore = transaction.objectStore(storeName);
+            const data = [];
+            const request = objectStore.openCursor();
+            request.onsuccess = (event) => {
+                const cursor = event.target?.result;
+                if (cursor) {
+                    data.push(cursor.value);
+                    cursor.continue();
+                }
+                else {
+                    resolve(data);
+                }
+            };
+            request.onerror = (event) => {
+                reject(`Failed to get all data: ${event.target?.error}`);
+            };
+        });
+    }
+    async query(condition, storeName, order, limit) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const objectStore = transaction.objectStore(storeName);
+            const data = [];
+            let cursorRequest;
+            if (order && limit) {
+                const index = objectStore.index(order.field);
+                cursorRequest = index.openCursor(null, order.direction === 'desc' ? 'prev' : 'next');
+            }
+            else {
+                cursorRequest = objectStore.openCursor();
+            }
+            cursorRequest.onsuccess = (event) => {
+                const cursor = event.target?.result;
+                if (cursor) {
+                    const currentData = cursor.value;
+                    if (condition(currentData)) {
+                        data.push(currentData);
+                        if (limit && data.length >= limit) {
+                            resolve(data);
+                            return;
+                        }
+                    }
+                    cursor.continue();
+                }
+                else {
+                    resolve(data);
+                }
+            };
+            cursorRequest.onerror = (event) => {
+                reject(`Failed to query data: ${event.target?.error}`);
+            };
+        });
+    }
+    async clear(storeName) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const objectStore = transaction.objectStore(storeName);
+            const request = objectStore.clear();
+            request.onsuccess = () => {
+                resolve();
+            };
+            request.onerror = (event) => {
+                reject(`Failed to clear object store: ${event.target?.error}`);
+            };
+        });
+    }
+    async getCount(storeName) {
+        const db = await this.ensureDatabaseOpen();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const objectStore = transaction.objectStore(storeName);
+            const request = objectStore.count();
+            request.onsuccess = (event) => {
+                const count = event.target?.result;
+                resolve(count);
+            };
+            request.onerror = (event) => {
+                reject(`Failed to get record count: ${event.target?.error}`);
+            };
+        });
+    }
+    async getBaseInfo() {
+        if (this.db) {
+            return this.db;
+        }
+        else {
+            throw new Error('Database is not open.');
+        }
+    }
+}
+
+class MessageQueueDBWrapper extends IndexedDBWrapper {
+    // 实例
+    static _instance = null;
+    maxMessageCount = 100;
+    constructor(config) {
+        super(config);
+    }
+    // 获取实例
+    static getInstance(config) {
+        if (!MessageQueueDBWrapper._instance) {
+            MessageQueueDBWrapper._instance = new MessageQueueDBWrapper({
+                dbName: config.dbName,
+                dbVersion: config.dbVersion,
+                storeName: config.storeName,
+            });
+        }
+        return MessageQueueDBWrapper._instance;
+    }
+    // 添加消息
+    async enqueue(data, storeName) {
+        const message = {
+            data,
+            timestamp: getCurrentUnix(),
+            status: 'pending',
+            pageUrl: data.pageUrl,
+        };
+        await this.add(message, storeName);
+    }
+    // 获取消息
+    async dequeue(storeName) {
+        const condition = (item) => {
+            return item.status === 'pending';
+        };
+        const messages = await this.query(condition, storeName, {
+            field: 'timestamp',
+            direction: 'asc',
+        }, this.maxMessageCount);
+        if (messages.length > 0) {
+            return messages;
+        }
+        return undefined;
+    }
+    updateStatus(messages, storeName) {
+        if (messages.length > 0) {
+            messages.forEach(async (mes) => {
+                if (mes.status === 'pending') {
+                    await this.update(mes.id, { status: 'consumed' }, storeName);
+                }
+            });
+        }
+    }
+    async batchDeleteBeforeDate(storeNameList, hoursAgo) {
+        const db = await this.ensureDatabaseOpen();
+        for (const storeName of storeNameList) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const objectStore = transaction.objectStore(storeName);
+                // 获取当前时间戳，并计算7天前的时间戳
+                const todayTimestamp = Date.now();
+                const thresholdTimestamp = todayTimestamp - hoursAgo * 60 * 60 * 1000;
+                // 创建一个索引（如果还没有的话），用于根据日期字段进行查询
+                const index = objectStore.index('timestamp');
+                // 执行一个范围查询以获取所有小于阈值时间戳的记录
+                const range = IDBKeyRange.upperBound(thresholdTimestamp);
+                const cursorRequest = index.openCursor(range);
+                cursorRequest.onsuccess = (event) => {
+                    const cursor = event.target?.result;
+                    if (cursor) {
+                        const item = cursor.value;
+                        if (item.status === 'consumed') {
+                            // 删除符合条件的记录
+                            cursor.delete();
+                        }
+                        cursor.continue(); // 移动到下一个记录
+                    }
+                };
+                cursorRequest.onerror = (event) => {
+                    reject(`Failed to batch delete data from store ${storeName}: ${event.target?.error}`);
+                };
+            });
+        }
+        // 所有store处理完毕后才resolve
+        return Promise.resolve();
+    }
+}
+
+const DB_CONFIG = {
+    DB_NAME: 'monitor',
+    TRAFFIC_STORE_NAME: 'traffic_analytics',
+    Error_STORE_NAME: 'errors',
+    ACTION_STORE_NAME: 'actions',
+    RECORD_STORE_NAME: 'records',
+    INTERFACE_STORE_NAME: 'interfaces',
+};
+
+const messageWrapper = MessageQueueDBWrapper.getInstance({
+    dbName: 'monitorxq',
+    dbVersion: 1,
+    storeName: DB_CONFIG.INTERFACE_STORE_NAME,
+});
+const enqueueHttpRequest = debounce(function (data) {
+    if (data &&
+        !data?.requestUrl.includes('/monitor/report') &&
+        !data?.requestUrl.includes('/monitor/errorReport')) {
+        const eventData = {
+            timestamp: getCurrentUnix(),
+            createTime: formatDate(new Date()),
+            pageUrl: normalizeUrlForPath(window.location.href),
+            type: 'HttpRequest',
+            ...data,
+            ...data,
+        };
+        messageWrapper.enqueue({ ...eventData, session: new Date().getDate() }, DB_CONFIG.INTERFACE_STORE_NAME);
+    }
+}, 1000);
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
     return function wrappedFetch(...args) {
+        let startTimeFetch = performance.now();
+        const method = args.length > 1 ? args[1]?.method : 'GET';
+        let errorContext = new Error().stack;
         try {
             return originalFetch
                 .apply(this, args)
                 .then(async (response) => {
-                if (!response.ok) {
-                    const message = `${response.status} ${response.statusText} at url:${response.url} `;
-                    const error = new Error(message, response);
+                let endTimeFetch = performance.now();
+                let durationFetch = endTimeFetch - startTimeFetch;
+                let requestUrl = typeof args[0] === 'string' ? args[0] : args[0].href;
+                enqueueHttpRequest({
+                    method,
+                    requestUrl: requestUrl,
+                    duration: durationFetch.toFixed(2),
+                });
+                if (!response.ok && !response.url.includes('/monitor/errorReport')) {
+                    const error = new HttpError(response.status, method, response.url, response, `HTTP Error ${response.status} config : ${response.statusText}`, response, errorContext);
                     callback(error); // 调用回调函数，将错误传递给上层处理
                 }
                 return response; // 返回正常的响应
@@ -253,6 +616,7 @@ function wrapFetch(originalFetch, callback) {
         catch (err) {
             console.log(err);
         }
+        errorContext = null;
     };
 }
 // 包裹 setTimeout API
@@ -294,7 +658,9 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     let method = null;
     let requestUrl = null;
     let data = null;
+    let errorContext = '';
     function wrappedXMLHttpRequest() {
+        let startTime = performance.now();
         const originalRequest = new OriginalXMLHttpRequest();
         // 包裹 open 方法
         const originalOpen = originalRequest.open;
@@ -305,17 +671,26 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
                 originalOpen.apply(this, args);
             }
             catch (error) {
+                console.log('🚀 ~ wrappedXMLHttpRequest ~ error:', error);
                 // 在这里收集错误信息，例如记录到日志或发送到服务器
                 callback(error); // 调用回调函数，将错误传递给上层处理
-                throw error;
             }
         };
         //  // 保存原始的 onreadystatechange 函数
         const originalOnReadyStateChange = originalRequest.onreadystatechange;
-        originalRequest.onreadystatechange = function () {
+        originalRequest.onreadystatechange = function (event) {
             if (originalRequest.readyState === XMLHttpRequest.DONE) {
-                if (originalRequest.status >= 400) {
-                    const error = new HttpError(originalRequest.status, method, requestUrl, data, `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`, originalRequest);
+                let endTime = performance.now();
+                let duration = endTime - startTime;
+                console.log(`请求和响应耗时: ${duration.toFixed(2)} 毫秒`);
+                enqueueHttpRequest({
+                    method,
+                    requestUrl,
+                    duration: duration.toFixed(2),
+                });
+                if (originalRequest.status >= 400 &&
+                    !requestUrl.includes('/monitor/errorReport')) {
+                    const error = new HttpError(originalRequest.status, method, requestUrl, data, `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`, originalRequest, errorContext);
                     callback(error); // 调用回调函数，将错误传递给上层处理
                 }
                 // 调用原始的 onreadystatechange 函数
@@ -326,7 +701,8 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         };
         // 包裹 send 方法
         const originalSend = originalRequest.send;
-        originalRequest.send = function (...args) {
+        OriginalXMLHttpRequest.prototype.send = function (...args) {
+            errorContext = new Error().stack;
             try {
                 data = args[0];
                 originalSend.apply(this, args);
@@ -339,6 +715,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         method = null;
         requestUrl = null;
         data = null;
+        errorContext = null;
         return originalRequest;
     }
     // 将 OriginalXMLHttpRequest 的静态方法和原型方法复制到 wrappedXMLHttpRequest
@@ -428,7 +805,7 @@ var e$1,n$1,t$1,r$1,a$1=-1,o$1=function(e){addEventListener("pageshow",(function
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-05 17:09:13
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-21 11:36:30
+ * @LastEditTime: 2024-03-20 17:19:36
  * @FilePath: \monitor-sdk\src\utils\calculate.ts
  * @Description:
  *
@@ -518,6 +895,7 @@ async function collectSlowResources(SLOW_RESOURCE_THRESHOLD) {
     const slowResources = {};
     if (typeof window !== 'undefined' && 'PerformanceObserver' in window && 'performance' in window) {
         const observer = new PerformanceObserver((list, observer) => {
+            console.log("🚀 ~ observer ~ list:", list);
             list.getEntries().forEach((entry) => {
                 if (entry.entryType === 'resource' && entry.duration > SLOW_RESOURCE_THRESHOLD) {
                     if (!slowResources[entry.name]) {
@@ -545,6 +923,26 @@ async function collectSlowResources(SLOW_RESOURCE_THRESHOLD) {
     }
     return slowResources;
 }
+function getUserLocation(timeout = 3000) {
+    return new Promise((resolve, reject) => {
+        const geoOptions = {
+            enableHighAccuracy: true,
+            timeout: timeout,
+            maximumAge: 0
+        };
+        navigator.geolocation.getCurrentPosition(position => {
+            resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            });
+        }, error => {
+            resolve({
+                latitude: 0,
+                longitude: 0
+            });
+        }, geoOptions);
+    });
+}
 
 class Request {
     defaultHeaders;
@@ -570,15 +968,21 @@ class Request {
                         resolve(response);
                     }
                     catch (error) {
-                        reject(error);
+                        if (shouldProcessErrorReport(xhr.responseURL)) {
+                            reject(error);
+                        }
                     }
                 }
                 else {
-                    reject(xhr.statusText);
+                    if (shouldProcessErrorReport(xhr.responseURL)) {
+                        reject(xhr.statusText);
+                    }
                 }
             };
             xhr.onerror = function () {
-                reject('Network Error');
+                if (shouldProcessErrorReport(xhr.responseURL)) {
+                    reject('Network Error');
+                }
             };
             // 根据HTTP方法设置请求体
             if (['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())) {
@@ -589,7 +993,9 @@ class Request {
                 xhr.send(); // GET请求不需要请求体
             }
             else {
-                reject(`Unsupported request method:${method}`);
+                if (shouldProcessErrorReport(xhr.responseURL)) {
+                    reject(`Unsupported request method:${method}`);
+                }
             }
         });
     }
@@ -658,7 +1064,7 @@ class WebSocketManager {
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-07 11:30:20
+ * @LastEditTime: 2024-03-19 16:29:22
  * @FilePath: \monitor-sdk\src\utils\index.ts
  * @Description:
  *
@@ -669,17 +1075,13 @@ class WebSocketManager {
  * @return {*}
  */
 function createUUid() {
-    let now = new Date().getTime();
+    let now = getCurrentUnix();
     const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
         const rand = (now + Math.random() * 16) % 16 | 0;
         now = Math.floor(now / 16);
         return (char === 'x' ? rand : (rand & 0x3) | 0x8).toString(16);
     });
     return uuid;
-}
-function getTime(event) {
-    let ts = event && event.timeStamp > 0 ? event.timeStamp : performance.now();
-    return Math.max(Math.round(ts - 0), 0);
 }
 function isArray(array) {
     return Array.isArray(array) && array.length > 0;
@@ -692,6 +1094,9 @@ function formatDate(date) {
     var minutes = ('0' + date.getMinutes()).slice(-2);
     var seconds = ('0' + date.getSeconds()).slice(-2);
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+function getCurrentUnix(unix) {
+    return new Date().getTime();
 }
 function recursiveTimeout(callback, delay) {
     let timeoutId;
@@ -706,6 +1111,21 @@ function recursiveTimeout(callback, delay) {
     return () => {
         clearTimeout(timeoutId); // 清理定时器
     };
+}
+function shouldProcessErrorReport(url) {
+    const excludeErrReportPath = ['monitor/errorReport', 'monitor/report'];
+    // 使用正则表达式来检查路径是否匹配
+    const matchesExcludedPath = excludeErrReportPath.some((path) => url.includes(path));
+    if (matchesExcludedPath) {
+        return false;
+    }
+    return true;
+}
+function mapDataProperties(list) {
+    if (Array.isArray(list)) {
+        return list.map((item) => item.data);
+    }
+    return [];
 }
 
 /**
@@ -772,6 +1192,7 @@ class PageViewTracker {
         switch (method) {
             case 'pushState':
             case 'replaceState':
+                this.storeCurrentPageEntryTime();
                 this.monitor.pvData = await this.updatePageViewTime(url);
                 break;
             case 'popstate':
@@ -792,7 +1213,6 @@ class PageViewTracker {
             return 0;
         }
         const stayDuration = performance.now() - this.currentPageEntryTime;
-        this.monitor.stayDuration = stayDuration;
         this.storeCurrentPageEntryTime();
         return stayDuration;
     }
@@ -802,7 +1222,7 @@ class PageViewTracker {
      * @param pageId 页面 ID。
      */
     async updatePageViewTime(pageId) {
-        const { fcp, lcp, ttfb, cls, fid } = await collectWebVitals(3000);
+        const { fcp, lcp, ttfb, cls, fid } = await collectWebVitals(10000);
         const slowResources = await collectSlowResources(3000);
         const metrics = {};
         [fcp, lcp, ttfb, fid, cls].forEach((metric) => {
@@ -814,30 +1234,30 @@ class PageViewTracker {
                 navigationType: metric.navigationType,
             };
         });
-        const now = performance.now();
         const lastVisitInfo = this.pageVisits.get(pageId);
         if (lastVisitInfo !== undefined &&
-            now - lastVisitInfo.timestamp < this.minTimeInterval) {
+            getCurrentUnix() - lastVisitInfo.timestamp < this.minTimeInterval) {
             return; // 如果上次访问时间距离现在小于最小时间间隔，则不计算 PV
         }
         const referrer = this.currentPageUrl && !pageId.startsWith('http')
             ? this.currentPageUrl
             : document.referrer;
+        const screenResolution = {
+            width: window.screen.width,
+            height: window.screen.height,
+        };
         const pvData = {
             // title: document.title,
             pageUrl: normalizeUrlForPath(window.location.href),
             userAgent: navigator.userAgent,
             platform: navigator.platform,
-            screenResolution: {
-                width: window.screen.width,
-                height: window.screen.height,
-            },
-            timestamp: now,
-            metrics,
-            slowResources,
+            screenResolution: JSON.stringify(screenResolution),
+            timestamp: getCurrentUnix(),
+            metrics: JSON.stringify(metrics),
+            slowResources: JSON.stringify(slowResources),
             referrer,
         };
-        console.log("🚀 ~ PageViewTracker ~ updatePageViewTime ~ pvData:", pvData);
+        console.log('🚀 ~ PageViewTracker ~ updatePageViewTime ~ pvData:', pvData);
         this.pageVisits.set(pageId, pvData);
         const result = this.calculateAndSendPVData(pvData);
         return result;
@@ -2140,7 +2560,7 @@ function stabilize(value, precision) {
     }
     var power = Math.floor(Math.log10(Math.abs(value)));
     var precisionPower = power - Math.floor(precision) + 1;
-    var precisionBase = Math.pow(10, -precisionPower) * ((precision * 10) % 10 || 1);
+    var precisionBase = Math.pow(10, -precisionPower) * ((precision * 10) % 10 );
     return Math.round(value * precisionBase) / precisionBase;
 }
 
@@ -4127,10 +4547,6 @@ class UvTracker {
             userAgent: navigator.userAgent,
             language: navigator.language,
             timeZoneOffset: new Date().getTimezoneOffset(),
-            screenResolution: {
-                width: window.screen.width,
-                height: window.screen.height,
-            },
         };
         return userInfo;
     }
@@ -4148,7 +4564,7 @@ class UvTracker {
         // 存储UV数据
         this.uvData = {
             uniqueKey,
-            timestamp: Date.now(),
+            timestamp: getCurrentUnix(),
             ...userInfo,
         };
         return this.uvData;
@@ -4173,322 +4589,6 @@ class UvTracker {
         }
     }
 }
-
-const DEFAULT_CONFIG = {
-    dbName: 'myDatabase',
-    version: 1,
-    storeName: 'myObjectStore',
-};
-class IndexedDBWrapper {
-    config;
-    db = null;
-    constructor(config) {
-        this.config = { ...DEFAULT_CONFIG, ...config };
-    }
-    async openDatabase(storeNames) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.config.dbName, this.config.version);
-                    request.onerror = (event) => {
-                        reject(`Failed to open database: ${event.target?.error}`);
-                    };
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target?.result;
-                        storeNames.forEach((storeName) => {
-                            if (!db.objectStoreNames.contains(storeName)) {
-                                const objectStore = db.createObjectStore(storeName, {
-                                    keyPath: 'id',
-                                    autoIncrement: true,
-                                });
-                                objectStore.createIndex('id', 'id', { unique: false });
-                                objectStore.createIndex('timestamp', 'timestamp', {
-                                    unique: false,
-                                });
-                            }
-                        });
-                    };
-                    resolve(request);
-                });
-                result.onsuccess = (event) => {
-                    this.db = event.target?.result;
-                    resolve(this.db);
-                };
-            }
-            catch (error) {
-                reject(error);
-            }
-        });
-    }
-    closeDatabase() {
-        if (this.db) {
-            this.db.close();
-            this.db = null;
-        }
-    }
-    async ensureDatabaseOpen() {
-        if (this.db) {
-            return Promise.resolve(this.db);
-        }
-        else {
-            return this.openDatabase(['DEFAULT_CONFIG.storeName']);
-        }
-    }
-    async add(data, storeName) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readwrite');
-            const objectStore = transaction.objectStore(storeName);
-            const request = objectStore.add(data);
-            request.onsuccess = (event) => {
-                resolve(event.target?.result);
-            };
-            request.onerror = (event) => {
-                reject(`Failed to add data: ${event.target?.error}`);
-            };
-        });
-    }
-    async get(id, storeName) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readonly');
-            const objectStore = transaction.objectStore(storeName);
-            const request = objectStore.get(id);
-            request.onsuccess = (event) => {
-                resolve(event.target?.result);
-            };
-            request.onerror = (event) => {
-                reject(`Failed to get data: ${event.target?.error}`);
-            };
-        });
-    }
-    async update(id, newData, storeName) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readwrite');
-            const objectStore = transaction.objectStore(storeName);
-            const getRequest = objectStore.get(id);
-            getRequest.onsuccess = (event) => {
-                const existingData = event.target?.result;
-                if (existingData) {
-                    const updatedData = { ...existingData, ...newData };
-                    const updateRequest = objectStore.put(updatedData);
-                    updateRequest.onsuccess = () => {
-                        resolve();
-                    };
-                    updateRequest.onerror = (event) => {
-                        reject(`Failed to update data: ${event.target?.error}`);
-                    };
-                }
-                else {
-                    reject(`Data with ID ${id} not found.`);
-                }
-            };
-            getRequest.onerror = (event) => {
-                reject(`Failed to get data for update: ${event.target?.error}`);
-            };
-        });
-    }
-    async delete(id, storeName) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readwrite');
-            const objectStore = transaction.objectStore(storeName);
-            const request = objectStore.delete(id);
-            request.onsuccess = () => {
-                resolve();
-            };
-            request.onerror = (event) => {
-                reject(`Failed to delete data: ${event.target?.error}`);
-            };
-        });
-    }
-    async getAll(storeName) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readonly');
-            const objectStore = transaction.objectStore(storeName);
-            const data = [];
-            const request = objectStore.openCursor();
-            request.onsuccess = (event) => {
-                const cursor = event.target?.result;
-                if (cursor) {
-                    data.push(cursor.value);
-                    cursor.continue();
-                }
-                else {
-                    resolve(data);
-                }
-            };
-            request.onerror = (event) => {
-                reject(`Failed to get all data: ${event.target?.error}`);
-            };
-        });
-    }
-    async query(condition, storeName, order, limit) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readonly');
-            const objectStore = transaction.objectStore(storeName);
-            const data = [];
-            let cursorRequest;
-            if (order && limit) {
-                const index = objectStore.index(order.field);
-                cursorRequest = index.openCursor(null, order.direction === 'desc' ? 'prev' : 'next');
-            }
-            else {
-                cursorRequest = objectStore.openCursor();
-            }
-            cursorRequest.onsuccess = (event) => {
-                const cursor = event.target?.result;
-                if (cursor) {
-                    const currentData = cursor.value;
-                    if (condition(currentData)) {
-                        data.push(currentData);
-                        if (limit && data.length >= limit) {
-                            resolve(data);
-                            return;
-                        }
-                    }
-                    cursor.continue();
-                }
-                else {
-                    resolve(data);
-                }
-            };
-            cursorRequest.onerror = (event) => {
-                reject(`Failed to query data: ${event.target?.error}`);
-            };
-        });
-    }
-    async clear(storeName) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readwrite');
-            const objectStore = transaction.objectStore(storeName);
-            const request = objectStore.clear();
-            request.onsuccess = () => {
-                resolve();
-            };
-            request.onerror = (event) => {
-                reject(`Failed to clear object store: ${event.target?.error}`);
-            };
-        });
-    }
-    async getCount(storeName) {
-        const db = await this.ensureDatabaseOpen();
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readonly');
-            const objectStore = transaction.objectStore(storeName);
-            const request = objectStore.count();
-            request.onsuccess = (event) => {
-                const count = event.target?.result;
-                resolve(count);
-            };
-            request.onerror = (event) => {
-                reject(`Failed to get record count: ${event.target?.error}`);
-            };
-        });
-    }
-    async getBaseInfo() {
-        if (this.db) {
-            return this.db;
-        }
-        else {
-            throw new Error('Database is not open.');
-        }
-    }
-}
-
-class MessageQueueDBWrapper extends IndexedDBWrapper {
-    // 实例
-    static _instance = null;
-    maxMessageCount = 100;
-    constructor(config) {
-        super(config);
-    }
-    // 获取实例
-    static getInstance(config) {
-        if (!MessageQueueDBWrapper._instance) {
-            MessageQueueDBWrapper._instance = new MessageQueueDBWrapper({
-                dbName: config.dbName,
-                dbVersion: config.dbVersion,
-                storeName: config.storeName,
-            });
-        }
-        return MessageQueueDBWrapper._instance;
-    }
-    // 添加消息
-    async enqueue(data, storeName) {
-        const message = {
-            data,
-            timestamp: Date.now(),
-            status: 'pending',
-            pageUrl: data.pageUrl,
-        };
-        await this.add(message, storeName);
-    }
-    // 获取消息
-    async dequeue(storeName) {
-        const condition = (item) => {
-            return item.status === 'pending';
-        };
-        const messages = await this.query(condition, storeName, {
-            field: 'timestamp',
-            direction: 'asc',
-        }, this.maxMessageCount);
-        if (messages.length > 0) {
-            messages.forEach(async (mes) => {
-                if (mes.status === 'pending') {
-                    await this.update(mes.id, { status: 'consumed' }, storeName);
-                }
-            });
-            return messages;
-        }
-        return undefined;
-    }
-    async batchDeleteBeforeDate(storeNameList, hoursAgo) {
-        const db = await this.ensureDatabaseOpen();
-        for (const storeName of storeNameList) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(storeName, 'readwrite');
-                const objectStore = transaction.objectStore(storeName);
-                // 获取当前时间戳，并计算7天前的时间戳
-                const todayTimestamp = Date.now();
-                const thresholdTimestamp = todayTimestamp - hoursAgo * 60 * 60 * 1000;
-                // 创建一个索引（如果还没有的话），用于根据日期字段进行查询
-                const index = objectStore.index('timestamp');
-                // 执行一个范围查询以获取所有小于阈值时间戳的记录
-                const range = IDBKeyRange.upperBound(thresholdTimestamp);
-                const cursorRequest = index.openCursor(range);
-                cursorRequest.onsuccess = (event) => {
-                    const cursor = event.target?.result;
-                    if (cursor) {
-                        const item = cursor.value;
-                        if (item.status === 'consumed') {
-                            // 删除符合条件的记录
-                            cursor.delete();
-                        }
-                        cursor.continue(); // 移动到下一个记录
-                    }
-                };
-                cursorRequest.onerror = (event) => {
-                    reject(`Failed to batch delete data from store ${storeName}: ${event.target?.error}`);
-                };
-            });
-        }
-        // 所有store处理完毕后才resolve
-        return Promise.resolve();
-    }
-}
-
-const DB_CONFIG = {
-    DB_NAME: 'monitor',
-    TRAFFIC_STORE_NAME: 'traffic_analytics',
-    Error_STORE_NAME: 'errors',
-    ACTION_STORE_NAME: 'actions',
-    RECORD_STORE_NAME: 'records',
-};
 
 class ErrorTracker {
     operationSequence;
@@ -4529,7 +4629,7 @@ class ErrorTracker {
             field: 'timestamp',
             direction: 'asc',
         });
-        return dataList.map((item) => JSON.stringify(item));
+        return JSON.stringify(dataList.map((item) => JSON.stringify(item)));
     }
     async collectError(error) {
         let errorInfo = this.getCommonErrorInfo(error);
@@ -4541,25 +4641,24 @@ class ErrorTracker {
             errorInfo.status = error.status;
         }
         try {
-            const startTime = new Date().getTime() - 120000;
-            const endTime = new Date().getTime() + 300000;
+            const startTime = getCurrentUnix() - 120000;
+            const endTime = getCurrentUnix() + 300000;
             errorInfo.record = await this.getRange(startTime, endTime);
         }
-        catch (screenshotError) {
-        }
+        catch (screenshotError) { }
         return errorInfo; // 如果ErrorInfo是一个接口或类型，请确保它包含了所有可能的属性
     }
     getCommonErrorInfo(error) {
         return {
-            errorType: (error instanceof Error) ? error.name : 'Non-JavaScript Error',
-            errorMessage: (error instanceof Error) ? error.message : error,
-            stackTrace: (error instanceof Error) ? error.stack : undefined,
+            errorType: error instanceof Error ? error.name : 'Non-JavaScript Error',
+            errorMessage: error instanceof Error ? error.message : error,
+            stackTrace: error instanceof Error ? error.stack : undefined,
             cause: (error instanceof Error && error.cause) || '',
             timestamp: formatDate(new Date()),
             userAgent: navigator.userAgent,
-            url: normalizeUrlForPath(window.location.href),
             operationSequence: this.operationSequence.slice(),
             logContext: this.logContext,
+            pageUrl: normalizeUrlForPath(window.location.href),
         };
     }
 }
@@ -4643,7 +4742,7 @@ function Listener(config) {
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-20 17:47:31
+ * @LastEditTime: 2024-07-30 10:49:39
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -4663,9 +4762,11 @@ class Report {
     websocketManager;
     messageWrapper;
     config;
-    constructor(config) {
+    uvTracker;
+    constructor(config, uvTracker) {
+        this.uvTracker = uvTracker;
         this.config = config;
-        this.timeInterval = config?.reportFrequency || 10000;
+        this.timeInterval = config?.reportFrequency || 5000;
         this.dataRetentionHours = config?.dataRetentionHours || 1;
         this.messageWrapper = MessageQueueDBWrapper.getInstance({
             dbName: 'monitorxq',
@@ -4677,30 +4778,52 @@ class Report {
         this.websocketManager = new WebSocketManager(`ws://${baseUrl}/monitor/report`);
         this.clearIndex();
         recursiveTimeout(async () => {
-            const startTime = new Date().getTime() - 30000;
-            const endTime = new Date().getTime() + 30000;
             const trafficList = await this.messageWrapper.dequeue(DB_CONFIG.TRAFFIC_STORE_NAME);
             const actionList = await this.messageWrapper.dequeue(DB_CONFIG.ACTION_STORE_NAME);
-            if (isArray(trafficList) || isArray(actionList)) {
+            const interfaceList = await this.messageWrapper.dequeue(DB_CONFIG.INTERFACE_STORE_NAME);
+            if (isArray(trafficList) ||
+                isArray(actionList) ||
+                isArray(interfaceList)) {
                 const reportData = {
                     appId: this.config.appId,
+                    userId: await this.uvTracker.getUniqueKey(),
+                    platform: navigator.platform,
+                    location: await getUserLocation(3000),
+                    userAgent: navigator.userAgent,
                     timestamp: formatDate(new Date()),
-                    eventList: isArray(trafficList)
-                        ? trafficList.map((item) => item.data)
-                        : [],
-                    actionList: isArray(actionList)
-                        ? actionList.map((item) => item.data)
-                        : [],
-                    record: await this.getRange(startTime, endTime),
+                    eventList: mapDataProperties(trafficList),
+                    actionList: mapDataProperties(actionList),
+                    interfaceList: mapDataProperties(interfaceList),
                 };
                 if (useWebSocket && this.websocketManager) {
+                    //todo webSocket Methods
                     this.webSocketReport(reportData);
                 }
                 else {
-                    this.fetchReport(`${baseUrl}/monitor/report`, reportData);
+                    await this.fetchReport(`${baseUrl}/monitor/report`, reportData);
+                    this.setSuccessfulStatus(trafficList, actionList, interfaceList);
                 }
             }
         }, this.timeInterval);
+    }
+    setSuccessfulStatus(trafficList, actionList, interfaceList) {
+        // 处理每个数组
+        const trafficSuccessfulResult = this.mapWithStoreName(trafficList, DB_CONFIG.TRAFFIC_STORE_NAME);
+        const actionSuccessfulResult = this.mapWithStoreName(actionList, DB_CONFIG.ACTION_STORE_NAME);
+        const interfaceSuccessfulResult = this.mapWithStoreName(interfaceList, DB_CONFIG.INTERFACE_STORE_NAME);
+        // 合并所有数组
+        const combineSuccessfulResult = [
+            ...trafficSuccessfulResult,
+            ...actionSuccessfulResult,
+            ...interfaceSuccessfulResult,
+        ];
+        combineSuccessfulResult.forEach((res) => {
+            this.messageWrapper.updateStatus(res.id.res.storeName);
+        });
+    }
+    // 创建一个函数来处理数组中的每个元素
+    mapWithStoreName(list, storeName) {
+        return list.map((item) => ({ id: item.id, storeName }));
     }
     clearIndex() {
         recursiveTimeout(async () => {
@@ -4714,7 +4837,8 @@ class Report {
     }
     async fetchReport(url, data) {
         const req = new Request();
-        await req.post(url, data);
+        const response = await req.post(url, data);
+        return response;
     }
     async webSocketReport(data) {
         if (!this.websocketManager) {
@@ -4745,7 +4869,7 @@ class Report {
             field: 'timestamp',
             direction: 'asc',
         });
-        return dataList.map((item) => JSON.stringify(item));
+        return JSON.stringify(dataList.map((item) => JSON.stringify(item)));
     }
 }
 
@@ -5454,7 +5578,7 @@ var Reflect$1;
                 case 4 /* Symbol */: return input;
                 case 5 /* Number */: return input;
             }
-            var hint = PreferredType === 3 /* String */ ? "string" : PreferredType === 5 /* Number */ ? "number" : "default";
+            var hint = "string" ;
             var exoticToPrim = GetMethod(input, toPrimitiveSymbol);
             if (exoticToPrim !== undefined) {
                 var result = exoticToPrim.call(input, hint);
@@ -5462,12 +5586,12 @@ var Reflect$1;
                     throw new TypeError();
                 return result;
             }
-            return OrdinaryToPrimitive(input, hint === "default" ? "number" : hint);
+            return OrdinaryToPrimitive(input);
         }
         // 7.1.1.1 OrdinaryToPrimitive(O, hint)
         // https://tc39.github.io/ecma262/#sec-ordinarytoprimitive
         function OrdinaryToPrimitive(O, hint) {
-            if (hint === "string") {
+            var valueOf, result; {
                 var toString_1 = O.toString;
                 if (IsCallable(toString_1)) {
                     var result = toString_1.call(O);
@@ -5477,20 +5601,6 @@ var Reflect$1;
                 var valueOf = O.valueOf;
                 if (IsCallable(valueOf)) {
                     var result = valueOf.call(O);
-                    if (!IsObject(result))
-                        return result;
-                }
-            }
-            else {
-                var valueOf = O.valueOf;
-                if (IsCallable(valueOf)) {
-                    var result = valueOf.call(O);
-                    if (!IsObject(result))
-                        return result;
-                }
-                var toString_2 = O.toString;
-                if (IsCallable(toString_2)) {
-                    var result = toString_2.call(O);
                     if (!IsObject(result))
                         return result;
                 }
@@ -5510,7 +5620,7 @@ var Reflect$1;
         // 7.1.14 ToPropertyKey(argument)
         // https://tc39.github.io/ecma262/#sec-topropertykey
         function ToPropertyKey(argument) {
-            var key = ToPrimitive(argument, 3 /* String */);
+            var key = ToPrimitive(argument);
             if (IsSymbol(key))
                 return key;
             return ToString(key);
@@ -6173,21 +6283,24 @@ class Monitor extends EventManager {
     originalPushState;
     originalReplaceState;
     Events = {};
+    errorMutex = 0; // 错误上报上锁 0-可用 1-占用
     originalFetch;
     reportUtils;
     config;
     baseInfo;
     report;
+    reportError;
     constructor(config) {
         super();
         this.config = config;
-        this.report = new Report(config);
-        this.report.start('/api');
         this.pvTracker = new PageViewTracker(config?.userId, this);
         this.uvTracker = new UvTracker(config?.userId, this);
+        this.report = new Report(config, this.uvTracker);
+        this.report.start('/api');
         this.baseInfo = { appId: config.appId, userId: config?.userId };
         this.errorTracker = new ErrorTracker();
-        this.uvTracker.initRefreshInterval(this.sendMessage);
+        this.reportError = debounce(this.basicReportError, 1000);
+        // this.uvTracker.initRefreshInterval(this.sendMessage);
         this.setGlobalProxy();
         this.initializeDatabase();
     }
@@ -6202,6 +6315,7 @@ class Monitor extends EventManager {
             DB_CONFIG.Error_STORE_NAME,
             DB_CONFIG.ACTION_STORE_NAME,
             DB_CONFIG.RECORD_STORE_NAME,
+            DB_CONFIG.INTERFACE_STORE_NAME,
         ]);
     }
     async onPopState(event) {
@@ -6224,10 +6338,11 @@ class Monitor extends EventManager {
         }
     }
     async onError(error) {
-        this.reportError(error);
+        console.log('🚀 ~ Monitor ~ onError ~ error:', error);
+        this.reportError(error.error);
     }
     async onUnhandlerejection(error) {
-        // this.reportError(error.reason);
+        this.reportError(error.reason);
     }
     stopTracking() {
         this.removeEventListeners();
@@ -6244,13 +6359,6 @@ class Monitor extends EventManager {
             const originalSetTimeout = window.setTimeout;
             window.setTimeout = wrapSetTimeout(originalSetTimeout, this.reportError.bind(this));
         }
-        // if (typeof window.Promise === "function") {
-        //   const OriginalPromise = window.Promise;
-        //   window.Promise = wrapPromise(
-        //     OriginalPromise,
-        //     this.reportError.bind(this)
-        //   ) as any;
-        // }
         if (typeof window.XMLHttpRequest === 'function') {
             const OriginalXMLHttpRequest = window.XMLHttpRequest;
             window.XMLHttpRequest = wrapXMLHttpRequest(OriginalXMLHttpRequest, this.reportError.bind(this));
@@ -6262,7 +6370,8 @@ class Monitor extends EventManager {
         });
     }
     async onPageChange(method, ...args) {
-        await this.pvTracker.calculateDuration();
+        const stayDuration = await this.pvTracker.calculateDuration();
+        await this.updateDurationMessage(stayDuration);
         await this.pvTracker.trackPageView(method, ...args);
         if (this.pvData?.pageUrl) {
             const message = {
@@ -6270,37 +6379,47 @@ class Monitor extends EventManager {
                 ...this.uvData,
                 ...this.baseInfo,
                 userId: this.uvTracker.uniqueKey,
-                timestamp: Date.now(),
+                timestamp: getCurrentUnix(),
                 name: DB_CONFIG.TRAFFIC_STORE_NAME,
             };
             this.sendMessage(message, DB_CONFIG.TRAFFIC_STORE_NAME);
         }
-        this.updateDurationMessage();
     }
     async sendMessage(message, storeName) {
         this.messageWrapper.enqueue(message, storeName);
     }
-    async reportError(error) {
+    async basicReportError(error) {
         const errorInfo = await this.errorTracker.collectError(error);
-        this.report.fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
-            ...errorInfo,
-            ...this.baseInfo,
-            userId: this.uvTracker.uniqueKey,
-        });
+        if (errorInfo?.requestUrl &&
+            !shouldProcessErrorReport(errorInfo.requestUrl)) {
+            return;
+        }
+        // 假如errorReport 发生错误就上锁
+        this.errorMutex === 0 &&
+            this.report
+                .fetchReport(`${this.config.baseUrl}/monitor/errorReport`, {
+                ...errorInfo,
+                ...this.baseInfo,
+                userId: this.uvTracker.uniqueKey,
+            })
+                .then(() => (this.errorMutex = 0))
+                .catch(() => (this.errorMutex = 1));
     }
-    async updateDurationMessage() {
-        console.log(this.stayDuration);
+    async updateDurationMessage(stayDuration) {
+        console.log("stayDuration================================", stayDuration);
         const latestPv = await this.getLastData(DB_CONFIG.TRAFFIC_STORE_NAME);
-        console.log('🚀 ~ Monitor ~ updateDurationMessage ~ latestPv:', latestPv);
-        const { data } = latestPv;
-        const newData = {
-            ...latestPv,
-            data: {
-                ...data,
-                stayDuration: this.stayDuration,
-            },
-        };
-        this.messageWrapper.update(latestPv.id, newData, DB_CONFIG.TRAFFIC_STORE_NAME);
+        if (latestPv) {
+            const { data } = latestPv;
+            const newData = {
+                ...latestPv,
+                data: {
+                    ...data,
+                    stayDuration: stayDuration,
+                },
+            };
+            this.messageWrapper.update(latestPv.id, newData, DB_CONFIG.TRAFFIC_STORE_NAME);
+        }
+        return true;
     }
     async getLastData(storeName) {
         try {
@@ -9257,7 +9376,7 @@ function __awaiter(thisArg, _arguments, P, generator) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
         function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
+        step((generator = generator.apply(thisArg, [])).next());
     });
 }
 
@@ -9547,15 +9666,13 @@ try {
 } catch(e) {} // eslint-disable-line
 
 function decodeBase64$1(base64, enableUnicode) {
-    return Buffer.from(base64, 'base64').toString(enableUnicode ? 'utf16' : 'utf8');
+    return Buffer.from(base64, 'base64').toString('utf8');
 }
 
 function createBase64WorkerFactory$2(base64, sourcemapArg, enableUnicodeArg) {
-    var sourcemap = sourcemapArg === undefined ? null : sourcemapArg;
-    var enableUnicode = enableUnicodeArg === undefined ? false : enableUnicodeArg;
-    var source = decodeBase64$1(base64, enableUnicode);
+    var source = decodeBase64$1(base64);
     var start = source.indexOf('\n', 10) + 1;
-    var body = source.substring(start) + (sourcemap ? '\/\/# sourceMappingURL=' + sourcemap : '');
+    var body = source.substring(start) + ('');
     return function WorkerFactory(options) {
         return new WorkerClass(body, Object.assign({}, options, { eval: true }));
     };
@@ -9563,22 +9680,13 @@ function createBase64WorkerFactory$2(base64, sourcemapArg, enableUnicodeArg) {
 
 function decodeBase64(base64, enableUnicode) {
     var binaryString = atob(base64);
-    if (enableUnicode) {
-        var binaryView = new Uint8Array(binaryString.length);
-        for (var i = 0, n = binaryString.length; i < n; ++i) {
-            binaryView[i] = binaryString.charCodeAt(i);
-        }
-        return String.fromCharCode.apply(null, new Uint16Array(binaryView.buffer));
-    }
     return binaryString;
 }
 
 function createURL(base64, sourcemapArg, enableUnicodeArg) {
-    var sourcemap = sourcemapArg === undefined ? null : sourcemapArg;
-    var enableUnicode = enableUnicodeArg === undefined ? false : enableUnicodeArg;
-    var source = decodeBase64(base64, enableUnicode);
+    var source = decodeBase64(base64);
     var start = source.indexOf('\n', 10) + 1;
-    var body = source.substring(start) + (sourcemap ? '\/\/# sourceMappingURL=' + sourcemap : '');
+    var body = source.substring(start) + ('');
     var blob = new Blob([body], { type: 'application/javascript' });
     return URL.createObjectURL(blob);
 }
@@ -9586,7 +9694,7 @@ function createURL(base64, sourcemapArg, enableUnicodeArg) {
 function createBase64WorkerFactory$1(base64, sourcemapArg, enableUnicodeArg) {
     var url;
     return function WorkerFactory(options) {
-        url = url || createURL(base64, sourcemapArg, enableUnicodeArg);
+        url = url || createURL(base64);
         return new Worker(url, options);
     };
 }
@@ -9599,12 +9707,12 @@ function isNodeJS() {
 
 function createBase64WorkerFactory(base64, sourcemapArg, enableUnicodeArg) {
     if (isNodeJS()) {
-        return createBase64WorkerFactory$2(base64, sourcemapArg, enableUnicodeArg);
+        return createBase64WorkerFactory$2(base64);
     }
-    return createBase64WorkerFactory$1(base64, sourcemapArg, enableUnicodeArg);
+    return createBase64WorkerFactory$1(base64);
 }
 
-var WorkerFactory = createBase64WorkerFactory('Lyogcm9sbHVwLXBsdWdpbi13ZWItd29ya2VyLWxvYWRlciAqLwooZnVuY3Rpb24gKCkgewogICAgJ3VzZSBzdHJpY3QnOwoKICAgIC8qISAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKg0KICAgIENvcHlyaWdodCAoYykgTWljcm9zb2Z0IENvcnBvcmF0aW9uLg0KDQogICAgUGVybWlzc2lvbiB0byB1c2UsIGNvcHksIG1vZGlmeSwgYW5kL29yIGRpc3RyaWJ1dGUgdGhpcyBzb2Z0d2FyZSBmb3IgYW55DQogICAgcHVycG9zZSB3aXRoIG9yIHdpdGhvdXQgZmVlIGlzIGhlcmVieSBncmFudGVkLg0KDQogICAgVEhFIFNPRlRXQVJFIElTIFBST1ZJREVEICJBUyBJUyIgQU5EIFRIRSBBVVRIT1IgRElTQ0xBSU1TIEFMTCBXQVJSQU5USUVTIFdJVEgNCiAgICBSRUdBUkQgVE8gVEhJUyBTT0ZUV0FSRSBJTkNMVURJTkcgQUxMIElNUExJRUQgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFkNCiAgICBBTkQgRklUTkVTUy4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFIEFVVEhPUiBCRSBMSUFCTEUgRk9SIEFOWSBTUEVDSUFMLCBESVJFQ1QsDQogICAgSU5ESVJFQ1QsIE9SIENPTlNFUVVFTlRJQUwgREFNQUdFUyBPUiBBTlkgREFNQUdFUyBXSEFUU09FVkVSIFJFU1VMVElORyBGUk9NDQogICAgTE9TUyBPRiBVU0UsIERBVEEgT1IgUFJPRklUUywgV0hFVEhFUiBJTiBBTiBBQ1RJT04gT0YgQ09OVFJBQ1QsIE5FR0xJR0VOQ0UgT1INCiAgICBPVEhFUiBUT1JUSU9VUyBBQ1RJT04sIEFSSVNJTkcgT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgVVNFIE9SDQogICAgUEVSRk9STUFOQ0UgT0YgVEhJUyBTT0ZUV0FSRS4NCiAgICAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiAqLw0KDQogICAgZnVuY3Rpb24gX19hd2FpdGVyKHRoaXNBcmcsIF9hcmd1bWVudHMsIFAsIGdlbmVyYXRvcikgew0KICAgICAgICBmdW5jdGlvbiBhZG9wdCh2YWx1ZSkgeyByZXR1cm4gdmFsdWUgaW5zdGFuY2VvZiBQID8gdmFsdWUgOiBuZXcgUChmdW5jdGlvbiAocmVzb2x2ZSkgeyByZXNvbHZlKHZhbHVlKTsgfSk7IH0NCiAgICAgICAgcmV0dXJuIG5ldyAoUCB8fCAoUCA9IFByb21pc2UpKShmdW5jdGlvbiAocmVzb2x2ZSwgcmVqZWN0KSB7DQogICAgICAgICAgICBmdW5jdGlvbiBmdWxmaWxsZWQodmFsdWUpIHsgdHJ5IHsgc3RlcChnZW5lcmF0b3IubmV4dCh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiByZWplY3RlZCh2YWx1ZSkgeyB0cnkgeyBzdGVwKGdlbmVyYXRvclsidGhyb3ciXSh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiBzdGVwKHJlc3VsdCkgeyByZXN1bHQuZG9uZSA/IHJlc29sdmUocmVzdWx0LnZhbHVlKSA6IGFkb3B0KHJlc3VsdC52YWx1ZSkudGhlbihmdWxmaWxsZWQsIHJlamVjdGVkKTsgfQ0KICAgICAgICAgICAgc3RlcCgoZ2VuZXJhdG9yID0gZ2VuZXJhdG9yLmFwcGx5KHRoaXNBcmcsIF9hcmd1bWVudHMgfHwgW10pKS5uZXh0KCkpOw0KICAgICAgICB9KTsNCiAgICB9CgogICAgLyoKICAgICAqIGJhc2U2NC1hcnJheWJ1ZmZlciAxLjAuMSA8aHR0cHM6Ly9naXRodWIuY29tL25pa2xhc3ZoL2Jhc2U2NC1hcnJheWJ1ZmZlcj4KICAgICAqIENvcHlyaWdodCAoYykgMjAyMSBOaWtsYXMgdm9uIEhlcnR6ZW4gPGh0dHBzOi8vaGVydHplbi5jb20+CiAgICAgKiBSZWxlYXNlZCB1bmRlciBNSVQgTGljZW5zZQogICAgICovCiAgICB2YXIgY2hhcnMgPSAnQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejAxMjM0NTY3ODkrLyc7CiAgICAvLyBVc2UgYSBsb29rdXAgdGFibGUgdG8gZmluZCB0aGUgaW5kZXguCiAgICB2YXIgbG9va3VwID0gdHlwZW9mIFVpbnQ4QXJyYXkgPT09ICd1bmRlZmluZWQnID8gW10gOiBuZXcgVWludDhBcnJheSgyNTYpOwogICAgZm9yICh2YXIgaSA9IDA7IGkgPCBjaGFycy5sZW5ndGg7IGkrKykgewogICAgICAgIGxvb2t1cFtjaGFycy5jaGFyQ29kZUF0KGkpXSA9IGk7CiAgICB9CiAgICB2YXIgZW5jb2RlID0gZnVuY3Rpb24gKGFycmF5YnVmZmVyKSB7CiAgICAgICAgdmFyIGJ5dGVzID0gbmV3IFVpbnQ4QXJyYXkoYXJyYXlidWZmZXIpLCBpLCBsZW4gPSBieXRlcy5sZW5ndGgsIGJhc2U2NCA9ICcnOwogICAgICAgIGZvciAoaSA9IDA7IGkgPCBsZW47IGkgKz0gMykgewogICAgICAgICAgICBiYXNlNjQgKz0gY2hhcnNbYnl0ZXNbaV0gPj4gMl07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1soKGJ5dGVzW2ldICYgMykgPDwgNCkgfCAoYnl0ZXNbaSArIDFdID4+IDQpXTsKICAgICAgICAgICAgYmFzZTY0ICs9IGNoYXJzWygoYnl0ZXNbaSArIDFdICYgMTUpIDw8IDIpIHwgKGJ5dGVzW2kgKyAyXSA+PiA2KV07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1tieXRlc1tpICsgMl0gJiA2M107CiAgICAgICAgfQogICAgICAgIGlmIChsZW4gJSAzID09PSAyKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDEpICsgJz0nOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChsZW4gJSAzID09PSAxKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDIpICsgJz09JzsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGJhc2U2NDsKICAgIH07CgogICAgY29uc3QgbGFzdEJsb2JNYXAgPSBuZXcgTWFwKCk7DQogICAgY29uc3QgdHJhbnNwYXJlbnRCbG9iTWFwID0gbmV3IE1hcCgpOw0KICAgIGZ1bmN0aW9uIGdldFRyYW5zcGFyZW50QmxvYkZvcih3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucykgew0KICAgICAgICByZXR1cm4gX19hd2FpdGVyKHRoaXMsIHZvaWQgMCwgdm9pZCAwLCBmdW5jdGlvbiogKCkgew0KICAgICAgICAgICAgY29uc3QgaWQgPSBgJHt3aWR0aH0tJHtoZWlnaHR9YDsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgaWYgKHRyYW5zcGFyZW50QmxvYk1hcC5oYXMoaWQpKQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gdHJhbnNwYXJlbnRCbG9iTWFwLmdldChpZCk7DQogICAgICAgICAgICAgICAgY29uc3Qgb2Zmc2NyZWVuID0gbmV3IE9mZnNjcmVlbkNhbnZhcyh3aWR0aCwgaGVpZ2h0KTsNCiAgICAgICAgICAgICAgICBvZmZzY3JlZW4uZ2V0Q29udGV4dCgnMmQnKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGFycmF5QnVmZmVyID0geWllbGQgYmxvYi5hcnJheUJ1ZmZlcigpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGJhc2U2NCA9IGVuY29kZShhcnJheUJ1ZmZlcik7DQogICAgICAgICAgICAgICAgdHJhbnNwYXJlbnRCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICByZXR1cm4gYmFzZTY0Ow0KICAgICAgICAgICAgfQ0KICAgICAgICAgICAgZWxzZSB7DQogICAgICAgICAgICAgICAgcmV0dXJuICcnOw0KICAgICAgICAgICAgfQ0KICAgICAgICB9KTsNCiAgICB9DQogICAgY29uc3Qgd29ya2VyID0gc2VsZjsNCiAgICB3b3JrZXIub25tZXNzYWdlID0gZnVuY3Rpb24gKGUpIHsNCiAgICAgICAgcmV0dXJuIF9fYXdhaXRlcih0aGlzLCB2b2lkIDAsIHZvaWQgMCwgZnVuY3Rpb24qICgpIHsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgY29uc3QgeyBpZCwgYml0bWFwLCB3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucyB9ID0gZS5kYXRhOw0KICAgICAgICAgICAgICAgIGNvbnN0IHRyYW5zcGFyZW50QmFzZTY0ID0gZ2V0VHJhbnNwYXJlbnRCbG9iRm9yKHdpZHRoLCBoZWlnaHQsIGRhdGFVUkxPcHRpb25zKTsNCiAgICAgICAgICAgICAgICBjb25zdCBvZmZzY3JlZW4gPSBuZXcgT2Zmc2NyZWVuQ2FudmFzKHdpZHRoLCBoZWlnaHQpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGN0eCA9IG9mZnNjcmVlbi5nZXRDb250ZXh0KCcyZCcpOw0KICAgICAgICAgICAgICAgIGN0eC5kcmF3SW1hZ2UoYml0bWFwLCAwLCAwKTsNCiAgICAgICAgICAgICAgICBiaXRtYXAuY2xvc2UoKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IHR5cGUgPSBibG9iLnR5cGU7DQogICAgICAgICAgICAgICAgY29uc3QgYXJyYXlCdWZmZXIgPSB5aWVsZCBibG9iLmFycmF5QnVmZmVyKCk7DQogICAgICAgICAgICAgICAgY29uc3QgYmFzZTY0ID0gZW5jb2RlKGFycmF5QnVmZmVyKTsNCiAgICAgICAgICAgICAgICBpZiAoIWxhc3RCbG9iTWFwLmhhcyhpZCkgJiYgKHlpZWxkIHRyYW5zcGFyZW50QmFzZTY0KSA9PT0gYmFzZTY0KSB7DQogICAgICAgICAgICAgICAgICAgIGxhc3RCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHdvcmtlci5wb3N0TWVzc2FnZSh7IGlkIH0pOw0KICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICBpZiAobGFzdEJsb2JNYXAuZ2V0KGlkKSA9PT0gYmFzZTY0KQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQgfSk7DQogICAgICAgICAgICAgICAgd29ya2VyLnBvc3RNZXNzYWdlKHsNCiAgICAgICAgICAgICAgICAgICAgaWQsDQogICAgICAgICAgICAgICAgICAgIHR5cGUsDQogICAgICAgICAgICAgICAgICAgIGJhc2U2NCwNCiAgICAgICAgICAgICAgICAgICAgd2lkdGgsDQogICAgICAgICAgICAgICAgICAgIGhlaWdodCwNCiAgICAgICAgICAgICAgICB9KTsNCiAgICAgICAgICAgICAgICBsYXN0QmxvYk1hcC5zZXQoaWQsIGJhc2U2NCk7DQogICAgICAgICAgICB9DQogICAgICAgICAgICBlbHNlIHsNCiAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQ6IGUuZGF0YS5pZCB9KTsNCiAgICAgICAgICAgIH0NCiAgICAgICAgfSk7DQogICAgfTsKCn0pKCk7Cgo=', null, false);
+var WorkerFactory = createBase64WorkerFactory('Lyogcm9sbHVwLXBsdWdpbi13ZWItd29ya2VyLWxvYWRlciAqLwooZnVuY3Rpb24gKCkgewogICAgJ3VzZSBzdHJpY3QnOwoKICAgIC8qISAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKg0KICAgIENvcHlyaWdodCAoYykgTWljcm9zb2Z0IENvcnBvcmF0aW9uLg0KDQogICAgUGVybWlzc2lvbiB0byB1c2UsIGNvcHksIG1vZGlmeSwgYW5kL29yIGRpc3RyaWJ1dGUgdGhpcyBzb2Z0d2FyZSBmb3IgYW55DQogICAgcHVycG9zZSB3aXRoIG9yIHdpdGhvdXQgZmVlIGlzIGhlcmVieSBncmFudGVkLg0KDQogICAgVEhFIFNPRlRXQVJFIElTIFBST1ZJREVEICJBUyBJUyIgQU5EIFRIRSBBVVRIT1IgRElTQ0xBSU1TIEFMTCBXQVJSQU5USUVTIFdJVEgNCiAgICBSRUdBUkQgVE8gVEhJUyBTT0ZUV0FSRSBJTkNMVURJTkcgQUxMIElNUExJRUQgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFkNCiAgICBBTkQgRklUTkVTUy4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFIEFVVEhPUiBCRSBMSUFCTEUgRk9SIEFOWSBTUEVDSUFMLCBESVJFQ1QsDQogICAgSU5ESVJFQ1QsIE9SIENPTlNFUVVFTlRJQUwgREFNQUdFUyBPUiBBTlkgREFNQUdFUyBXSEFUU09FVkVSIFJFU1VMVElORyBGUk9NDQogICAgTE9TUyBPRiBVU0UsIERBVEEgT1IgUFJPRklUUywgV0hFVEhFUiBJTiBBTiBBQ1RJT04gT0YgQ09OVFJBQ1QsIE5FR0xJR0VOQ0UgT1INCiAgICBPVEhFUiBUT1JUSU9VUyBBQ1RJT04sIEFSSVNJTkcgT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgVVNFIE9SDQogICAgUEVSRk9STUFOQ0UgT0YgVEhJUyBTT0ZUV0FSRS4NCiAgICAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiAqLw0KDQogICAgZnVuY3Rpb24gX19hd2FpdGVyKHRoaXNBcmcsIF9hcmd1bWVudHMsIFAsIGdlbmVyYXRvcikgew0KICAgICAgICBmdW5jdGlvbiBhZG9wdCh2YWx1ZSkgeyByZXR1cm4gdmFsdWUgaW5zdGFuY2VvZiBQID8gdmFsdWUgOiBuZXcgUChmdW5jdGlvbiAocmVzb2x2ZSkgeyByZXNvbHZlKHZhbHVlKTsgfSk7IH0NCiAgICAgICAgcmV0dXJuIG5ldyAoUCB8fCAoUCA9IFByb21pc2UpKShmdW5jdGlvbiAocmVzb2x2ZSwgcmVqZWN0KSB7DQogICAgICAgICAgICBmdW5jdGlvbiBmdWxmaWxsZWQodmFsdWUpIHsgdHJ5IHsgc3RlcChnZW5lcmF0b3IubmV4dCh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiByZWplY3RlZCh2YWx1ZSkgeyB0cnkgeyBzdGVwKGdlbmVyYXRvclsidGhyb3ciXSh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiBzdGVwKHJlc3VsdCkgeyByZXN1bHQuZG9uZSA/IHJlc29sdmUocmVzdWx0LnZhbHVlKSA6IGFkb3B0KHJlc3VsdC52YWx1ZSkudGhlbihmdWxmaWxsZWQsIHJlamVjdGVkKTsgfQ0KICAgICAgICAgICAgc3RlcCgoZ2VuZXJhdG9yID0gZ2VuZXJhdG9yLmFwcGx5KHRoaXNBcmcsIF9hcmd1bWVudHMgfHwgW10pKS5uZXh0KCkpOw0KICAgICAgICB9KTsNCiAgICB9CgogICAgLyoKICAgICAqIGJhc2U2NC1hcnJheWJ1ZmZlciAxLjAuMSA8aHR0cHM6Ly9naXRodWIuY29tL25pa2xhc3ZoL2Jhc2U2NC1hcnJheWJ1ZmZlcj4KICAgICAqIENvcHlyaWdodCAoYykgMjAyMSBOaWtsYXMgdm9uIEhlcnR6ZW4gPGh0dHBzOi8vaGVydHplbi5jb20+CiAgICAgKiBSZWxlYXNlZCB1bmRlciBNSVQgTGljZW5zZQogICAgICovCiAgICB2YXIgY2hhcnMgPSAnQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejAxMjM0NTY3ODkrLyc7CiAgICAvLyBVc2UgYSBsb29rdXAgdGFibGUgdG8gZmluZCB0aGUgaW5kZXguCiAgICB2YXIgbG9va3VwID0gdHlwZW9mIFVpbnQ4QXJyYXkgPT09ICd1bmRlZmluZWQnID8gW10gOiBuZXcgVWludDhBcnJheSgyNTYpOwogICAgZm9yICh2YXIgaSA9IDA7IGkgPCBjaGFycy5sZW5ndGg7IGkrKykgewogICAgICAgIGxvb2t1cFtjaGFycy5jaGFyQ29kZUF0KGkpXSA9IGk7CiAgICB9CiAgICB2YXIgZW5jb2RlID0gZnVuY3Rpb24gKGFycmF5YnVmZmVyKSB7CiAgICAgICAgdmFyIGJ5dGVzID0gbmV3IFVpbnQ4QXJyYXkoYXJyYXlidWZmZXIpLCBpLCBsZW4gPSBieXRlcy5sZW5ndGgsIGJhc2U2NCA9ICcnOwogICAgICAgIGZvciAoaSA9IDA7IGkgPCBsZW47IGkgKz0gMykgewogICAgICAgICAgICBiYXNlNjQgKz0gY2hhcnNbYnl0ZXNbaV0gPj4gMl07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1soKGJ5dGVzW2ldICYgMykgPDwgNCkgfCAoYnl0ZXNbaSArIDFdID4+IDQpXTsKICAgICAgICAgICAgYmFzZTY0ICs9IGNoYXJzWygoYnl0ZXNbaSArIDFdICYgMTUpIDw8IDIpIHwgKGJ5dGVzW2kgKyAyXSA+PiA2KV07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1tieXRlc1tpICsgMl0gJiA2M107CiAgICAgICAgfQogICAgICAgIGlmIChsZW4gJSAzID09PSAyKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDEpICsgJz0nOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChsZW4gJSAzID09PSAxKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDIpICsgJz09JzsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGJhc2U2NDsKICAgIH07CgogICAgY29uc3QgbGFzdEJsb2JNYXAgPSBuZXcgTWFwKCk7DQogICAgY29uc3QgdHJhbnNwYXJlbnRCbG9iTWFwID0gbmV3IE1hcCgpOw0KICAgIGZ1bmN0aW9uIGdldFRyYW5zcGFyZW50QmxvYkZvcih3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucykgew0KICAgICAgICByZXR1cm4gX19hd2FpdGVyKHRoaXMsIHZvaWQgMCwgdm9pZCAwLCBmdW5jdGlvbiogKCkgew0KICAgICAgICAgICAgY29uc3QgaWQgPSBgJHt3aWR0aH0tJHtoZWlnaHR9YDsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgaWYgKHRyYW5zcGFyZW50QmxvYk1hcC5oYXMoaWQpKQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gdHJhbnNwYXJlbnRCbG9iTWFwLmdldChpZCk7DQogICAgICAgICAgICAgICAgY29uc3Qgb2Zmc2NyZWVuID0gbmV3IE9mZnNjcmVlbkNhbnZhcyh3aWR0aCwgaGVpZ2h0KTsNCiAgICAgICAgICAgICAgICBvZmZzY3JlZW4uZ2V0Q29udGV4dCgnMmQnKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGFycmF5QnVmZmVyID0geWllbGQgYmxvYi5hcnJheUJ1ZmZlcigpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGJhc2U2NCA9IGVuY29kZShhcnJheUJ1ZmZlcik7DQogICAgICAgICAgICAgICAgdHJhbnNwYXJlbnRCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICByZXR1cm4gYmFzZTY0Ow0KICAgICAgICAgICAgfQ0KICAgICAgICAgICAgZWxzZSB7DQogICAgICAgICAgICAgICAgcmV0dXJuICcnOw0KICAgICAgICAgICAgfQ0KICAgICAgICB9KTsNCiAgICB9DQogICAgY29uc3Qgd29ya2VyID0gc2VsZjsNCiAgICB3b3JrZXIub25tZXNzYWdlID0gZnVuY3Rpb24gKGUpIHsNCiAgICAgICAgcmV0dXJuIF9fYXdhaXRlcih0aGlzLCB2b2lkIDAsIHZvaWQgMCwgZnVuY3Rpb24qICgpIHsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgY29uc3QgeyBpZCwgYml0bWFwLCB3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucyB9ID0gZS5kYXRhOw0KICAgICAgICAgICAgICAgIGNvbnN0IHRyYW5zcGFyZW50QmFzZTY0ID0gZ2V0VHJhbnNwYXJlbnRCbG9iRm9yKHdpZHRoLCBoZWlnaHQsIGRhdGFVUkxPcHRpb25zKTsNCiAgICAgICAgICAgICAgICBjb25zdCBvZmZzY3JlZW4gPSBuZXcgT2Zmc2NyZWVuQ2FudmFzKHdpZHRoLCBoZWlnaHQpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGN0eCA9IG9mZnNjcmVlbi5nZXRDb250ZXh0KCcyZCcpOw0KICAgICAgICAgICAgICAgIGN0eC5kcmF3SW1hZ2UoYml0bWFwLCAwLCAwKTsNCiAgICAgICAgICAgICAgICBiaXRtYXAuY2xvc2UoKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IHR5cGUgPSBibG9iLnR5cGU7DQogICAgICAgICAgICAgICAgY29uc3QgYXJyYXlCdWZmZXIgPSB5aWVsZCBibG9iLmFycmF5QnVmZmVyKCk7DQogICAgICAgICAgICAgICAgY29uc3QgYmFzZTY0ID0gZW5jb2RlKGFycmF5QnVmZmVyKTsNCiAgICAgICAgICAgICAgICBpZiAoIWxhc3RCbG9iTWFwLmhhcyhpZCkgJiYgKHlpZWxkIHRyYW5zcGFyZW50QmFzZTY0KSA9PT0gYmFzZTY0KSB7DQogICAgICAgICAgICAgICAgICAgIGxhc3RCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHdvcmtlci5wb3N0TWVzc2FnZSh7IGlkIH0pOw0KICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICBpZiAobGFzdEJsb2JNYXAuZ2V0KGlkKSA9PT0gYmFzZTY0KQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQgfSk7DQogICAgICAgICAgICAgICAgd29ya2VyLnBvc3RNZXNzYWdlKHsNCiAgICAgICAgICAgICAgICAgICAgaWQsDQogICAgICAgICAgICAgICAgICAgIHR5cGUsDQogICAgICAgICAgICAgICAgICAgIGJhc2U2NCwNCiAgICAgICAgICAgICAgICAgICAgd2lkdGgsDQogICAgICAgICAgICAgICAgICAgIGhlaWdodCwNCiAgICAgICAgICAgICAgICB9KTsNCiAgICAgICAgICAgICAgICBsYXN0QmxvYk1hcC5zZXQoaWQsIGJhc2U2NCk7DQogICAgICAgICAgICB9DQogICAgICAgICAgICBlbHNlIHsNCiAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQ6IGUuZGF0YS5pZCB9KTsNCiAgICAgICAgICAgIH0NCiAgICAgICAgfSk7DQogICAgfTsKCn0pKCk7Cgo=');
 
 class CanvasManager {
     constructor(options) {
@@ -10256,7 +10364,7 @@ record.takeFullSnapshot = (isCheckout) => {
 };
 record.mirror = mirror;
 
-function e(){}function t(e,t){for(const n in t)e[n]=t[n];return e}function n(e){return e()}function i(){return Object.create(null)}function o(e){e.forEach(n);}function r(e){return "function"==typeof e}function s(e,t){return e!=e?t==t:e!==t||e&&"object"==typeof e||"function"==typeof e}function a(e){const t={};for(const n in e)"$"!==n[0]&&(t[n]=e[n]);return t}function l(e,t){e.appendChild(t);}function c(e,t,n){e.insertBefore(t,n||null);}function d(e){e.parentNode.removeChild(e);}function u(e,t){for(let n=0;n<e.length;n+=1)e[n]&&e[n].d(t);}function h(e){return document.createElement(e)}function p(e){return document.createElementNS("http://www.w3.org/2000/svg",e)}function g(e){return document.createTextNode(e)}function m(){return g(" ")}function f(e,t,n,i){return e.addEventListener(t,n,i),()=>e.removeEventListener(t,n,i)}function y(e,t,n){null==n?e.removeAttribute(t):e.getAttribute(t)!==n&&e.setAttribute(t,n);}function v(e,t){t=""+t,e.wholeText!==t&&(e.data=t);}function C(e,t,n,i){null===n?e.style.removeProperty(t):e.style.setProperty(t,n,i?"important":"");}function I(e,t,n){e.classList[n?"add":"remove"](t);}let A;function b(e){A=e;}function w(){if(!A)throw new Error("Function called outside component initialization");return A}function N(e){w().$$.on_mount.push(e);}function E(e){w().$$.on_destroy.push(e);}function S(){const e=w();return (t,n,{cancelable:i=!1}={})=>{const o=e.$$.callbacks[t];if(o){const r=function(e,t,{bubbles:n=!1,cancelable:i=!1}={}){const o=document.createEvent("CustomEvent");return o.initCustomEvent(e,n,i,t),o}(t,n,{cancelable:i});return o.slice().forEach((t=>{t.call(e,r);})),!r.defaultPrevented}return !0}}const T=[],D=[],M=[],R=[],x=Promise.resolve();let k=!1;function F(e){M.push(e);}const O=new Set;let B=0;function L(){const e=A;do{for(;B<T.length;){const e=T[B];B++,b(e),V(e.$$);}for(b(null),T.length=0,B=0;D.length;)D.pop()();for(let e=0;e<M.length;e+=1){const t=M[e];O.has(t)||(O.add(t),t());}M.length=0;}while(T.length);for(;R.length;)R.pop()();k=!1,O.clear(),b(e);}function V(e){if(null!==e.fragment){e.update(),o(e.before_update);const t=e.dirty;e.dirty=[-1],e.fragment&&e.fragment.p(e.ctx,t),e.after_update.forEach(F);}}const _=new Set;let G;function W(){G={r:0,c:[],p:G};}function U(){G.r||o(G.c),G=G.p;}function Z(e,t){e&&e.i&&(_.delete(e),e.i(t));}function $(e,t,n,i){if(e&&e.o){if(_.has(e))return;_.add(e),G.c.push((()=>{_.delete(e),i&&(n&&e.d(1),i());})),e.o(t);}else i&&i();}function K(e){e&&e.c();}function Y(e,t,i,s){const{fragment:a,on_mount:l,on_destroy:c,after_update:d}=e.$$;a&&a.m(t,i),s||F((()=>{const t=l.map(n).filter(r);c?c.push(...t):o(t),e.$$.on_mount=[];})),d.forEach(F);}function P(e,t){const n=e.$$;null!==n.fragment&&(o(n.on_destroy),n.fragment&&n.fragment.d(t),n.on_destroy=n.fragment=null,n.ctx=[]);}function Q(e,t){-1===e.$$.dirty[0]&&(T.push(e),k||(k=!0,x.then(L)),e.$$.dirty.fill(0)),e.$$.dirty[t/31|0]|=1<<t%31;}function z(t,n,r,s,a,l,c,u=[-1]){const h=A;b(t);const p=t.$$={fragment:null,ctx:null,props:l,update:e,not_equal:a,bound:i(),on_mount:[],on_destroy:[],on_disconnect:[],before_update:[],after_update:[],context:new Map(n.context||(h?h.$$.context:[])),callbacks:i(),dirty:u,skip_bound:!1,root:n.target||h.$$.root};c&&c(p.root);let g=!1;if(p.ctx=r?r(t,n.props||{},((e,n,...i)=>{const o=i.length?i[0]:n;return p.ctx&&a(p.ctx[e],p.ctx[e]=o)&&(!p.skip_bound&&p.bound[e]&&p.bound[e](o),g&&Q(t,e)),n})):[],p.update(),g=!0,o(p.before_update),p.fragment=!!s&&s(p.ctx),n.target){if(n.hydrate){const e=function(e){return Array.from(e.childNodes)}(n.target);p.fragment&&p.fragment.l(e),e.forEach(d);}else p.fragment&&p.fragment.c();n.intro&&Z(t.$$.fragment),Y(t,n.target,n.anchor,n.customElement),L();}b(h);}class J{$destroy(){P(this,1),this.$destroy=e;}$on(e,t){const n=this.$$.callbacks[e]||(this.$$.callbacks[e]=[]);return n.push(t),()=>{const e=n.indexOf(t);-1!==e&&n.splice(e,1);}}$set(e){var t;this.$$set&&(t=e,0!==Object.keys(t).length)&&(this.$$.skip_bound=!0,this.$$set(e),this.$$.skip_bound=!1);}}var X;function H(e){return e.nodeType===e.ELEMENT_NODE}!function(e){e[e.Document=0]="Document",e[e.DocumentType=1]="DocumentType",e[e.Element=2]="Element",e[e.Text=3]="Text",e[e.CDATA=4]="CDATA",e[e.Comment=5]="Comment";}(X||(X={}));var j=function(){function e(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}return e.prototype.getId=function(e){var t;if(!e)return -1;var n=null===(t=this.getMeta(e))||void 0===t?void 0:t.id;return null!=n?n:-1},e.prototype.getNode=function(e){return this.idNodeMap.get(e)||null},e.prototype.getIds=function(){return Array.from(this.idNodeMap.keys())},e.prototype.getMeta=function(e){return this.nodeMetaMap.get(e)||null},e.prototype.removeNodeFromMap=function(e){var t=this,n=this.getId(e);this.idNodeMap.delete(n),e.childNodes&&e.childNodes.forEach((function(e){return t.removeNodeFromMap(e)}));},e.prototype.has=function(e){return this.idNodeMap.has(e)},e.prototype.hasNode=function(e){return this.nodeMetaMap.has(e)},e.prototype.add=function(e,t){var n=t.id;this.idNodeMap.set(n,e),this.nodeMetaMap.set(e,t);},e.prototype.replace=function(e,t){var n=this.getNode(e);if(n){var i=this.nodeMetaMap.get(n);i&&this.nodeMetaMap.set(t,i);}this.idNodeMap.set(e,t);},e.prototype.reset=function(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;},e}();function q(){return new j}var ee=/\/\*[^*]*\*+([^/*][^*]*\*+)*\//g;function te(e,t){void 0===t&&(t={});var n=1,i=1;function o(e){var t=e.match(/\n/g);t&&(n+=t.length);var o=e.lastIndexOf("\n");i=-1===o?i+e.length:e.length-o;}function r(){var e={line:n,column:i};return function(t){return t.position=new s(e),p(),t}}var s=function(e){this.start=e,this.end={line:n,column:i},this.source=t.source;};s.prototype.content=e;var a=[];function l(o){var r=new Error("".concat(t.source||"",":").concat(n,":").concat(i,": ").concat(o));if(r.reason=o,r.filename=t.source,r.line=n,r.column=i,r.source=e,!t.silent)throw r;a.push(r);}function c(){return h(/^{\s*/)}function d(){return h(/^}/)}function u(){var t,n=[];for(p(),g(n);e.length&&"}"!==e.charAt(0)&&(t=E()||S());)!1!==t&&(n.push(t),g(n));return n}function h(t){var n=t.exec(e);if(n){var i=n[0];return o(i),e=e.slice(i.length),n}}function p(){h(/^\s*/);}function g(e){var t;for(void 0===e&&(e=[]);t=m();)!1!==t&&e.push(t),t=m();return e}function m(){var t=r();if("/"===e.charAt(0)&&"*"===e.charAt(1)){for(var n=2;""!==e.charAt(n)&&("*"!==e.charAt(n)||"/"!==e.charAt(n+1));)++n;if(n+=2,""===e.charAt(n-1))return l("End of comment missing");var s=e.slice(2,n-2);return i+=2,o(s),e=e.slice(n),i+=2,t({type:"comment",comment:s})}}function f(){var e=h(/^([^{]+)/);if(e)return ne(e[0]).replace(/\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*\/+/g,"").replace(/"(?:\\"|[^"])*"|'(?:\\'|[^'])*'/g,(function(e){return e.replace(/,/g,"‌")})).split(/\s*(?![^(]*\)),\s*/).map((function(e){return e.replace(/\u200C/g,",")}))}function y(){var e=r(),t=h(/^(\*?[-#\/\*\\\w]+(\[[0-9a-z_-]+\])?)\s*/);if(t){var n=ne(t[0]);if(!h(/^:\s*/))return l("property missing ':'");var i=h(/^((?:'(?:\\'|.)*?'|"(?:\\"|.)*?"|\([^\)]*?\)|[^};])+)/),o=e({type:"declaration",property:n.replace(ee,""),value:i?ne(i[0]).replace(ee,""):""});return h(/^[;\s]*/),o}}function v(){var e,t=[];if(!c())return l("missing '{'");for(g(t);e=y();)!1!==e&&(t.push(e),g(t)),e=y();return d()?t:l("missing '}'")}function C(){for(var e,t=[],n=r();e=h(/^((\d+\.\d+|\.\d+|\d+)%?|[a-z]+)\s*/);)t.push(e[1]),h(/^,\s*/);if(t.length)return n({type:"keyframe",values:t,declarations:v()})}var I,A=N("import"),b=N("charset"),w=N("namespace");function N(e){var t=new RegExp("^@"+e+"\\s*([^;]+);");return function(){var n=r(),i=h(t);if(i){var o={type:e};return o[e]=i[1].trim(),n(o)}}}function E(){if("@"===e[0])return function(){var e=r(),t=h(/^@([-\w]+)?keyframes\s*/);if(t){var n=t[1];if(!(t=h(/^([-\w]+)\s*/)))return l("@keyframes missing name");var i,o=t[1];if(!c())return l("@keyframes missing '{'");for(var s=g();i=C();)s.push(i),s=s.concat(g());return d()?e({type:"keyframes",name:o,vendor:n,keyframes:s}):l("@keyframes missing '}'")}}()||function(){var e=r(),t=h(/^@media *([^{]+)/);if(t){var n=ne(t[1]);if(!c())return l("@media missing '{'");var i=g().concat(u());return d()?e({type:"media",media:n,rules:i}):l("@media missing '}'")}}()||function(){var e=r(),t=h(/^@custom-media\s+(--[^\s]+)\s*([^{;]+);/);if(t)return e({type:"custom-media",name:ne(t[1]),media:ne(t[2])})}()||function(){var e=r(),t=h(/^@supports *([^{]+)/);if(t){var n=ne(t[1]);if(!c())return l("@supports missing '{'");var i=g().concat(u());return d()?e({type:"supports",supports:n,rules:i}):l("@supports missing '}'")}}()||A()||b()||w()||function(){var e=r(),t=h(/^@([-\w]+)?document *([^{]+)/);if(t){var n=ne(t[1]),i=ne(t[2]);if(!c())return l("@document missing '{'");var o=g().concat(u());return d()?e({type:"document",document:i,vendor:n,rules:o}):l("@document missing '}'")}}()||function(){var e=r();if(h(/^@page */)){var t=f()||[];if(!c())return l("@page missing '{'");for(var n,i=g();n=y();)i.push(n),i=i.concat(g());return d()?e({type:"page",selectors:t,declarations:i}):l("@page missing '}'")}}()||function(){var e=r();if(h(/^@host\s*/)){if(!c())return l("@host missing '{'");var t=g().concat(u());return d()?e({type:"host",rules:t}):l("@host missing '}'")}}()||function(){var e=r();if(h(/^@font-face\s*/)){if(!c())return l("@font-face missing '{'");for(var t,n=g();t=y();)n.push(t),n=n.concat(g());return d()?e({type:"font-face",declarations:n}):l("@font-face missing '}'")}}()}function S(){var e=r(),t=f();return t?(g(),e({type:"rule",selectors:t,declarations:v()})):l("selector missing")}return ie((I=u(),{type:"stylesheet",stylesheet:{source:t.source,rules:I,parsingErrors:a}}))}function ne(e){return e?e.replace(/^\s+|\s+$/g,""):""}function ie(e,t){for(var n=e&&"string"==typeof e.type,i=n?e:t,o=0,r=Object.keys(e);o<r.length;o++){var s=e[r[o]];Array.isArray(s)?s.forEach((function(e){ie(e,i);})):s&&"object"==typeof s&&ie(s,i);}return n&&Object.defineProperty(e,"parent",{configurable:!0,writable:!0,enumerable:!1,value:t||null}),e}var oe={script:"noscript",altglyph:"altGlyph",altglyphdef:"altGlyphDef",altglyphitem:"altGlyphItem",animatecolor:"animateColor",animatemotion:"animateMotion",animatetransform:"animateTransform",clippath:"clipPath",feblend:"feBlend",fecolormatrix:"feColorMatrix",fecomponenttransfer:"feComponentTransfer",fecomposite:"feComposite",feconvolvematrix:"feConvolveMatrix",fediffuselighting:"feDiffuseLighting",fedisplacementmap:"feDisplacementMap",fedistantlight:"feDistantLight",fedropshadow:"feDropShadow",feflood:"feFlood",fefunca:"feFuncA",fefuncb:"feFuncB",fefuncg:"feFuncG",fefuncr:"feFuncR",fegaussianblur:"feGaussianBlur",feimage:"feImage",femerge:"feMerge",femergenode:"feMergeNode",femorphology:"feMorphology",feoffset:"feOffset",fepointlight:"fePointLight",fespecularlighting:"feSpecularLighting",fespotlight:"feSpotLight",fetile:"feTile",feturbulence:"feTurbulence",foreignobject:"foreignObject",glyphref:"glyphRef",lineargradient:"linearGradient",radialgradient:"radialGradient"};var re=/([^\\]):hover/,se=new RegExp(re.source,"g");function ae(e,t){var n=null==t?void 0:t.stylesWithHoverClass.get(e);if(n)return n;var i=te(e,{silent:!0});if(!i.stylesheet)return e;var o=[];if(i.stylesheet.rules.forEach((function(e){"selectors"in e&&(e.selectors||[]).forEach((function(e){re.test(e)&&o.push(e);}));})),0===o.length)return e;var r=new RegExp(o.filter((function(e,t){return o.indexOf(e)===t})).sort((function(e,t){return t.length-e.length})).map((function(e){return e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})).join("|"),"g"),s=e.replace(r,(function(e){var t=e.replace(se,"$1.\\:hover");return "".concat(e,", ").concat(t)}));return null==t||t.stylesWithHoverClass.set(e,s),s}function le(){return {stylesWithHoverClass:new Map}}function ce(e,t){var n=t.doc,i=t.hackCss,o=t.cache;switch(e.type){case X.Document:return n.implementation.createDocument(null,"",null);case X.DocumentType:return n.implementation.createDocumentType(e.name||"html",e.publicId,e.systemId);case X.Element:var r,s=function(e){var t=oe[e.tagName]?oe[e.tagName]:e.tagName;return "link"===t&&e.attributes._cssText&&(t="style"),t}(e);r=e.isSVG?n.createElementNS("http://www.w3.org/2000/svg",s):n.createElement(s);var a={};for(var l in e.attributes)if(Object.prototype.hasOwnProperty.call(e.attributes,l)){var c=e.attributes[l];if("option"!==s||"selected"!==l||!1!==c)if(!0===c&&(c=""),l.startsWith("rr_"))a[l]=c;else {var d="textarea"===s&&"value"===l,u="style"===s&&"_cssText"===l;if(u&&i&&"string"==typeof c&&(c=ae(c,o)),!d&&!u||"string"!=typeof c)try{if(e.isSVG&&"xlink:href"===l)r.setAttributeNS("http://www.w3.org/1999/xlink",l,c.toString());else if("onload"===l||"onclick"===l||"onmouse"===l.substring(0,7))r.setAttribute("_"+l,c.toString());else {if("meta"===s&&"Content-Security-Policy"===e.attributes["http-equiv"]&&"content"===l){r.setAttribute("csp-content",c.toString());continue}"link"===s&&"preload"===e.attributes.rel&&"script"===e.attributes.as||"link"===s&&"prefetch"===e.attributes.rel&&"string"==typeof e.attributes.href&&e.attributes.href.endsWith(".js")||("img"===s&&e.attributes.srcset&&e.attributes.rr_dataURL?r.setAttribute("rrweb-original-srcset",e.attributes.srcset):r.setAttribute(l,c.toString()));}}catch(e){}else {for(var h=n.createTextNode(c),p=0,g=Array.from(r.childNodes);p<g.length;p++){var m=g[p];m.nodeType===r.TEXT_NODE&&r.removeChild(m);}r.appendChild(h);}}}var f=function(t){var n=a[t];if("canvas"===s&&"rr_dataURL"===t){var i=document.createElement("img");i.onload=function(){var e=r.getContext("2d");e&&e.drawImage(i,0,0,i.width,i.height);},i.src=n.toString(),r.RRNodeType&&(r.rr_dataURL=n.toString());}else if("img"===s&&"rr_dataURL"===t){var o=r;o.currentSrc.startsWith("data:")||(o.setAttribute("rrweb-original-src",e.attributes.src),o.src=n.toString());}if("rr_width"===t)r.style.width=n.toString();else if("rr_height"===t)r.style.height=n.toString();else if("rr_mediaCurrentTime"===t&&"number"==typeof n)r.currentTime=n;else if("rr_mediaState"===t)switch(n){case"played":r.play().catch((function(e){return console.warn("media playback error",e)}));break;case"paused":r.pause();}};for(var y in a)f(y);if(e.isShadowHost)if(r.shadowRoot)for(;r.shadowRoot.firstChild;)r.shadowRoot.removeChild(r.shadowRoot.firstChild);else r.attachShadow({mode:"open"});return r;case X.Text:return n.createTextNode(e.isStyle&&i?ae(e.textContent,o):e.textContent);case X.CDATA:return n.createCDATASection(e.textContent);case X.Comment:return n.createComment(e.textContent);default:return null}}function de(e,t){var n=t.doc,i=t.mirror,o=t.skipChild,r=void 0!==o&&o,s=t.hackCss,a=void 0===s||s,l=t.afterAppend,c=t.cache,d=ce(e,{doc:n,hackCss:a,cache:c});if(!d)return null;if(e.rootId&&i.getNode(e.rootId)!==n&&i.replace(e.rootId,n),e.type===X.Document&&(n.close(),n.open(),"BackCompat"===e.compatMode&&e.childNodes&&e.childNodes[0].type!==X.DocumentType&&(e.childNodes[0].type===X.Element&&"xmlns"in e.childNodes[0].attributes&&"http://www.w3.org/1999/xhtml"===e.childNodes[0].attributes.xmlns?n.write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "">'):n.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "">')),d=n),i.add(d,e),(e.type===X.Document||e.type===X.Element)&&!r)for(var u=0,h=e.childNodes;u<h.length;u++){var p=h[u],g=de(p,{doc:n,mirror:i,skipChild:!1,hackCss:a,afterAppend:l,cache:c});g?(p.isShadow&&H(d)&&d.shadowRoot?d.shadowRoot.appendChild(g):d.appendChild(g),l&&l(g,p.id)):console.warn("Failed to rebuild",p);}return d}function ue(e,t){var n=t.doc,i=t.onVisit,o=t.hackCss,r=void 0===o||o,s=t.afterAppend,a=t.cache,l=t.mirror,c=void 0===l?new j:l,d=de(e,{doc:n,mirror:c,skipChild:!1,hackCss:r,afterAppend:s,cache:a});return function(e,t){for(var n=0,i=e.getIds();n<i.length;n++){var o=i[n];e.has(o)&&t(e.getNode(o));}}(c,(function(e){i&&i(e),function(e,t){var n=t.getMeta(e);if((null==n?void 0:n.type)===X.Element){var i=e;for(var o in n.attributes)if(Object.prototype.hasOwnProperty.call(n.attributes,o)&&o.startsWith("rr_")){var r=n.attributes[o];"rr_scrollLeft"===o&&(i.scrollLeft=r),"rr_scrollTop"===o&&(i.scrollTop=r);}}}(e,c);})),d}const he="Please stop import mirror directly. Instead of that,\r\nnow you can use replayer.getMirror() to access the mirror instance of a replayer,\r\nor you can use record.mirror to access the mirror instance during recording.";let pe={map:{},getId:()=>(console.error(he),-1),getNode:()=>(console.error(he),null),removeNodeFromMap(){console.error(he);},has:()=>(console.error(he),!1),reset(){console.error(he);}};function ge(e){const t={},n=(e,n)=>{const i={value:e,parent:n,children:[]};return t[e.node.id]=i,i},i=[];for(const o of e){const{nextId:e,parentId:r}=o;if(e&&e in t){const r=t[e];if(r.parent){const e=r.parent.children.indexOf(r);r.parent.children.splice(e,0,n(o,r.parent));}else {const e=i.indexOf(r);i.splice(e,0,n(o,null));}}else if(r in t){const e=t[r];e.children.push(n(o,e));}else i.push(n(o,null));}return i}function me(e,t){t(e.value);for(let n=e.children.length-1;n>=0;n--)me(e.children[n],t);}function fe(e,t){return Boolean("IFRAME"===e.nodeName&&t.getMeta(e))}function ye(e,t){var n,i;const o=null===(i=null===(n=e.ownerDocument)||void 0===n?void 0:n.defaultView)||void 0===i?void 0:i.frameElement;if(!o||o===t)return {x:0,y:0,relativeScale:1,absoluteScale:1};const r=o.getBoundingClientRect(),s=ye(o,t),a=r.height/o.clientHeight;return {x:r.x*s.relativeScale+s.x,y:r.y*s.relativeScale+s.y,relativeScale:a,absoluteScale:s.absoluteScale*a}}function ve(e){return Boolean(null==e?void 0:e.shadowRoot)}function Ce(e,t){const n=e[t[0]];return 1===t.length?n:Ce(n.cssRules[t[1]].cssRules,t.slice(2))}function Ie(e){const t=[...e],n=t.pop();return {positions:t,index:n}}"undefined"!=typeof window&&window.Proxy&&window.Reflect&&(pe=new Proxy(pe,{get:(e,t,n)=>("map"===t&&console.error(he),Reflect.get(e,t,n))}));class Ae{constructor(){this.id=1,this.styleIDMap=new WeakMap,this.idStyleMap=new Map;}getId(e){var t;return null!==(t=this.styleIDMap.get(e))&&void 0!==t?t:-1}has(e){return this.styleIDMap.has(e)}add(e,t){if(this.has(e))return this.getId(e);let n;return n=void 0===t?this.id++:t,this.styleIDMap.set(e,n),this.idStyleMap.set(n,e),n}getStyle(e){return this.idStyleMap.get(e)||null}reset(){this.styleIDMap=new WeakMap,this.idStyleMap=new Map,this.id=1;}generateId(){return this.id++}}var be=(e=>(e[e.DomContentLoaded=0]="DomContentLoaded",e[e.Load=1]="Load",e[e.FullSnapshot=2]="FullSnapshot",e[e.IncrementalSnapshot=3]="IncrementalSnapshot",e[e.Meta=4]="Meta",e[e.Custom=5]="Custom",e[e.Plugin=6]="Plugin",e))(be||{}),we=(e=>(e[e.Mutation=0]="Mutation",e[e.MouseMove=1]="MouseMove",e[e.MouseInteraction=2]="MouseInteraction",e[e.Scroll=3]="Scroll",e[e.ViewportResize=4]="ViewportResize",e[e.Input=5]="Input",e[e.TouchMove=6]="TouchMove",e[e.MediaInteraction=7]="MediaInteraction",e[e.StyleSheetRule=8]="StyleSheetRule",e[e.CanvasMutation=9]="CanvasMutation",e[e.Font=10]="Font",e[e.Log=11]="Log",e[e.Drag=12]="Drag",e[e.StyleDeclaration=13]="StyleDeclaration",e[e.Selection=14]="Selection",e[e.AdoptedStyleSheet=15]="AdoptedStyleSheet",e))(we||{}),Ne=(e=>(e[e.MouseUp=0]="MouseUp",e[e.MouseDown=1]="MouseDown",e[e.Click=2]="Click",e[e.ContextMenu=3]="ContextMenu",e[e.DblClick=4]="DblClick",e[e.Focus=5]="Focus",e[e.Blur=6]="Blur",e[e.TouchStart=7]="TouchStart",e[e.TouchMove_Departed=8]="TouchMove_Departed",e[e.TouchEnd=9]="TouchEnd",e[e.TouchCancel=10]="TouchCancel",e))(Ne||{}),Ee=(e=>(e[e["2D"]=0]="2D",e[e.WebGL=1]="WebGL",e[e.WebGL2=2]="WebGL2",e))(Ee||{}),Se=(e=>(e.Start="start",e.Pause="pause",e.Resume="resume",e.Resize="resize",e.Finish="finish",e.FullsnapshotRebuilded="fullsnapshot-rebuilded",e.LoadStylesheetStart="load-stylesheet-start",e.LoadStylesheetEnd="load-stylesheet-end",e.SkipStart="skip-start",e.SkipEnd="skip-end",e.MouseInteraction="mouse-interaction",e.EventCast="event-cast",e.CustomEvent="custom-event",e.Flush="flush",e.StateChange="state-change",e.PlayBack="play-back",e.Destroy="destroy",e))(Se||{});
+function e(){}function t(e,t){for(const n in t)e[n]=t[n];return e}function n(e){return e()}function i(){return Object.create(null)}function o(e){e.forEach(n);}function r(e){return "function"==typeof e}function s(e,t){return e!=e?t==t:e!==t||e&&"object"==typeof e||"function"==typeof e}function a(e){const t={};for(const n in e)"$"!==n[0]&&(t[n]=e[n]);return t}function l(e,t){e.appendChild(t);}function c(e,t,n){e.insertBefore(t,n||null);}function d(e){e.parentNode.removeChild(e);}function u(e,t){for(let n=0;n<e.length;n+=1)e[n]&&e[n].d(t);}function h(e){return document.createElement(e)}function p(e){return document.createElementNS("http://www.w3.org/2000/svg",e)}function g(e){return document.createTextNode(e)}function m(){return g(" ")}function f(e,t,n,i){return e.addEventListener(t,n,i),()=>e.removeEventListener(t,n,i)}function y(e,t,n){null==n?e.removeAttribute(t):e.getAttribute(t)!==n&&e.setAttribute(t,n);}function v(e,t){t=""+t,e.wholeText!==t&&(e.data=t);}function C(e,t,n,i){null===n?e.style.removeProperty(t):e.style.setProperty(t,n,"");}function I(e,t,n){e.classList[n?"add":"remove"](t);}let A;function b(e){A=e;}function w(){if(!A)throw new Error("Function called outside component initialization");return A}function N(e){w().$$.on_mount.push(e);}function E(e){w().$$.on_destroy.push(e);}function S(){const e=w();return (t,n,{cancelable:i=!1}={})=>{const o=e.$$.callbacks[t];if(o){const r=function(e,t,{bubbles:n=!1,cancelable:i=!1}={}){const o=document.createEvent("CustomEvent");return o.initCustomEvent(e,n,i,t),o}(t,n,{cancelable:i});return o.slice().forEach((t=>{t.call(e,r);})),!r.defaultPrevented}return !0}}const T=[],D=[],M=[],R=[],x=Promise.resolve();let k=!1;function F(e){M.push(e);}const O=new Set;let B=0;function L(){const e=A;do{for(;B<T.length;){const e=T[B];B++,b(e),V(e.$$);}for(b(null),T.length=0,B=0;D.length;)D.pop()();for(let e=0;e<M.length;e+=1){const t=M[e];O.has(t)||(O.add(t),t());}M.length=0;}while(T.length);for(;R.length;)R.pop()();k=!1,O.clear(),b(e);}function V(e){if(null!==e.fragment){e.update(),o(e.before_update);const t=e.dirty;e.dirty=[-1],e.fragment&&e.fragment.p(e.ctx,t),e.after_update.forEach(F);}}const _=new Set;let G;function W(){G={r:0,c:[],p:G};}function U(){G.r||o(G.c),G=G.p;}function Z(e,t){e&&e.i&&(_.delete(e),e.i(t));}function $(e,t,n,i){if(e&&e.o){if(_.has(e))return;_.add(e),G.c.push((()=>{_.delete(e),i&&(n&&e.d(1),i());})),e.o(t);}else i&&i();}function K(e){e&&e.c();}function Y(e,t,i,s){const{fragment:a,on_mount:l,on_destroy:c,after_update:d}=e.$$;a&&a.m(t,i),s||F((()=>{const t=l.map(n).filter(r);c?c.push(...t):o(t),e.$$.on_mount=[];})),d.forEach(F);}function P(e,t){const n=e.$$;null!==n.fragment&&(o(n.on_destroy),n.fragment&&n.fragment.d(t),n.on_destroy=n.fragment=null,n.ctx=[]);}function Q(e,t){-1===e.$$.dirty[0]&&(T.push(e),k||(k=!0,x.then(L)),e.$$.dirty.fill(0)),e.$$.dirty[t/31|0]|=1<<t%31;}function z(t,n,r,s,a,l,c,u=[-1]){const h=A;b(t);const p=t.$$={fragment:null,ctx:null,props:l,update:e,not_equal:a,bound:i(),on_mount:[],on_destroy:[],on_disconnect:[],before_update:[],after_update:[],context:new Map(n.context||(h?h.$$.context:[])),callbacks:i(),dirty:u,skip_bound:!1,root:n.target||h.$$.root};c&&c(p.root);let g=!1;if(p.ctx=r?r(t,n.props||{},((e,n,...i)=>{const o=i.length?i[0]:n;return p.ctx&&a(p.ctx[e],p.ctx[e]=o)&&(!p.skip_bound&&p.bound[e]&&p.bound[e](o),g&&Q(t,e)),n})):[],p.update(),g=!0,o(p.before_update),p.fragment=!!s&&s(p.ctx),n.target){if(n.hydrate){const e=function(e){return Array.from(e.childNodes)}(n.target);p.fragment&&p.fragment.l(e),e.forEach(d);}else p.fragment&&p.fragment.c();n.intro&&Z(t.$$.fragment),Y(t,n.target,n.anchor,n.customElement),L();}b(h);}class J{$destroy(){P(this,1),this.$destroy=e;}$on(e,t){const n=this.$$.callbacks[e]||(this.$$.callbacks[e]=[]);return n.push(t),()=>{const e=n.indexOf(t);-1!==e&&n.splice(e,1);}}$set(e){var t;this.$$set&&(t=e,0!==Object.keys(t).length)&&(this.$$.skip_bound=!0,this.$$set(e),this.$$.skip_bound=!1);}}var X;function H(e){return e.nodeType===e.ELEMENT_NODE}!function(e){e[e.Document=0]="Document",e[e.DocumentType=1]="DocumentType",e[e.Element=2]="Element",e[e.Text=3]="Text",e[e.CDATA=4]="CDATA",e[e.Comment=5]="Comment";}(X||(X={}));var j=function(){function e(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}return e.prototype.getId=function(e){var t;if(!e)return -1;var n=null===(t=this.getMeta(e))||void 0===t?void 0:t.id;return null!=n?n:-1},e.prototype.getNode=function(e){return this.idNodeMap.get(e)||null},e.prototype.getIds=function(){return Array.from(this.idNodeMap.keys())},e.prototype.getMeta=function(e){return this.nodeMetaMap.get(e)||null},e.prototype.removeNodeFromMap=function(e){var t=this,n=this.getId(e);this.idNodeMap.delete(n),e.childNodes&&e.childNodes.forEach((function(e){return t.removeNodeFromMap(e)}));},e.prototype.has=function(e){return this.idNodeMap.has(e)},e.prototype.hasNode=function(e){return this.nodeMetaMap.has(e)},e.prototype.add=function(e,t){var n=t.id;this.idNodeMap.set(n,e),this.nodeMetaMap.set(e,t);},e.prototype.replace=function(e,t){var n=this.getNode(e);if(n){var i=this.nodeMetaMap.get(n);i&&this.nodeMetaMap.set(t,i);}this.idNodeMap.set(e,t);},e.prototype.reset=function(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;},e}();function q(){return new j}var ee=/\/\*[^*]*\*+([^/*][^*]*\*+)*\//g;function te(e,t){void 0===t&&(t={});var n=1,i=1;function o(e){var t=e.match(/\n/g);t&&(n+=t.length);var o=e.lastIndexOf("\n");i=-1===o?i+e.length:e.length-o;}function r(){var e={line:n,column:i};return function(t){return t.position=new s(e),p(),t}}var s=function(e){this.start=e,this.end={line:n,column:i},this.source=t.source;};s.prototype.content=e;var a=[];function l(o){var r=new Error("".concat(t.source||"",":").concat(n,":").concat(i,": ").concat(o));if(r.reason=o,r.filename=t.source,r.line=n,r.column=i,r.source=e,!t.silent)throw r;a.push(r);}function c(){return h(/^{\s*/)}function d(){return h(/^}/)}function u(){var t,n=[];for(p(),g(n);e.length&&"}"!==e.charAt(0)&&(t=E()||S());)!1!==t&&(n.push(t),g(n));return n}function h(t){var n=t.exec(e);if(n){var i=n[0];return o(i),e=e.slice(i.length),n}}function p(){h(/^\s*/);}function g(e){var t;for(void 0===e&&(e=[]);t=m();)!1!==t&&e.push(t),t=m();return e}function m(){var t=r();if("/"===e.charAt(0)&&"*"===e.charAt(1)){for(var n=2;""!==e.charAt(n)&&("*"!==e.charAt(n)||"/"!==e.charAt(n+1));)++n;if(n+=2,""===e.charAt(n-1))return l("End of comment missing");var s=e.slice(2,n-2);return i+=2,o(s),e=e.slice(n),i+=2,t({type:"comment",comment:s})}}function f(){var e=h(/^([^{]+)/);if(e)return ne(e[0]).replace(/\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*\/+/g,"").replace(/"(?:\\"|[^"])*"|'(?:\\'|[^'])*'/g,(function(e){return e.replace(/,/g,"‌")})).split(/\s*(?![^(]*\)),\s*/).map((function(e){return e.replace(/\u200C/g,",")}))}function y(){var e=r(),t=h(/^(\*?[-#\/\*\\\w]+(\[[0-9a-z_-]+\])?)\s*/);if(t){var n=ne(t[0]);if(!h(/^:\s*/))return l("property missing ':'");var i=h(/^((?:'(?:\\'|.)*?'|"(?:\\"|.)*?"|\([^\)]*?\)|[^};])+)/),o=e({type:"declaration",property:n.replace(ee,""),value:i?ne(i[0]).replace(ee,""):""});return h(/^[;\s]*/),o}}function v(){var e,t=[];if(!c())return l("missing '{'");for(g(t);e=y();)!1!==e&&(t.push(e),g(t)),e=y();return d()?t:l("missing '}'")}function C(){for(var e,t=[],n=r();e=h(/^((\d+\.\d+|\.\d+|\d+)%?|[a-z]+)\s*/);)t.push(e[1]),h(/^,\s*/);if(t.length)return n({type:"keyframe",values:t,declarations:v()})}var I,A=N("import"),b=N("charset"),w=N("namespace");function N(e){var t=new RegExp("^@"+e+"\\s*([^;]+);");return function(){var n=r(),i=h(t);if(i){var o={type:e};return o[e]=i[1].trim(),n(o)}}}function E(){if("@"===e[0])return function(){var e=r(),t=h(/^@([-\w]+)?keyframes\s*/);if(t){var n=t[1];if(!(t=h(/^([-\w]+)\s*/)))return l("@keyframes missing name");var i,o=t[1];if(!c())return l("@keyframes missing '{'");for(var s=g();i=C();)s.push(i),s=s.concat(g());return d()?e({type:"keyframes",name:o,vendor:n,keyframes:s}):l("@keyframes missing '}'")}}()||function(){var e=r(),t=h(/^@media *([^{]+)/);if(t){var n=ne(t[1]);if(!c())return l("@media missing '{'");var i=g().concat(u());return d()?e({type:"media",media:n,rules:i}):l("@media missing '}'")}}()||function(){var e=r(),t=h(/^@custom-media\s+(--[^\s]+)\s*([^{;]+);/);if(t)return e({type:"custom-media",name:ne(t[1]),media:ne(t[2])})}()||function(){var e=r(),t=h(/^@supports *([^{]+)/);if(t){var n=ne(t[1]);if(!c())return l("@supports missing '{'");var i=g().concat(u());return d()?e({type:"supports",supports:n,rules:i}):l("@supports missing '}'")}}()||A()||b()||w()||function(){var e=r(),t=h(/^@([-\w]+)?document *([^{]+)/);if(t){var n=ne(t[1]),i=ne(t[2]);if(!c())return l("@document missing '{'");var o=g().concat(u());return d()?e({type:"document",document:i,vendor:n,rules:o}):l("@document missing '}'")}}()||function(){var e=r();if(h(/^@page */)){var t=f()||[];if(!c())return l("@page missing '{'");for(var n,i=g();n=y();)i.push(n),i=i.concat(g());return d()?e({type:"page",selectors:t,declarations:i}):l("@page missing '}'")}}()||function(){var e=r();if(h(/^@host\s*/)){if(!c())return l("@host missing '{'");var t=g().concat(u());return d()?e({type:"host",rules:t}):l("@host missing '}'")}}()||function(){var e=r();if(h(/^@font-face\s*/)){if(!c())return l("@font-face missing '{'");for(var t,n=g();t=y();)n.push(t),n=n.concat(g());return d()?e({type:"font-face",declarations:n}):l("@font-face missing '}'")}}()}function S(){var e=r(),t=f();return t?(g(),e({type:"rule",selectors:t,declarations:v()})):l("selector missing")}return ie((I=u(),{type:"stylesheet",stylesheet:{source:t.source,rules:I,parsingErrors:a}}))}function ne(e){return e?e.replace(/^\s+|\s+$/g,""):""}function ie(e,t){for(var n=e&&"string"==typeof e.type,i=n?e:t,o=0,r=Object.keys(e);o<r.length;o++){var s=e[r[o]];Array.isArray(s)?s.forEach((function(e){ie(e,i);})):s&&"object"==typeof s&&ie(s,i);}return n&&Object.defineProperty(e,"parent",{configurable:!0,writable:!0,enumerable:!1,value:t||null}),e}var oe={script:"noscript",altglyph:"altGlyph",altglyphdef:"altGlyphDef",altglyphitem:"altGlyphItem",animatecolor:"animateColor",animatemotion:"animateMotion",animatetransform:"animateTransform",clippath:"clipPath",feblend:"feBlend",fecolormatrix:"feColorMatrix",fecomponenttransfer:"feComponentTransfer",fecomposite:"feComposite",feconvolvematrix:"feConvolveMatrix",fediffuselighting:"feDiffuseLighting",fedisplacementmap:"feDisplacementMap",fedistantlight:"feDistantLight",fedropshadow:"feDropShadow",feflood:"feFlood",fefunca:"feFuncA",fefuncb:"feFuncB",fefuncg:"feFuncG",fefuncr:"feFuncR",fegaussianblur:"feGaussianBlur",feimage:"feImage",femerge:"feMerge",femergenode:"feMergeNode",femorphology:"feMorphology",feoffset:"feOffset",fepointlight:"fePointLight",fespecularlighting:"feSpecularLighting",fespotlight:"feSpotLight",fetile:"feTile",feturbulence:"feTurbulence",foreignobject:"foreignObject",glyphref:"glyphRef",lineargradient:"linearGradient",radialgradient:"radialGradient"};var re=/([^\\]):hover/,se=new RegExp(re.source,"g");function ae(e,t){var n=null==t?void 0:t.stylesWithHoverClass.get(e);if(n)return n;var i=te(e,{silent:!0});if(!i.stylesheet)return e;var o=[];if(i.stylesheet.rules.forEach((function(e){"selectors"in e&&(e.selectors||[]).forEach((function(e){re.test(e)&&o.push(e);}));})),0===o.length)return e;var r=new RegExp(o.filter((function(e,t){return o.indexOf(e)===t})).sort((function(e,t){return t.length-e.length})).map((function(e){return e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})).join("|"),"g"),s=e.replace(r,(function(e){var t=e.replace(se,"$1.\\:hover");return "".concat(e,", ").concat(t)}));return null==t||t.stylesWithHoverClass.set(e,s),s}function le(){return {stylesWithHoverClass:new Map}}function ce(e,t){var n=t.doc,i=t.hackCss,o=t.cache;switch(e.type){case X.Document:return n.implementation.createDocument(null,"",null);case X.DocumentType:return n.implementation.createDocumentType(e.name||"html",e.publicId,e.systemId);case X.Element:var r,s=function(e){var t=oe[e.tagName]?oe[e.tagName]:e.tagName;return "link"===t&&e.attributes._cssText&&(t="style"),t}(e);r=e.isSVG?n.createElementNS("http://www.w3.org/2000/svg",s):n.createElement(s);var a={};for(var l in e.attributes)if(Object.prototype.hasOwnProperty.call(e.attributes,l)){var c=e.attributes[l];if("option"!==s||"selected"!==l||!1!==c)if(!0===c&&(c=""),l.startsWith("rr_"))a[l]=c;else {var d="textarea"===s&&"value"===l,u="style"===s&&"_cssText"===l;if(u&&i&&"string"==typeof c&&(c=ae(c,o)),!d&&!u||"string"!=typeof c)try{if(e.isSVG&&"xlink:href"===l)r.setAttributeNS("http://www.w3.org/1999/xlink",l,c.toString());else if("onload"===l||"onclick"===l||"onmouse"===l.substring(0,7))r.setAttribute("_"+l,c.toString());else {if("meta"===s&&"Content-Security-Policy"===e.attributes["http-equiv"]&&"content"===l){r.setAttribute("csp-content",c.toString());continue}"link"===s&&"preload"===e.attributes.rel&&"script"===e.attributes.as||"link"===s&&"prefetch"===e.attributes.rel&&"string"==typeof e.attributes.href&&e.attributes.href.endsWith(".js")||("img"===s&&e.attributes.srcset&&e.attributes.rr_dataURL?r.setAttribute("rrweb-original-srcset",e.attributes.srcset):r.setAttribute(l,c.toString()));}}catch(e){}else {for(var h=n.createTextNode(c),p=0,g=Array.from(r.childNodes);p<g.length;p++){var m=g[p];m.nodeType===r.TEXT_NODE&&r.removeChild(m);}r.appendChild(h);}}}var f=function(t){var n=a[t];if("canvas"===s&&"rr_dataURL"===t){var i=document.createElement("img");i.onload=function(){var e=r.getContext("2d");e&&e.drawImage(i,0,0,i.width,i.height);},i.src=n.toString(),r.RRNodeType&&(r.rr_dataURL=n.toString());}else if("img"===s&&"rr_dataURL"===t){var o=r;o.currentSrc.startsWith("data:")||(o.setAttribute("rrweb-original-src",e.attributes.src),o.src=n.toString());}if("rr_width"===t)r.style.width=n.toString();else if("rr_height"===t)r.style.height=n.toString();else if("rr_mediaCurrentTime"===t&&"number"==typeof n)r.currentTime=n;else if("rr_mediaState"===t)switch(n){case"played":r.play().catch((function(e){return console.warn("media playback error",e)}));break;case"paused":r.pause();}};for(var y in a)f(y);if(e.isShadowHost)if(r.shadowRoot)for(;r.shadowRoot.firstChild;)r.shadowRoot.removeChild(r.shadowRoot.firstChild);else r.attachShadow({mode:"open"});return r;case X.Text:return n.createTextNode(e.isStyle&&i?ae(e.textContent,o):e.textContent);case X.CDATA:return n.createCDATASection(e.textContent);case X.Comment:return n.createComment(e.textContent);default:return null}}function de(e,t){var n=t.doc,i=t.mirror,o=t.skipChild,r=void 0!==o&&o,s=t.hackCss,a=void 0===s||s,l=t.afterAppend,c=t.cache,d=ce(e,{doc:n,hackCss:a,cache:c});if(!d)return null;if(e.rootId&&i.getNode(e.rootId)!==n&&i.replace(e.rootId,n),e.type===X.Document&&(n.close(),n.open(),"BackCompat"===e.compatMode&&e.childNodes&&e.childNodes[0].type!==X.DocumentType&&(e.childNodes[0].type===X.Element&&"xmlns"in e.childNodes[0].attributes&&"http://www.w3.org/1999/xhtml"===e.childNodes[0].attributes.xmlns?n.write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "">'):n.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "">')),d=n),i.add(d,e),(e.type===X.Document||e.type===X.Element)&&!r)for(var u=0,h=e.childNodes;u<h.length;u++){var p=h[u],g=de(p,{doc:n,mirror:i,skipChild:!1,hackCss:a,afterAppend:l,cache:c});g?(p.isShadow&&H(d)&&d.shadowRoot?d.shadowRoot.appendChild(g):d.appendChild(g),l&&l(g,p.id)):console.warn("Failed to rebuild",p);}return d}function ue(e,t){var n=t.doc,i=t.onVisit,o=t.hackCss,r=void 0===o||o,s=t.afterAppend,a=t.cache,l=t.mirror,c=void 0===l?new j:l,d=de(e,{doc:n,mirror:c,skipChild:!1,hackCss:r,afterAppend:s,cache:a});return function(e,t){for(var n=0,i=e.getIds();n<i.length;n++){var o=i[n];e.has(o)&&t(e.getNode(o));}}(c,(function(e){i&&i(e),function(e,t){var n=t.getMeta(e);if((null==n?void 0:n.type)===X.Element){var i=e;for(var o in n.attributes)if(Object.prototype.hasOwnProperty.call(n.attributes,o)&&o.startsWith("rr_")){var r=n.attributes[o];"rr_scrollLeft"===o&&(i.scrollLeft=r),"rr_scrollTop"===o&&(i.scrollTop=r);}}}(e,c);})),d}const he="Please stop import mirror directly. Instead of that,\r\nnow you can use replayer.getMirror() to access the mirror instance of a replayer,\r\nor you can use record.mirror to access the mirror instance during recording.";let pe={map:{},getId:()=>(console.error(he),-1),getNode:()=>(console.error(he),null),removeNodeFromMap(){console.error(he);},has:()=>(console.error(he),!1),reset(){console.error(he);}};function ge(e){const t={},n=(e,n)=>{const i={value:e,parent:n,children:[]};return t[e.node.id]=i,i},i=[];for(const o of e){const{nextId:e,parentId:r}=o;if(e&&e in t){const r=t[e];if(r.parent){const e=r.parent.children.indexOf(r);r.parent.children.splice(e,0,n(o,r.parent));}else {const e=i.indexOf(r);i.splice(e,0,n(o,null));}}else if(r in t){const e=t[r];e.children.push(n(o,e));}else i.push(n(o,null));}return i}function me(e,t){t(e.value);for(let n=e.children.length-1;n>=0;n--)me(e.children[n],t);}function fe(e,t){return Boolean("IFRAME"===e.nodeName&&t.getMeta(e))}function ye(e,t){var n,i;const o=null===(i=null===(n=e.ownerDocument)||void 0===n?void 0:n.defaultView)||void 0===i?void 0:i.frameElement;if(!o||o===t)return {x:0,y:0,relativeScale:1,absoluteScale:1};const r=o.getBoundingClientRect(),s=ye(o,t),a=r.height/o.clientHeight;return {x:r.x*s.relativeScale+s.x,y:r.y*s.relativeScale+s.y,relativeScale:a,absoluteScale:s.absoluteScale*a}}function ve(e){return Boolean(null==e?void 0:e.shadowRoot)}function Ce(e,t){const n=e[t[0]];return 1===t.length?n:Ce(n.cssRules[t[1]].cssRules,t.slice(2))}function Ie(e){const t=[...e],n=t.pop();return {positions:t,index:n}}"undefined"!=typeof window&&window.Proxy&&window.Reflect&&(pe=new Proxy(pe,{get:(e,t,n)=>("map"===t&&console.error(he),Reflect.get(e,t,n))}));class Ae{constructor(){this.id=1,this.styleIDMap=new WeakMap,this.idStyleMap=new Map;}getId(e){var t;return null!==(t=this.styleIDMap.get(e))&&void 0!==t?t:-1}has(e){return this.styleIDMap.has(e)}add(e,t){if(this.has(e))return this.getId(e);let n;return n=void 0===t?this.id++:t,this.styleIDMap.set(e,n),this.idStyleMap.set(n,e),n}getStyle(e){return this.idStyleMap.get(e)||null}reset(){this.styleIDMap=new WeakMap,this.idStyleMap=new Map,this.id=1;}generateId(){return this.id++}}var be=(e=>(e[e.DomContentLoaded=0]="DomContentLoaded",e[e.Load=1]="Load",e[e.FullSnapshot=2]="FullSnapshot",e[e.IncrementalSnapshot=3]="IncrementalSnapshot",e[e.Meta=4]="Meta",e[e.Custom=5]="Custom",e[e.Plugin=6]="Plugin",e))(be||{}),we=(e=>(e[e.Mutation=0]="Mutation",e[e.MouseMove=1]="MouseMove",e[e.MouseInteraction=2]="MouseInteraction",e[e.Scroll=3]="Scroll",e[e.ViewportResize=4]="ViewportResize",e[e.Input=5]="Input",e[e.TouchMove=6]="TouchMove",e[e.MediaInteraction=7]="MediaInteraction",e[e.StyleSheetRule=8]="StyleSheetRule",e[e.CanvasMutation=9]="CanvasMutation",e[e.Font=10]="Font",e[e.Log=11]="Log",e[e.Drag=12]="Drag",e[e.StyleDeclaration=13]="StyleDeclaration",e[e.Selection=14]="Selection",e[e.AdoptedStyleSheet=15]="AdoptedStyleSheet",e))(we||{}),Ne=(e=>(e[e.MouseUp=0]="MouseUp",e[e.MouseDown=1]="MouseDown",e[e.Click=2]="Click",e[e.ContextMenu=3]="ContextMenu",e[e.DblClick=4]="DblClick",e[e.Focus=5]="Focus",e[e.Blur=6]="Blur",e[e.TouchStart=7]="TouchStart",e[e.TouchMove_Departed=8]="TouchMove_Departed",e[e.TouchEnd=9]="TouchEnd",e[e.TouchCancel=10]="TouchCancel",e))(Ne||{}),Ee=(e=>(e[e["2D"]=0]="2D",e[e.WebGL=1]="WebGL",e[e.WebGL2=2]="WebGL2",e))(Ee||{}),Se=(e=>(e.Start="start",e.Pause="pause",e.Resume="resume",e.Resize="resize",e.Finish="finish",e.FullsnapshotRebuilded="fullsnapshot-rebuilded",e.LoadStylesheetStart="load-stylesheet-start",e.LoadStylesheetEnd="load-stylesheet-end",e.SkipStart="skip-start",e.SkipEnd="skip-end",e.MouseInteraction="mouse-interaction",e.EventCast="event-cast",e.CustomEvent="custom-event",e.Flush="flush",e.StateChange="state-change",e.PlayBack="play-back",e.Destroy="destroy",e))(Se||{});
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -10271,7 +10379,7 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
-function Te(e,t,n,i){return new(n||(n=Promise))((function(o,r){function s(e){try{l(i.next(e));}catch(e){r(e);}}function a(e){try{l(i.throw(e));}catch(e){r(e);}}function l(e){var t;e.done?o(e.value):(t=e.value,t instanceof n?t:new n((function(e){e(t);}))).then(s,a);}l((i=i.apply(e,t||[])).next());}))}for(var De="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",Me="undefined"==typeof Uint8Array?[]:new Uint8Array(256),Re=0;Re<De.length;Re++)Me[De.charCodeAt(Re)]=Re;var xe=null;try{var ke="undefined"!=typeof module&&"function"==typeof module.require&&module.require("worker_threads")||"function"==typeof __non_webpack_require__&&__non_webpack_require__("worker_threads")||"function"==typeof require&&require("worker_threads");xe=ke.Worker;}catch(Ht){}function Fe(e,t,n){var i=void 0===t?null:t,o=function(e,t){return Buffer.from(e,"base64").toString(t?"utf16":"utf8")}(e,void 0!==n&&n),r=o.indexOf("\n",10)+1,s=o.substring(r)+(i?"//# sourceMappingURL="+i:"");return function(e){return new xe(s,Object.assign({},e,{eval:!0}))}}var Oe,Be,Le,Ve,_e="[object process]"===Object.prototype.toString.call("undefined"!=typeof process?process:0);Oe="Lyogcm9sbHVwLXBsdWdpbi13ZWItd29ya2VyLWxvYWRlciAqLwooZnVuY3Rpb24gKCkgewogICAgJ3VzZSBzdHJpY3QnOwoKICAgIC8qISAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKg0KICAgIENvcHlyaWdodCAoYykgTWljcm9zb2Z0IENvcnBvcmF0aW9uLg0KDQogICAgUGVybWlzc2lvbiB0byB1c2UsIGNvcHksIG1vZGlmeSwgYW5kL29yIGRpc3RyaWJ1dGUgdGhpcyBzb2Z0d2FyZSBmb3IgYW55DQogICAgcHVycG9zZSB3aXRoIG9yIHdpdGhvdXQgZmVlIGlzIGhlcmVieSBncmFudGVkLg0KDQogICAgVEhFIFNPRlRXQVJFIElTIFBST1ZJREVEICJBUyBJUyIgQU5EIFRIRSBBVVRIT1IgRElTQ0xBSU1TIEFMTCBXQVJSQU5USUVTIFdJVEgNCiAgICBSRUdBUkQgVE8gVEhJUyBTT0ZUV0FSRSBJTkNMVURJTkcgQUxMIElNUExJRUQgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFkNCiAgICBBTkQgRklUTkVTUy4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFIEFVVEhPUiBCRSBMSUFCTEUgRk9SIEFOWSBTUEVDSUFMLCBESVJFQ1QsDQogICAgSU5ESVJFQ1QsIE9SIENPTlNFUVVFTlRJQUwgREFNQUdFUyBPUiBBTlkgREFNQUdFUyBXSEFUU09FVkVSIFJFU1VMVElORyBGUk9NDQogICAgTE9TUyBPRiBVU0UsIERBVEEgT1IgUFJPRklUUywgV0hFVEhFUiBJTiBBTiBBQ1RJT04gT0YgQ09OVFJBQ1QsIE5FR0xJR0VOQ0UgT1INCiAgICBPVEhFUiBUT1JUSU9VUyBBQ1RJT04sIEFSSVNJTkcgT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgVVNFIE9SDQogICAgUEVSRk9STUFOQ0UgT0YgVEhJUyBTT0ZUV0FSRS4NCiAgICAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiAqLw0KDQogICAgZnVuY3Rpb24gX19hd2FpdGVyKHRoaXNBcmcsIF9hcmd1bWVudHMsIFAsIGdlbmVyYXRvcikgew0KICAgICAgICBmdW5jdGlvbiBhZG9wdCh2YWx1ZSkgeyByZXR1cm4gdmFsdWUgaW5zdGFuY2VvZiBQID8gdmFsdWUgOiBuZXcgUChmdW5jdGlvbiAocmVzb2x2ZSkgeyByZXNvbHZlKHZhbHVlKTsgfSk7IH0NCiAgICAgICAgcmV0dXJuIG5ldyAoUCB8fCAoUCA9IFByb21pc2UpKShmdW5jdGlvbiAocmVzb2x2ZSwgcmVqZWN0KSB7DQogICAgICAgICAgICBmdW5jdGlvbiBmdWxmaWxsZWQodmFsdWUpIHsgdHJ5IHsgc3RlcChnZW5lcmF0b3IubmV4dCh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiByZWplY3RlZCh2YWx1ZSkgeyB0cnkgeyBzdGVwKGdlbmVyYXRvclsidGhyb3ciXSh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiBzdGVwKHJlc3VsdCkgeyByZXN1bHQuZG9uZSA/IHJlc29sdmUocmVzdWx0LnZhbHVlKSA6IGFkb3B0KHJlc3VsdC52YWx1ZSkudGhlbihmdWxmaWxsZWQsIHJlamVjdGVkKTsgfQ0KICAgICAgICAgICAgc3RlcCgoZ2VuZXJhdG9yID0gZ2VuZXJhdG9yLmFwcGx5KHRoaXNBcmcsIF9hcmd1bWVudHMgfHwgW10pKS5uZXh0KCkpOw0KICAgICAgICB9KTsNCiAgICB9CgogICAgLyoKICAgICAqIGJhc2U2NC1hcnJheWJ1ZmZlciAxLjAuMSA8aHR0cHM6Ly9naXRodWIuY29tL25pa2xhc3ZoL2Jhc2U2NC1hcnJheWJ1ZmZlcj4KICAgICAqIENvcHlyaWdodCAoYykgMjAyMSBOaWtsYXMgdm9uIEhlcnR6ZW4gPGh0dHBzOi8vaGVydHplbi5jb20+CiAgICAgKiBSZWxlYXNlZCB1bmRlciBNSVQgTGljZW5zZQogICAgICovCiAgICB2YXIgY2hhcnMgPSAnQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejAxMjM0NTY3ODkrLyc7CiAgICAvLyBVc2UgYSBsb29rdXAgdGFibGUgdG8gZmluZCB0aGUgaW5kZXguCiAgICB2YXIgbG9va3VwID0gdHlwZW9mIFVpbnQ4QXJyYXkgPT09ICd1bmRlZmluZWQnID8gW10gOiBuZXcgVWludDhBcnJheSgyNTYpOwogICAgZm9yICh2YXIgaSA9IDA7IGkgPCBjaGFycy5sZW5ndGg7IGkrKykgewogICAgICAgIGxvb2t1cFtjaGFycy5jaGFyQ29kZUF0KGkpXSA9IGk7CiAgICB9CiAgICB2YXIgZW5jb2RlID0gZnVuY3Rpb24gKGFycmF5YnVmZmVyKSB7CiAgICAgICAgdmFyIGJ5dGVzID0gbmV3IFVpbnQ4QXJyYXkoYXJyYXlidWZmZXIpLCBpLCBsZW4gPSBieXRlcy5sZW5ndGgsIGJhc2U2NCA9ICcnOwogICAgICAgIGZvciAoaSA9IDA7IGkgPCBsZW47IGkgKz0gMykgewogICAgICAgICAgICBiYXNlNjQgKz0gY2hhcnNbYnl0ZXNbaV0gPj4gMl07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1soKGJ5dGVzW2ldICYgMykgPDwgNCkgfCAoYnl0ZXNbaSArIDFdID4+IDQpXTsKICAgICAgICAgICAgYmFzZTY0ICs9IGNoYXJzWygoYnl0ZXNbaSArIDFdICYgMTUpIDw8IDIpIHwgKGJ5dGVzW2kgKyAyXSA+PiA2KV07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1tieXRlc1tpICsgMl0gJiA2M107CiAgICAgICAgfQogICAgICAgIGlmIChsZW4gJSAzID09PSAyKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDEpICsgJz0nOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChsZW4gJSAzID09PSAxKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDIpICsgJz09JzsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGJhc2U2NDsKICAgIH07CgogICAgY29uc3QgbGFzdEJsb2JNYXAgPSBuZXcgTWFwKCk7DQogICAgY29uc3QgdHJhbnNwYXJlbnRCbG9iTWFwID0gbmV3IE1hcCgpOw0KICAgIGZ1bmN0aW9uIGdldFRyYW5zcGFyZW50QmxvYkZvcih3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucykgew0KICAgICAgICByZXR1cm4gX19hd2FpdGVyKHRoaXMsIHZvaWQgMCwgdm9pZCAwLCBmdW5jdGlvbiogKCkgew0KICAgICAgICAgICAgY29uc3QgaWQgPSBgJHt3aWR0aH0tJHtoZWlnaHR9YDsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgaWYgKHRyYW5zcGFyZW50QmxvYk1hcC5oYXMoaWQpKQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gdHJhbnNwYXJlbnRCbG9iTWFwLmdldChpZCk7DQogICAgICAgICAgICAgICAgY29uc3Qgb2Zmc2NyZWVuID0gbmV3IE9mZnNjcmVlbkNhbnZhcyh3aWR0aCwgaGVpZ2h0KTsNCiAgICAgICAgICAgICAgICBvZmZzY3JlZW4uZ2V0Q29udGV4dCgnMmQnKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGFycmF5QnVmZmVyID0geWllbGQgYmxvYi5hcnJheUJ1ZmZlcigpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGJhc2U2NCA9IGVuY29kZShhcnJheUJ1ZmZlcik7DQogICAgICAgICAgICAgICAgdHJhbnNwYXJlbnRCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICByZXR1cm4gYmFzZTY0Ow0KICAgICAgICAgICAgfQ0KICAgICAgICAgICAgZWxzZSB7DQogICAgICAgICAgICAgICAgcmV0dXJuICcnOw0KICAgICAgICAgICAgfQ0KICAgICAgICB9KTsNCiAgICB9DQogICAgY29uc3Qgd29ya2VyID0gc2VsZjsNCiAgICB3b3JrZXIub25tZXNzYWdlID0gZnVuY3Rpb24gKGUpIHsNCiAgICAgICAgcmV0dXJuIF9fYXdhaXRlcih0aGlzLCB2b2lkIDAsIHZvaWQgMCwgZnVuY3Rpb24qICgpIHsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgY29uc3QgeyBpZCwgYml0bWFwLCB3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucyB9ID0gZS5kYXRhOw0KICAgICAgICAgICAgICAgIGNvbnN0IHRyYW5zcGFyZW50QmFzZTY0ID0gZ2V0VHJhbnNwYXJlbnRCbG9iRm9yKHdpZHRoLCBoZWlnaHQsIGRhdGFVUkxPcHRpb25zKTsNCiAgICAgICAgICAgICAgICBjb25zdCBvZmZzY3JlZW4gPSBuZXcgT2Zmc2NyZWVuQ2FudmFzKHdpZHRoLCBoZWlnaHQpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGN0eCA9IG9mZnNjcmVlbi5nZXRDb250ZXh0KCcyZCcpOw0KICAgICAgICAgICAgICAgIGN0eC5kcmF3SW1hZ2UoYml0bWFwLCAwLCAwKTsNCiAgICAgICAgICAgICAgICBiaXRtYXAuY2xvc2UoKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IHR5cGUgPSBibG9iLnR5cGU7DQogICAgICAgICAgICAgICAgY29uc3QgYXJyYXlCdWZmZXIgPSB5aWVsZCBibG9iLmFycmF5QnVmZmVyKCk7DQogICAgICAgICAgICAgICAgY29uc3QgYmFzZTY0ID0gZW5jb2RlKGFycmF5QnVmZmVyKTsNCiAgICAgICAgICAgICAgICBpZiAoIWxhc3RCbG9iTWFwLmhhcyhpZCkgJiYgKHlpZWxkIHRyYW5zcGFyZW50QmFzZTY0KSA9PT0gYmFzZTY0KSB7DQogICAgICAgICAgICAgICAgICAgIGxhc3RCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHdvcmtlci5wb3N0TWVzc2FnZSh7IGlkIH0pOw0KICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICBpZiAobGFzdEJsb2JNYXAuZ2V0KGlkKSA9PT0gYmFzZTY0KQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQgfSk7DQogICAgICAgICAgICAgICAgd29ya2VyLnBvc3RNZXNzYWdlKHsNCiAgICAgICAgICAgICAgICAgICAgaWQsDQogICAgICAgICAgICAgICAgICAgIHR5cGUsDQogICAgICAgICAgICAgICAgICAgIGJhc2U2NCwNCiAgICAgICAgICAgICAgICAgICAgd2lkdGgsDQogICAgICAgICAgICAgICAgICAgIGhlaWdodCwNCiAgICAgICAgICAgICAgICB9KTsNCiAgICAgICAgICAgICAgICBsYXN0QmxvYk1hcC5zZXQoaWQsIGJhc2U2NCk7DQogICAgICAgICAgICB9DQogICAgICAgICAgICBlbHNlIHsNCiAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQ6IGUuZGF0YS5pZCB9KTsNCiAgICAgICAgICAgIH0NCiAgICAgICAgfSk7DQogICAgfTsKCn0pKCk7Cgo=",Be=null,Le=!1,_e?Fe(Oe,Be,Le):function(e,t,n){}(),function(e){e[e.Document=0]="Document",e[e.DocumentType=1]="DocumentType",e[e.Element=2]="Element",e[e.Text=3]="Text",e[e.CDATA=4]="CDATA",e[e.Comment=5]="Comment";}(Ve||(Ve={}));var Ge=function(){function e(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}return e.prototype.getId=function(e){var t;if(!e)return -1;var n=null===(t=this.getMeta(e))||void 0===t?void 0:t.id;return null!=n?n:-1},e.prototype.getNode=function(e){return this.idNodeMap.get(e)||null},e.prototype.getIds=function(){return Array.from(this.idNodeMap.keys())},e.prototype.getMeta=function(e){return this.nodeMetaMap.get(e)||null},e.prototype.removeNodeFromMap=function(e){var t=this,n=this.getId(e);this.idNodeMap.delete(n),e.childNodes&&e.childNodes.forEach((function(e){return t.removeNodeFromMap(e)}));},e.prototype.has=function(e){return this.idNodeMap.has(e)},e.prototype.hasNode=function(e){return this.nodeMetaMap.has(e)},e.prototype.add=function(e,t){var n=t.id;this.idNodeMap.set(n,e),this.nodeMetaMap.set(e,t);},e.prototype.replace=function(e,t){var n=this.getNode(e);if(n){var i=this.nodeMetaMap.get(n);i&&this.nodeMetaMap.set(t,i);}this.idNodeMap.set(e,t);},e.prototype.reset=function(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;},e}();function We(e){const t=[];for(const n in e){const i=e[n];if("string"!=typeof i)continue;const o=Ye(n);t.push(`${o}: ${i};`);}return t.join(" ")}const Ue=/-([a-z])/g,Ze=/^--[a-zA-Z0-9-]+$/,$e=e=>Ze.test(e)?e:e.replace(Ue,((e,t)=>t?t.toUpperCase():"")),Ke=/\B([A-Z])/g,Ye=e=>e.replace(Ke,"-$1").toLowerCase();class Pe{constructor(...e){this.childNodes=[],this.parentElement=null,this.parentNode=null,this.ELEMENT_NODE=qe.ELEMENT_NODE,this.TEXT_NODE=qe.TEXT_NODE;}get firstChild(){return this.childNodes[0]||null}get lastChild(){return this.childNodes[this.childNodes.length-1]||null}get nextSibling(){const e=this.parentNode;if(!e)return null;const t=e.childNodes,n=t.indexOf(this);return t[n+1]||null}contains(e){if(e===this)return !0;for(const t of this.childNodes)if(t.contains(e))return !0;return !1}appendChild(e){throw new Error("RRDomException: Failed to execute 'appendChild' on 'RRNode': This RRNode type does not support this method.")}insertBefore(e,t){throw new Error("RRDomException: Failed to execute 'insertBefore' on 'RRNode': This RRNode type does not support this method.")}removeChild(e){throw new Error("RRDomException: Failed to execute 'removeChild' on 'RRNode': This RRNode type does not support this method.")}toString(){return "RRNode"}}function Qe(e){return class extends e{constructor(e,t,n){super(),this.nodeType=qe.DOCUMENT_TYPE_NODE,this.RRNodeType=Ve.DocumentType,this.textContent=null,this.name=e,this.publicId=t,this.systemId=n,this.nodeName=e;}toString(){return "RRDocumentType"}}}function ze(e){return class extends e{constructor(e){super(),this.nodeType=qe.ELEMENT_NODE,this.RRNodeType=Ve.Element,this.attributes={},this.shadowRoot=null,this.tagName=e.toUpperCase(),this.nodeName=e.toUpperCase();}get textContent(){let e="";return this.childNodes.forEach((t=>e+=t.textContent)),e}set textContent(e){this.childNodes=[this.ownerDocument.createTextNode(e)];}get classList(){return new je(this.attributes.class,(e=>{this.attributes.class=e;}))}get id(){return this.attributes.id||""}get className(){return this.attributes.class||""}get style(){const e=this.attributes.style?function(e){const t={},n=/:(.+)/;return e.replace(/\/\*.*?\*\//g,"").split(/;(?![^(]*\))/g).forEach((function(e){if(e){const i=e.split(n);i.length>1&&(t[$e(i[0].trim())]=i[1].trim());}})),t}(this.attributes.style):{},t=/\B([A-Z])/g;return e.setProperty=(n,i,o)=>{if(t.test(n))return;const r=$e(n);i?e[r]=i:delete e[r],"important"===o&&(e[r]+=" !important"),this.attributes.style=We(e);},e.removeProperty=n=>{if(t.test(n))return "";const i=$e(n),o=e[i]||"";return delete e[i],this.attributes.style=We(e),o},e}getAttribute(e){return this.attributes[e]||null}setAttribute(e,t){this.attributes[e]=t;}setAttributeNS(e,t,n){this.setAttribute(t,n);}removeAttribute(e){delete this.attributes[e];}appendChild(e){return this.childNodes.push(e),e.parentNode=this,e.parentElement=this,e}insertBefore(e,t){if(null===t)return this.appendChild(e);const n=this.childNodes.indexOf(t);if(-1==n)throw new Error("Failed to execute 'insertBefore' on 'RRNode': The RRNode before which the new node is to be inserted is not a child of this RRNode.");return this.childNodes.splice(n,0,e),e.parentElement=this,e.parentNode=this,e}removeChild(e){const t=this.childNodes.indexOf(e);if(-1===t)throw new Error("Failed to execute 'removeChild' on 'RRElement': The RRNode to be removed is not a child of this RRNode.");return this.childNodes.splice(t,1),e.parentElement=null,e.parentNode=null,e}attachShadow(e){const t=this.ownerDocument.createElement("SHADOWROOT");return this.shadowRoot=t,t}dispatchEvent(e){return !0}toString(){let e="";for(const t in this.attributes)e+=`${t}="${this.attributes[t]}" `;return `${this.tagName} ${e}`}}}function Je(e){return class extends e{constructor(e){super(),this.nodeType=qe.TEXT_NODE,this.nodeName="#text",this.RRNodeType=Ve.Text,this.data=e;}get textContent(){return this.data}set textContent(e){this.data=e;}toString(){return `RRText text=${JSON.stringify(this.data)}`}}}function Xe(e){return class extends e{constructor(e){super(),this.nodeType=qe.COMMENT_NODE,this.nodeName="#comment",this.RRNodeType=Ve.Comment,this.data=e;}get textContent(){return this.data}set textContent(e){this.data=e;}toString(){return `RRComment text=${JSON.stringify(this.data)}`}}}function He(e){return class extends e{constructor(e){super(),this.nodeName="#cdata-section",this.nodeType=qe.CDATA_SECTION_NODE,this.RRNodeType=Ve.CDATA,this.data=e;}get textContent(){return this.data}set textContent(e){this.data=e;}toString(){return `RRCDATASection data=${JSON.stringify(this.data)}`}}}class je{constructor(e,t){if(this.classes=[],this.add=(...e)=>{for(const t of e){const e=String(t);this.classes.indexOf(e)>=0||this.classes.push(e);}this.onChange&&this.onChange(this.classes.join(" "));},this.remove=(...e)=>{this.classes=this.classes.filter((t=>-1===e.indexOf(t))),this.onChange&&this.onChange(this.classes.join(" "));},e){const t=e.trim().split(/\s+/);this.classes.push(...t);}this.onChange=t;}}var qe;!function(e){e[e.PLACEHOLDER=0]="PLACEHOLDER",e[e.ELEMENT_NODE=1]="ELEMENT_NODE",e[e.ATTRIBUTE_NODE=2]="ATTRIBUTE_NODE",e[e.TEXT_NODE=3]="TEXT_NODE",e[e.CDATA_SECTION_NODE=4]="CDATA_SECTION_NODE",e[e.ENTITY_REFERENCE_NODE=5]="ENTITY_REFERENCE_NODE",e[e.ENTITY_NODE=6]="ENTITY_NODE",e[e.PROCESSING_INSTRUCTION_NODE=7]="PROCESSING_INSTRUCTION_NODE",e[e.COMMENT_NODE=8]="COMMENT_NODE",e[e.DOCUMENT_NODE=9]="DOCUMENT_NODE",e[e.DOCUMENT_TYPE_NODE=10]="DOCUMENT_TYPE_NODE",e[e.DOCUMENT_FRAGMENT_NODE=11]="DOCUMENT_FRAGMENT_NODE";}(qe||(qe={}));const et={svg:"http://www.w3.org/2000/svg","xlink:href":"http://www.w3.org/1999/xlink",xmlns:"http://www.w3.org/2000/xmlns/"},tt={altglyph:"altGlyph",altglyphdef:"altGlyphDef",altglyphitem:"altGlyphItem",animatecolor:"animateColor",animatemotion:"animateMotion",animatetransform:"animateTransform",clippath:"clipPath",feblend:"feBlend",fecolormatrix:"feColorMatrix",fecomponenttransfer:"feComponentTransfer",fecomposite:"feComposite",feconvolvematrix:"feConvolveMatrix",fediffuselighting:"feDiffuseLighting",fedisplacementmap:"feDisplacementMap",fedistantlight:"feDistantLight",fedropshadow:"feDropShadow",feflood:"feFlood",fefunca:"feFuncA",fefuncb:"feFuncB",fefuncg:"feFuncG",fefuncr:"feFuncR",fegaussianblur:"feGaussianBlur",feimage:"feImage",femerge:"feMerge",femergenode:"feMergeNode",femorphology:"feMorphology",feoffset:"feOffset",fepointlight:"fePointLight",fespecularlighting:"feSpecularLighting",fespotlight:"feSpotLight",fetile:"feTile",feturbulence:"feTurbulence",foreignobject:"foreignObject",glyphref:"glyphRef",lineargradient:"linearGradient",radialgradient:"radialGradient"};function nt(e,t,n,i){const o=e.childNodes,r=t.childNodes;i=i||t.mirror||t.ownerDocument.mirror,(o.length>0||r.length>0)&&it(Array.from(o),r,e,n,i);let s=null,a=null;switch(t.RRNodeType){case Ve.Document:a=t.scrollData;break;case Ve.Element:{const o=e,r=t;switch(function(e,t,n){const i=e.attributes,o=t.attributes;for(const i in o){const r=o[i],s=n.getMeta(t);if(s&&"isSVG"in s&&s.isSVG&&et[i])e.setAttributeNS(et[i],i,r);else if("CANVAS"===t.tagName&&"rr_dataURL"===i){const t=document.createElement("img");t.src=r,t.onload=()=>{const n=e.getContext("2d");n&&n.drawImage(t,0,0,t.width,t.height);};}else e.setAttribute(i,r);}for(const{name:t}of Array.from(i))t in o||e.removeAttribute(t);t.scrollLeft&&(e.scrollLeft=t.scrollLeft),t.scrollTop&&(e.scrollTop=t.scrollTop);}(o,r,i),a=r.scrollData,s=r.inputData,r.tagName){case"AUDIO":case"VIDEO":{const t=e,n=r;void 0!==n.paused&&(n.paused?t.pause():t.play()),void 0!==n.muted&&(t.muted=n.muted),void 0!==n.volume&&(t.volume=n.volume),void 0!==n.currentTime&&(t.currentTime=n.currentTime),void 0!==n.playbackRate&&(t.playbackRate=n.playbackRate);break}case"CANVAS":{const i=t;if(null!==i.rr_dataURL){const e=document.createElement("img");e.onload=()=>{const t=o.getContext("2d");t&&t.drawImage(e,0,0,e.width,e.height);},e.src=i.rr_dataURL;}i.canvasMutations.forEach((t=>n.applyCanvas(t.event,t.mutation,e)));}break;case"STYLE":{const e=o.sheet;e&&t.rules.forEach((t=>n.applyStyleSheetMutation(t,e)));}}if(r.shadowRoot){o.shadowRoot||o.attachShadow({mode:"open"});const e=o.shadowRoot.childNodes,t=r.shadowRoot.childNodes;(e.length>0||t.length>0)&&it(Array.from(e),t,o.shadowRoot,n,i);}break}case Ve.Text:case Ve.Comment:case Ve.CDATA:e.textContent!==t.data&&(e.textContent=t.data);}if(a&&n.applyScroll(a,!0),s&&n.applyInput(s),"IFRAME"===t.nodeName){const o=e.contentDocument,r=t;if(o){const e=i.getMeta(r.contentDocument);e&&n.mirror.add(o,Object.assign({},e)),nt(o,r.contentDocument,n,i);}}}function it(e,t,n,i,o){var r;let s,a,l=0,c=e.length-1,d=0,u=t.length-1,h=e[l],p=e[c],g=t[d],m=t[u];for(;l<=c&&d<=u;){const f=i.mirror.getId(h),y=i.mirror.getId(p),v=o.getId(g),C=o.getId(m);if(void 0===h)h=e[++l];else if(void 0===p)p=e[--c];else if(-1!==f&&f===v)nt(h,g,i,o),h=e[++l],g=t[++d];else if(-1!==y&&y===C)nt(p,m,i,o),p=e[--c],m=t[--u];else if(-1!==f&&f===C)n.insertBefore(h,p.nextSibling),nt(h,m,i,o),h=e[++l],m=t[--u];else if(-1!==y&&y===v)n.insertBefore(p,h),nt(p,g,i,o),p=e[--c],g=t[++d];else {if(!s){s={};for(let t=l;t<=c;t++){const n=e[t];n&&i.mirror.hasNode(n)&&(s[i.mirror.getId(n)]=t);}}if(a=s[o.getId(g)],a){const t=e[a];n.insertBefore(t,h),nt(t,g,i,o),e[a]=void 0;}else {const t=ot(g,i.mirror,o);"#document"===n.nodeName&&(null===(r=i.mirror.getMeta(t))||void 0===r?void 0:r.type)===Ve.Element&&n.documentElement&&(n.removeChild(n.documentElement),e[l]=void 0,h=void 0),n.insertBefore(t,h||null),nt(t,g,i,o);}g=t[++d];}}if(l>c){const e=t[u+1];let r=null;for(e&&n.childNodes.forEach((t=>{i.mirror.getId(t)===o.getId(e)&&(r=t);}));d<=u;++d){const e=ot(t[d],i.mirror,o);n.insertBefore(e,r),nt(e,t[d],i,o);}}else if(d>u)for(;l<=c;l++){const t=e[l];t&&(n.removeChild(t),i.mirror.removeNodeFromMap(t));}}function ot(e,t,n){const i=n.getId(e),o=n.getMeta(e);let r=null;if(i>-1&&(r=t.getNode(i)),null!==r)return r;switch(e.RRNodeType){case Ve.Document:r=new Document;break;case Ve.DocumentType:r=document.implementation.createDocumentType(e.name,e.publicId,e.systemId);break;case Ve.Element:{let t=e.tagName.toLowerCase();t=tt[t]||t,r=o&&"isSVG"in o&&(null==o?void 0:o.isSVG)?document.createElementNS(et.svg,t):document.createElement(e.tagName);break}case Ve.Text:r=document.createTextNode(e.data);break;case Ve.Comment:r=document.createComment(e.data);break;case Ve.CDATA:r=document.createCDATASection(e.data);}return o&&t.add(r,Object.assign({},o)),r}class rt extends(function(e){return class t extends e{constructor(){super(...arguments),this.nodeType=qe.DOCUMENT_NODE,this.nodeName="#document",this.compatMode="CSS1Compat",this.RRNodeType=Ve.Document,this.textContent=null;}get documentElement(){return this.childNodes.find((e=>e.RRNodeType===Ve.Element&&"HTML"===e.tagName))||null}get body(){var e;return (null===(e=this.documentElement)||void 0===e?void 0:e.childNodes.find((e=>e.RRNodeType===Ve.Element&&"BODY"===e.tagName)))||null}get head(){var e;return (null===(e=this.documentElement)||void 0===e?void 0:e.childNodes.find((e=>e.RRNodeType===Ve.Element&&"HEAD"===e.tagName)))||null}get implementation(){return this}get firstElementChild(){return this.documentElement}appendChild(e){const t=e.RRNodeType;if((t===Ve.Element||t===Ve.DocumentType)&&this.childNodes.some((e=>e.RRNodeType===t)))throw new Error(`RRDomException: Failed to execute 'appendChild' on 'RRNode': Only one ${t===Ve.Element?"RRElement":"RRDoctype"} on RRDocument allowed.`);return e.parentElement=null,e.parentNode=this,this.childNodes.push(e),e}insertBefore(e,t){const n=e.RRNodeType;if((n===Ve.Element||n===Ve.DocumentType)&&this.childNodes.some((e=>e.RRNodeType===n)))throw new Error(`RRDomException: Failed to execute 'insertBefore' on 'RRNode': Only one ${n===Ve.Element?"RRElement":"RRDoctype"} on RRDocument allowed.`);if(null===t)return this.appendChild(e);const i=this.childNodes.indexOf(t);if(-1==i)throw new Error("Failed to execute 'insertBefore' on 'RRNode': The RRNode before which the new node is to be inserted is not a child of this RRNode.");return this.childNodes.splice(i,0,e),e.parentElement=null,e.parentNode=this,e}removeChild(e){const t=this.childNodes.indexOf(e);if(-1===t)throw new Error("Failed to execute 'removeChild' on 'RRDocument': The RRNode to be removed is not a child of this RRNode.");return this.childNodes.splice(t,1),e.parentElement=null,e.parentNode=null,e}open(){this.childNodes=[];}close(){}write(e){let t;if('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "">'===e?t="-//W3C//DTD XHTML 1.0 Transitional//EN":'<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "">'===e&&(t="-//W3C//DTD HTML 4.0 Transitional//EN"),t){const e=this.createDocumentType("html",t,"");this.open(),this.appendChild(e);}}createDocument(e,n,i){return new t}createDocumentType(e,t,n){const i=new(Qe(Pe))(e,t,n);return i.ownerDocument=this,i}createElement(e){const t=new(ze(Pe))(e);return t.ownerDocument=this,t}createElementNS(e,t){return this.createElement(t)}createTextNode(e){const t=new(Je(Pe))(e);return t.ownerDocument=this,t}createComment(e){const t=new(Xe(Pe))(e);return t.ownerDocument=this,t}createCDATASection(e){const t=new(He(Pe))(e);return t.ownerDocument=this,t}toString(){return "RRDocument"}}}(Pe)){constructor(e){super(),this.UNSERIALIZED_STARTING_ID=-2,this._unserializedId=this.UNSERIALIZED_STARTING_ID,this.mirror=new yt,this.scrollData=null,e&&(this.mirror=e);}get unserializedId(){return this._unserializedId--}createDocument(e,t,n){return new rt}createDocumentType(e,t,n){const i=new st(e,t,n);return i.ownerDocument=this,i}createElement(e){const t=e.toUpperCase();let n;switch(t){case"AUDIO":case"VIDEO":n=new lt(t);break;case"IFRAME":n=new ut(t,this.mirror);break;case"CANVAS":n=new ct(t);break;case"STYLE":n=new dt(t);break;default:n=new at(t);}return n.ownerDocument=this,n}createComment(e){const t=new pt(e);return t.ownerDocument=this,t}createCDATASection(e){const t=new gt(e);return t.ownerDocument=this,t}createTextNode(e){const t=new ht(e);return t.ownerDocument=this,t}destroyTree(){this.childNodes=[],this.mirror.reset();}open(){super.open(),this._unserializedId=this.UNSERIALIZED_STARTING_ID;}}const st=Qe(Pe);class at extends(ze(Pe)){constructor(){super(...arguments),this.inputData=null,this.scrollData=null;}}class lt extends(function(e){return class extends e{attachShadow(e){throw new Error("RRDomException: Failed to execute 'attachShadow' on 'RRElement': This RRElement does not support attachShadow")}play(){this.paused=!1;}pause(){this.paused=!0;}}}(at)){}class ct extends at{constructor(){super(...arguments),this.rr_dataURL=null,this.canvasMutations=[];}getContext(){return null}}class dt extends at{constructor(){super(...arguments),this.rules=[];}}class ut extends at{constructor(e,t){super(e),this.contentDocument=new rt,this.contentDocument.mirror=t;}}const ht=Je(Pe),pt=Xe(Pe),gt=He(Pe);function mt(e,t,n,i){let o;switch(e.nodeType){case qe.DOCUMENT_NODE:i&&"IFRAME"===i.nodeName?o=i.contentDocument:(o=t,o.compatMode=e.compatMode);break;case qe.DOCUMENT_TYPE_NODE:{const n=e;o=t.createDocumentType(n.name,n.publicId,n.systemId);break}case qe.ELEMENT_NODE:{const n=e,i=function(e){return e instanceof HTMLFormElement?"FORM":e.tagName.toUpperCase()}(n);o=t.createElement(i);const r=o;for(const{name:e,value:t}of Array.from(n.attributes))r.attributes[e]=t;n.scrollLeft&&(r.scrollLeft=n.scrollLeft),n.scrollTop&&(r.scrollTop=n.scrollTop);break}case qe.TEXT_NODE:o=t.createTextNode(e.textContent||"");break;case qe.CDATA_SECTION_NODE:o=t.createCDATASection(e.data);break;case qe.COMMENT_NODE:o=t.createComment(e.textContent||"");break;case qe.DOCUMENT_FRAGMENT_NODE:o=i.attachShadow({mode:"open"});break;default:return null}let r=n.getMeta(e);return t instanceof rt&&(r||(r=vt(o,t.unserializedId),n.add(e,r)),t.mirror.add(o,Object.assign({},r))),o}function ft(e,t=function(){return new Ge}(),n=new rt){return function e(i,o){const r=mt(i,n,t,o);if(null!==r)if("IFRAME"!==(null==o?void 0:o.nodeName)&&i.nodeType!==qe.DOCUMENT_FRAGMENT_NODE&&(null==o||o.appendChild(r),r.parentNode=o,r.parentElement=o),"IFRAME"===i.nodeName){const t=i.contentDocument;t&&e(t,r);}else i.nodeType!==qe.DOCUMENT_NODE&&i.nodeType!==qe.ELEMENT_NODE&&i.nodeType!==qe.DOCUMENT_FRAGMENT_NODE||(i.nodeType===qe.ELEMENT_NODE&&i.shadowRoot&&e(i.shadowRoot,r),i.childNodes.forEach((t=>e(t,r))));}(e,null),n}class yt{constructor(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}getId(e){var t;if(!e)return -1;const n=null===(t=this.getMeta(e))||void 0===t?void 0:t.id;return null!=n?n:-1}getNode(e){return this.idNodeMap.get(e)||null}getIds(){return Array.from(this.idNodeMap.keys())}getMeta(e){return this.nodeMetaMap.get(e)||null}removeNodeFromMap(e){const t=this.getId(e);this.idNodeMap.delete(t),e.childNodes&&e.childNodes.forEach((e=>this.removeNodeFromMap(e)));}has(e){return this.idNodeMap.has(e)}hasNode(e){return this.nodeMetaMap.has(e)}add(e,t){const n=t.id;this.idNodeMap.set(n,e),this.nodeMetaMap.set(e,t);}replace(e,t){const n=this.getNode(e);if(n){const e=this.nodeMetaMap.get(n);e&&this.nodeMetaMap.set(t,e);}this.idNodeMap.set(e,t);}reset(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}}function vt(e,t){switch(e.RRNodeType){case Ve.Document:return {id:t,type:e.RRNodeType,childNodes:[]};case Ve.DocumentType:{const n=e;return {id:t,type:e.RRNodeType,name:n.name,publicId:n.publicId,systemId:n.systemId}}case Ve.Element:return {id:t,type:e.RRNodeType,tagName:e.tagName.toLowerCase(),attributes:{},childNodes:[]};case Ve.Text:case Ve.Comment:return {id:t,type:e.RRNodeType,textContent:e.textContent||""};case Ve.CDATA:return {id:t,type:e.RRNodeType,textContent:""}}}var Ct=Uint8Array,It=Uint16Array,At=Uint32Array,bt=new Ct([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0,0,0,0]),wt=new Ct([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,0,0]),Nt=new Ct([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]),Et=function(e,t){for(var n=new It(31),i=0;i<31;++i)n[i]=t+=1<<e[i-1];var o=new At(n[30]);for(i=1;i<30;++i)for(var r=n[i];r<n[i+1];++r)o[r]=r-n[i]<<5|i;return [n,o]},St=Et(bt,2),Tt=St[0],Dt=St[1];Tt[28]=258,Dt[258]=28;for(var Mt=Et(wt,0)[0],Rt=new It(32768),xt=0;xt<32768;++xt){var kt=(43690&xt)>>>1|(21845&xt)<<1;kt=(61680&(kt=(52428&kt)>>>2|(13107&kt)<<2))>>>4|(3855&kt)<<4,Rt[xt]=((65280&kt)>>>8|(255&kt)<<8)>>>1;}var Ft=function(e,t,n){for(var i=e.length,o=0,r=new It(t);o<i;++o)++r[e[o]-1];var s,a=new It(t);for(o=0;o<t;++o)a[o]=a[o-1]+r[o-1]<<1;if(n){s=new It(1<<t);var l=15-t;for(o=0;o<i;++o)if(e[o])for(var c=o<<4|e[o],d=t-e[o],u=a[e[o]-1]++<<d,h=u|(1<<d)-1;u<=h;++u)s[Rt[u]>>>l]=c;}else for(s=new It(i),o=0;o<i;++o)s[o]=Rt[a[e[o]-1]++]>>>15-e[o];return s},Ot=new Ct(288);for(xt=0;xt<144;++xt)Ot[xt]=8;for(xt=144;xt<256;++xt)Ot[xt]=9;for(xt=256;xt<280;++xt)Ot[xt]=7;for(xt=280;xt<288;++xt)Ot[xt]=8;var Bt=new Ct(32);for(xt=0;xt<32;++xt)Bt[xt]=5;var Lt=Ft(Ot,9,1),Vt=Ft(Bt,5,1),_t=function(e){for(var t=e[0],n=1;n<e.length;++n)e[n]>t&&(t=e[n]);return t},Gt=function(e,t,n){var i=t/8>>0;return (e[i]|e[i+1]<<8)>>>(7&t)&n},Wt=function(e,t){var n=t/8>>0;return (e[n]|e[n+1]<<8|e[n+2]<<16)>>>(7&t)},Ut=function(e,t,n){(null==t||t<0)&&(t=0),(null==n||n>e.length)&&(n=e.length);var i=new(e instanceof It?It:e instanceof At?At:Ct)(n-t);return i.set(e.subarray(t,n)),i};function Zt(e,t){return function(e,t,n){var i=e.length,o=!t||n,r=!n||n.i;n||(n={}),t||(t=new Ct(3*i));var s,a=function(e){var n=t.length;if(e>n){var i=new Ct(Math.max(2*n,e));i.set(t),t=i;}},l=n.f||0,c=n.p||0,d=n.b||0,u=n.l,h=n.d,p=n.m,g=n.n,m=8*i;do{if(!u){n.f=l=Gt(e,c,1);var f=Gt(e,c+1,3);if(c+=3,!f){var y=e[(D=((s=c)/8>>0)+(7&s&&1)+4)-4]|e[D-3]<<8,v=D+y;if(v>i){if(r)throw "unexpected EOF";break}o&&a(d+y),t.set(e.subarray(D,v),d),n.b=d+=y,n.p=c=8*v;continue}if(1==f)u=Lt,h=Vt,p=9,g=5;else {if(2!=f)throw "invalid block type";var C=Gt(e,c,31)+257,I=Gt(e,c+10,15)+4,A=C+Gt(e,c+5,31)+1;c+=14;for(var b=new Ct(A),w=new Ct(19),N=0;N<I;++N)w[Nt[N]]=Gt(e,c+3*N,7);c+=3*I;var E=_t(w),S=(1<<E)-1;if(!r&&c+A*(E+7)>m)break;var T=Ft(w,E,1);for(N=0;N<A;){var D,M=T[Gt(e,c,S)];if(c+=15&M,(D=M>>>4)<16)b[N++]=D;else {var R=0,x=0;for(16==D?(x=3+Gt(e,c,3),c+=2,R=b[N-1]):17==D?(x=3+Gt(e,c,7),c+=3):18==D&&(x=11+Gt(e,c,127),c+=7);x--;)b[N++]=R;}}var k=b.subarray(0,C),F=b.subarray(C);p=_t(k),g=_t(F),u=Ft(k,p,1),h=Ft(F,g,1);}if(c>m)throw "unexpected EOF"}o&&a(d+131072);for(var O=(1<<p)-1,B=(1<<g)-1,L=p+g+18;r||c+L<m;){var V=(R=u[Wt(e,c)&O])>>>4;if((c+=15&R)>m)throw "unexpected EOF";if(!R)throw "invalid length/literal";if(V<256)t[d++]=V;else {if(256==V){u=null;break}var _=V-254;if(V>264){var G=bt[N=V-257];_=Gt(e,c,(1<<G)-1)+Tt[N],c+=G;}var W=h[Wt(e,c)&B],U=W>>>4;if(!W)throw "invalid distance";if(c+=15&W,F=Mt[U],U>3&&(G=wt[U],F+=Wt(e,c)&(1<<G)-1,c+=G),c>m)throw "unexpected EOF";o&&a(d+131072);for(var Z=d+_;d<Z;d+=4)t[d]=t[d-F],t[d+1]=t[d+1-F],t[d+2]=t[d+2-F],t[d+3]=t[d+3-F];d=Z;}}n.l=u,n.p=c,n.b=d,u&&(l=1,n.m=p,n.d=h,n.n=g);}while(!l);return d==t.length?t:Ut(t,0,d)}((function(e){if(8!=(15&e[0])||e[0]>>>4>7||(e[0]<<8|e[1])%31)throw "invalid zlib data";if(32&e[1])throw "invalid zlib data: preset dictionaries not supported"}(e),e.subarray(2,-4)),t)}const $t=e=>{if("string"!=typeof e)return e;try{const t=JSON.parse(e);if(t.timestamp)return t}catch(e){}try{const t=JSON.parse(function(e,t){var n="";if(!t&&"undefined"!=typeof TextDecoder)return (new TextDecoder).decode(e);for(var i=0;i<e.length;){var o=e[i++];o<128||t?n+=String.fromCharCode(o):o<224?n+=String.fromCharCode((31&o)<<6|63&e[i++]):o<240?n+=String.fromCharCode((15&o)<<12|(63&e[i++])<<6|63&e[i++]):(o=((15&o)<<18|(63&e[i++])<<12|(63&e[i++])<<6|63&e[i++])-65536,n+=String.fromCharCode(55296|o>>10,56320|1023&o));}return n}(Zt(function(e,t){var n=e.length;if(!t&&"undefined"!=typeof TextEncoder)return (new TextEncoder).encode(e);for(var i=new Ct(e.length+(e.length>>>1)),o=0,r=function(e){i[o++]=e;},s=0;s<n;++s){if(o+5>i.length){var a=new Ct(o+8+(n-s<<1));a.set(i),i=a;}var l=e.charCodeAt(s);l<128||t?r(l):l<2048?(r(192|l>>>6),r(128|63&l)):l>55295&&l<57344?(r(240|(l=65536+(1047552&l)|1023&e.charCodeAt(++s))>>>18),r(128|l>>>12&63),r(128|l>>>6&63),r(128|63&l)):(r(224|l>>>12),r(128|l>>>6&63),r(128|63&l));}return Ut(i,0,o)}(e,!0))));if("v1"===t.v)return t;throw new Error(`These events were packed with packer ${t.v} which is incompatible with current packer v1.`)}catch(e){throw console.error(e),new Error("Unknown data format.")}};function Kt(e){return {all:e=e||new Map,on:function(t,n){var i=e.get(t);i?i.push(n):e.set(t,[n]);},off:function(t,n){var i=e.get(t);i&&(n?i.splice(i.indexOf(n)>>>0,1):e.set(t,[]));},emit:function(t,n){var i=e.get(t);i&&i.slice().map((function(e){e(n);})),(i=e.get("*"))&&i.slice().map((function(e){e(t,n);}));}}}var Yt,Pt=Object.freeze({__proto__:null,default:Kt});function Qt(e=window,t=document){if("scrollBehavior"in t.documentElement.style&&!0!==e.__forceSmoothScrollPolyfill__)return;const n=e.HTMLElement||e.Element,i={scroll:e.scroll||e.scrollTo,scrollBy:e.scrollBy,elementScroll:n.prototype.scroll||a,scrollIntoView:n.prototype.scrollIntoView},o=e.performance&&e.performance.now?e.performance.now.bind(e.performance):Date.now;const r=(s=e.navigator.userAgent,new RegExp(["MSIE ","Trident/","Edge/"].join("|")).test(s)?1:0);var s;function a(e,t){this.scrollLeft=e,this.scrollTop=t;}function l(e){if(null===e||"object"!=typeof e||void 0===e.behavior||"auto"===e.behavior||"instant"===e.behavior)return !0;if("object"==typeof e&&"smooth"===e.behavior)return !1;throw new TypeError("behavior member of ScrollOptions "+e.behavior+" is not a valid value for enumeration ScrollBehavior.")}function c(e,t){return "Y"===t?e.clientHeight+r<e.scrollHeight:"X"===t?e.clientWidth+r<e.scrollWidth:void 0}function d(t,n){const i=e.getComputedStyle(t,null)["overflow"+n];return "auto"===i||"scroll"===i}function u(e){const t=c(e,"Y")&&d(e,"Y"),n=c(e,"X")&&d(e,"X");return t||n}function h(e){for(;e!==t.body&&!1===u(e);)e=e.parentNode||e.host;return e}function p(t){let n,i,r,s=(o()-t.startTime)/468;var a;s=s>1?1:s,a=s,n=.5*(1-Math.cos(Math.PI*a)),i=t.startX+(t.x-t.startX)*n,r=t.startY+(t.y-t.startY)*n,t.method.call(t.scrollable,i,r),i===t.x&&r===t.y||e.requestAnimationFrame(p.bind(e,t));}function g(n,r,s){let l,c,d,u;const h=o();n===t.body?(l=e,c=e.scrollX||e.pageXOffset,d=e.scrollY||e.pageYOffset,u=i.scroll):(l=n,c=n.scrollLeft,d=n.scrollTop,u=a),p({scrollable:l,method:u,startTime:h,startX:c,startY:d,x:r,y:s});}e.scroll=e.scrollTo=function(){void 0!==arguments[0]&&(!0!==l(arguments[0])?g.call(e,t.body,void 0!==arguments[0].left?~~arguments[0].left:e.scrollX||e.pageXOffset,void 0!==arguments[0].top?~~arguments[0].top:e.scrollY||e.pageYOffset):i.scroll.call(e,void 0!==arguments[0].left?arguments[0].left:"object"!=typeof arguments[0]?arguments[0]:e.scrollX||e.pageXOffset,void 0!==arguments[0].top?arguments[0].top:void 0!==arguments[1]?arguments[1]:e.scrollY||e.pageYOffset));},e.scrollBy=function(){void 0!==arguments[0]&&(l(arguments[0])?i.scrollBy.call(e,void 0!==arguments[0].left?arguments[0].left:"object"!=typeof arguments[0]?arguments[0]:0,void 0!==arguments[0].top?arguments[0].top:void 0!==arguments[1]?arguments[1]:0):g.call(e,t.body,~~arguments[0].left+(e.scrollX||e.pageXOffset),~~arguments[0].top+(e.scrollY||e.pageYOffset)));},n.prototype.scroll=n.prototype.scrollTo=function(){if(void 0===arguments[0])return;if(!0===l(arguments[0])){if("number"==typeof arguments[0]&&void 0===arguments[1])throw new SyntaxError("Value could not be converted");return void i.elementScroll.call(this,void 0!==arguments[0].left?~~arguments[0].left:"object"!=typeof arguments[0]?~~arguments[0]:this.scrollLeft,void 0!==arguments[0].top?~~arguments[0].top:void 0!==arguments[1]?~~arguments[1]:this.scrollTop)}const e=arguments[0].left,t=arguments[0].top;g.call(this,this,void 0===e?this.scrollLeft:~~e,void 0===t?this.scrollTop:~~t);},n.prototype.scrollBy=function(){void 0!==arguments[0]&&(!0!==l(arguments[0])?this.scroll({left:~~arguments[0].left+this.scrollLeft,top:~~arguments[0].top+this.scrollTop,behavior:arguments[0].behavior}):i.elementScroll.call(this,void 0!==arguments[0].left?~~arguments[0].left+this.scrollLeft:~~arguments[0]+this.scrollLeft,void 0!==arguments[0].top?~~arguments[0].top+this.scrollTop:~~arguments[1]+this.scrollTop));},n.prototype.scrollIntoView=function(){if(!0===l(arguments[0]))return void i.scrollIntoView.call(this,void 0===arguments[0]||arguments[0]);const n=h(this),o=n.getBoundingClientRect(),r=this.getBoundingClientRect();n!==t.body?(g.call(this,n,n.scrollLeft+r.left-o.left,n.scrollTop+r.top-o.top),"fixed"!==e.getComputedStyle(n).position&&e.scrollBy({left:o.left,top:o.top,behavior:"smooth"})):e.scrollBy({left:r.left,top:r.top,behavior:"smooth"});};}class zt{constructor(e=[],t){this.timeOffset=0,this.raf=null,this.actions=e,this.speed=t.speed,this.liveMode=t.liveMode;}addAction(e){if(!this.actions.length||this.actions[this.actions.length-1].delay<=e.delay)return void this.actions.push(e);const t=this.findActionIndex(e);this.actions.splice(t,0,e);}start(){this.timeOffset=0;let e=performance.now();const t=()=>{const n=performance.now();for(this.timeOffset+=(n-e)*this.speed,e=n;this.actions.length;){const e=this.actions[0];if(!(this.timeOffset>=e.delay))break;this.actions.shift(),e.doAction();}(this.actions.length>0||this.liveMode)&&(this.raf=requestAnimationFrame(t));};this.raf=requestAnimationFrame(t);}clear(){this.raf&&(cancelAnimationFrame(this.raf),this.raf=null),this.actions.length=0;}setSpeed(e){this.speed=e;}toggleLiveMode(e){this.liveMode=e;}isActive(){return null!==this.raf}findActionIndex(e){let t=0,n=this.actions.length-1;for(;t<=n;){const i=Math.floor((t+n)/2);if(this.actions[i].delay<e.delay)t=i+1;else {if(!(this.actions[i].delay>e.delay))return i+1;n=i-1;}}return t}}function Jt(e,t){if(e.type===be.IncrementalSnapshot&&e.data.source===we.MouseMove&&e.data.positions&&e.data.positions.length){const n=e.data.positions[0].timeOffset,i=e.timestamp+n;return e.delay=i-t,i-t}return e.delay=e.timestamp-t,e.delay}
+function Te(e,t,n,i){return new(n||(n=Promise))((function(o,r){function s(e){try{l(i.next(e));}catch(e){r(e);}}function a(e){try{l(i.throw(e));}catch(e){r(e);}}function l(e){var t;e.done?o(e.value):(t=e.value,t instanceof n?t:new n((function(e){e(t);}))).then(s,a);}l((i=i.apply(e,[])).next());}))}for(var De="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",Me="undefined"==typeof Uint8Array?[]:new Uint8Array(256),Re=0;Re<De.length;Re++)Me[De.charCodeAt(Re)]=Re;var xe=null;try{var ke="undefined"!=typeof module&&"function"==typeof module.require&&module.require("worker_threads")||"function"==typeof __non_webpack_require__&&__non_webpack_require__("worker_threads")||"function"==typeof require&&require("worker_threads");xe=ke.Worker;}catch(Ht){}function Fe(e,t,n){var i=void 0===t?null:t,o=function(e,t){return Buffer.from(e,"base64").toString(t?"utf16":"utf8")}(e,void 0!==n&&n),r=o.indexOf("\n",10)+1,s=o.substring(r)+(i?"//# sourceMappingURL="+i:"");return function(e){return new xe(s,Object.assign({},e,{eval:!0}))}}var Oe,Be,Le,Ve,_e="[object process]"===Object.prototype.toString.call("undefined"!=typeof process?process:0);Oe="Lyogcm9sbHVwLXBsdWdpbi13ZWItd29ya2VyLWxvYWRlciAqLwooZnVuY3Rpb24gKCkgewogICAgJ3VzZSBzdHJpY3QnOwoKICAgIC8qISAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKg0KICAgIENvcHlyaWdodCAoYykgTWljcm9zb2Z0IENvcnBvcmF0aW9uLg0KDQogICAgUGVybWlzc2lvbiB0byB1c2UsIGNvcHksIG1vZGlmeSwgYW5kL29yIGRpc3RyaWJ1dGUgdGhpcyBzb2Z0d2FyZSBmb3IgYW55DQogICAgcHVycG9zZSB3aXRoIG9yIHdpdGhvdXQgZmVlIGlzIGhlcmVieSBncmFudGVkLg0KDQogICAgVEhFIFNPRlRXQVJFIElTIFBST1ZJREVEICJBUyBJUyIgQU5EIFRIRSBBVVRIT1IgRElTQ0xBSU1TIEFMTCBXQVJSQU5USUVTIFdJVEgNCiAgICBSRUdBUkQgVE8gVEhJUyBTT0ZUV0FSRSBJTkNMVURJTkcgQUxMIElNUExJRUQgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFkNCiAgICBBTkQgRklUTkVTUy4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFIEFVVEhPUiBCRSBMSUFCTEUgRk9SIEFOWSBTUEVDSUFMLCBESVJFQ1QsDQogICAgSU5ESVJFQ1QsIE9SIENPTlNFUVVFTlRJQUwgREFNQUdFUyBPUiBBTlkgREFNQUdFUyBXSEFUU09FVkVSIFJFU1VMVElORyBGUk9NDQogICAgTE9TUyBPRiBVU0UsIERBVEEgT1IgUFJPRklUUywgV0hFVEhFUiBJTiBBTiBBQ1RJT04gT0YgQ09OVFJBQ1QsIE5FR0xJR0VOQ0UgT1INCiAgICBPVEhFUiBUT1JUSU9VUyBBQ1RJT04sIEFSSVNJTkcgT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgVVNFIE9SDQogICAgUEVSRk9STUFOQ0UgT0YgVEhJUyBTT0ZUV0FSRS4NCiAgICAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiAqLw0KDQogICAgZnVuY3Rpb24gX19hd2FpdGVyKHRoaXNBcmcsIF9hcmd1bWVudHMsIFAsIGdlbmVyYXRvcikgew0KICAgICAgICBmdW5jdGlvbiBhZG9wdCh2YWx1ZSkgeyByZXR1cm4gdmFsdWUgaW5zdGFuY2VvZiBQID8gdmFsdWUgOiBuZXcgUChmdW5jdGlvbiAocmVzb2x2ZSkgeyByZXNvbHZlKHZhbHVlKTsgfSk7IH0NCiAgICAgICAgcmV0dXJuIG5ldyAoUCB8fCAoUCA9IFByb21pc2UpKShmdW5jdGlvbiAocmVzb2x2ZSwgcmVqZWN0KSB7DQogICAgICAgICAgICBmdW5jdGlvbiBmdWxmaWxsZWQodmFsdWUpIHsgdHJ5IHsgc3RlcChnZW5lcmF0b3IubmV4dCh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiByZWplY3RlZCh2YWx1ZSkgeyB0cnkgeyBzdGVwKGdlbmVyYXRvclsidGhyb3ciXSh2YWx1ZSkpOyB9IGNhdGNoIChlKSB7IHJlamVjdChlKTsgfSB9DQogICAgICAgICAgICBmdW5jdGlvbiBzdGVwKHJlc3VsdCkgeyByZXN1bHQuZG9uZSA/IHJlc29sdmUocmVzdWx0LnZhbHVlKSA6IGFkb3B0KHJlc3VsdC52YWx1ZSkudGhlbihmdWxmaWxsZWQsIHJlamVjdGVkKTsgfQ0KICAgICAgICAgICAgc3RlcCgoZ2VuZXJhdG9yID0gZ2VuZXJhdG9yLmFwcGx5KHRoaXNBcmcsIF9hcmd1bWVudHMgfHwgW10pKS5uZXh0KCkpOw0KICAgICAgICB9KTsNCiAgICB9CgogICAgLyoKICAgICAqIGJhc2U2NC1hcnJheWJ1ZmZlciAxLjAuMSA8aHR0cHM6Ly9naXRodWIuY29tL25pa2xhc3ZoL2Jhc2U2NC1hcnJheWJ1ZmZlcj4KICAgICAqIENvcHlyaWdodCAoYykgMjAyMSBOaWtsYXMgdm9uIEhlcnR6ZW4gPGh0dHBzOi8vaGVydHplbi5jb20+CiAgICAgKiBSZWxlYXNlZCB1bmRlciBNSVQgTGljZW5zZQogICAgICovCiAgICB2YXIgY2hhcnMgPSAnQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejAxMjM0NTY3ODkrLyc7CiAgICAvLyBVc2UgYSBsb29rdXAgdGFibGUgdG8gZmluZCB0aGUgaW5kZXguCiAgICB2YXIgbG9va3VwID0gdHlwZW9mIFVpbnQ4QXJyYXkgPT09ICd1bmRlZmluZWQnID8gW10gOiBuZXcgVWludDhBcnJheSgyNTYpOwogICAgZm9yICh2YXIgaSA9IDA7IGkgPCBjaGFycy5sZW5ndGg7IGkrKykgewogICAgICAgIGxvb2t1cFtjaGFycy5jaGFyQ29kZUF0KGkpXSA9IGk7CiAgICB9CiAgICB2YXIgZW5jb2RlID0gZnVuY3Rpb24gKGFycmF5YnVmZmVyKSB7CiAgICAgICAgdmFyIGJ5dGVzID0gbmV3IFVpbnQ4QXJyYXkoYXJyYXlidWZmZXIpLCBpLCBsZW4gPSBieXRlcy5sZW5ndGgsIGJhc2U2NCA9ICcnOwogICAgICAgIGZvciAoaSA9IDA7IGkgPCBsZW47IGkgKz0gMykgewogICAgICAgICAgICBiYXNlNjQgKz0gY2hhcnNbYnl0ZXNbaV0gPj4gMl07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1soKGJ5dGVzW2ldICYgMykgPDwgNCkgfCAoYnl0ZXNbaSArIDFdID4+IDQpXTsKICAgICAgICAgICAgYmFzZTY0ICs9IGNoYXJzWygoYnl0ZXNbaSArIDFdICYgMTUpIDw8IDIpIHwgKGJ5dGVzW2kgKyAyXSA+PiA2KV07CiAgICAgICAgICAgIGJhc2U2NCArPSBjaGFyc1tieXRlc1tpICsgMl0gJiA2M107CiAgICAgICAgfQogICAgICAgIGlmIChsZW4gJSAzID09PSAyKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDEpICsgJz0nOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChsZW4gJSAzID09PSAxKSB7CiAgICAgICAgICAgIGJhc2U2NCA9IGJhc2U2NC5zdWJzdHJpbmcoMCwgYmFzZTY0Lmxlbmd0aCAtIDIpICsgJz09JzsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGJhc2U2NDsKICAgIH07CgogICAgY29uc3QgbGFzdEJsb2JNYXAgPSBuZXcgTWFwKCk7DQogICAgY29uc3QgdHJhbnNwYXJlbnRCbG9iTWFwID0gbmV3IE1hcCgpOw0KICAgIGZ1bmN0aW9uIGdldFRyYW5zcGFyZW50QmxvYkZvcih3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucykgew0KICAgICAgICByZXR1cm4gX19hd2FpdGVyKHRoaXMsIHZvaWQgMCwgdm9pZCAwLCBmdW5jdGlvbiogKCkgew0KICAgICAgICAgICAgY29uc3QgaWQgPSBgJHt3aWR0aH0tJHtoZWlnaHR9YDsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgaWYgKHRyYW5zcGFyZW50QmxvYk1hcC5oYXMoaWQpKQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gdHJhbnNwYXJlbnRCbG9iTWFwLmdldChpZCk7DQogICAgICAgICAgICAgICAgY29uc3Qgb2Zmc2NyZWVuID0gbmV3IE9mZnNjcmVlbkNhbnZhcyh3aWR0aCwgaGVpZ2h0KTsNCiAgICAgICAgICAgICAgICBvZmZzY3JlZW4uZ2V0Q29udGV4dCgnMmQnKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGFycmF5QnVmZmVyID0geWllbGQgYmxvYi5hcnJheUJ1ZmZlcigpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGJhc2U2NCA9IGVuY29kZShhcnJheUJ1ZmZlcik7DQogICAgICAgICAgICAgICAgdHJhbnNwYXJlbnRCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICByZXR1cm4gYmFzZTY0Ow0KICAgICAgICAgICAgfQ0KICAgICAgICAgICAgZWxzZSB7DQogICAgICAgICAgICAgICAgcmV0dXJuICcnOw0KICAgICAgICAgICAgfQ0KICAgICAgICB9KTsNCiAgICB9DQogICAgY29uc3Qgd29ya2VyID0gc2VsZjsNCiAgICB3b3JrZXIub25tZXNzYWdlID0gZnVuY3Rpb24gKGUpIHsNCiAgICAgICAgcmV0dXJuIF9fYXdhaXRlcih0aGlzLCB2b2lkIDAsIHZvaWQgMCwgZnVuY3Rpb24qICgpIHsNCiAgICAgICAgICAgIGlmICgnT2Zmc2NyZWVuQ2FudmFzJyBpbiBnbG9iYWxUaGlzKSB7DQogICAgICAgICAgICAgICAgY29uc3QgeyBpZCwgYml0bWFwLCB3aWR0aCwgaGVpZ2h0LCBkYXRhVVJMT3B0aW9ucyB9ID0gZS5kYXRhOw0KICAgICAgICAgICAgICAgIGNvbnN0IHRyYW5zcGFyZW50QmFzZTY0ID0gZ2V0VHJhbnNwYXJlbnRCbG9iRm9yKHdpZHRoLCBoZWlnaHQsIGRhdGFVUkxPcHRpb25zKTsNCiAgICAgICAgICAgICAgICBjb25zdCBvZmZzY3JlZW4gPSBuZXcgT2Zmc2NyZWVuQ2FudmFzKHdpZHRoLCBoZWlnaHQpOw0KICAgICAgICAgICAgICAgIGNvbnN0IGN0eCA9IG9mZnNjcmVlbi5nZXRDb250ZXh0KCcyZCcpOw0KICAgICAgICAgICAgICAgIGN0eC5kcmF3SW1hZ2UoYml0bWFwLCAwLCAwKTsNCiAgICAgICAgICAgICAgICBiaXRtYXAuY2xvc2UoKTsNCiAgICAgICAgICAgICAgICBjb25zdCBibG9iID0geWllbGQgb2Zmc2NyZWVuLmNvbnZlcnRUb0Jsb2IoZGF0YVVSTE9wdGlvbnMpOw0KICAgICAgICAgICAgICAgIGNvbnN0IHR5cGUgPSBibG9iLnR5cGU7DQogICAgICAgICAgICAgICAgY29uc3QgYXJyYXlCdWZmZXIgPSB5aWVsZCBibG9iLmFycmF5QnVmZmVyKCk7DQogICAgICAgICAgICAgICAgY29uc3QgYmFzZTY0ID0gZW5jb2RlKGFycmF5QnVmZmVyKTsNCiAgICAgICAgICAgICAgICBpZiAoIWxhc3RCbG9iTWFwLmhhcyhpZCkgJiYgKHlpZWxkIHRyYW5zcGFyZW50QmFzZTY0KSA9PT0gYmFzZTY0KSB7DQogICAgICAgICAgICAgICAgICAgIGxhc3RCbG9iTWFwLnNldChpZCwgYmFzZTY0KTsNCiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHdvcmtlci5wb3N0TWVzc2FnZSh7IGlkIH0pOw0KICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICBpZiAobGFzdEJsb2JNYXAuZ2V0KGlkKSA9PT0gYmFzZTY0KQ0KICAgICAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQgfSk7DQogICAgICAgICAgICAgICAgd29ya2VyLnBvc3RNZXNzYWdlKHsNCiAgICAgICAgICAgICAgICAgICAgaWQsDQogICAgICAgICAgICAgICAgICAgIHR5cGUsDQogICAgICAgICAgICAgICAgICAgIGJhc2U2NCwNCiAgICAgICAgICAgICAgICAgICAgd2lkdGgsDQogICAgICAgICAgICAgICAgICAgIGhlaWdodCwNCiAgICAgICAgICAgICAgICB9KTsNCiAgICAgICAgICAgICAgICBsYXN0QmxvYk1hcC5zZXQoaWQsIGJhc2U2NCk7DQogICAgICAgICAgICB9DQogICAgICAgICAgICBlbHNlIHsNCiAgICAgICAgICAgICAgICByZXR1cm4gd29ya2VyLnBvc3RNZXNzYWdlKHsgaWQ6IGUuZGF0YS5pZCB9KTsNCiAgICAgICAgICAgIH0NCiAgICAgICAgfSk7DQogICAgfTsKCn0pKCk7Cgo=",Be=null,Le=!1,_e?Fe(Oe,Be,Le):function(e,t,n){}(),function(e){e[e.Document=0]="Document",e[e.DocumentType=1]="DocumentType",e[e.Element=2]="Element",e[e.Text=3]="Text",e[e.CDATA=4]="CDATA",e[e.Comment=5]="Comment";}(Ve||(Ve={}));var Ge=function(){function e(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}return e.prototype.getId=function(e){var t;if(!e)return -1;var n=null===(t=this.getMeta(e))||void 0===t?void 0:t.id;return null!=n?n:-1},e.prototype.getNode=function(e){return this.idNodeMap.get(e)||null},e.prototype.getIds=function(){return Array.from(this.idNodeMap.keys())},e.prototype.getMeta=function(e){return this.nodeMetaMap.get(e)||null},e.prototype.removeNodeFromMap=function(e){var t=this,n=this.getId(e);this.idNodeMap.delete(n),e.childNodes&&e.childNodes.forEach((function(e){return t.removeNodeFromMap(e)}));},e.prototype.has=function(e){return this.idNodeMap.has(e)},e.prototype.hasNode=function(e){return this.nodeMetaMap.has(e)},e.prototype.add=function(e,t){var n=t.id;this.idNodeMap.set(n,e),this.nodeMetaMap.set(e,t);},e.prototype.replace=function(e,t){var n=this.getNode(e);if(n){var i=this.nodeMetaMap.get(n);i&&this.nodeMetaMap.set(t,i);}this.idNodeMap.set(e,t);},e.prototype.reset=function(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;},e}();function We(e){const t=[];for(const n in e){const i=e[n];if("string"!=typeof i)continue;const o=Ye(n);t.push(`${o}: ${i};`);}return t.join(" ")}const Ue=/-([a-z])/g,Ze=/^--[a-zA-Z0-9-]+$/,$e=e=>Ze.test(e)?e:e.replace(Ue,((e,t)=>t?t.toUpperCase():"")),Ke=/\B([A-Z])/g,Ye=e=>e.replace(Ke,"-$1").toLowerCase();class Pe{constructor(...e){this.childNodes=[],this.parentElement=null,this.parentNode=null,this.ELEMENT_NODE=qe.ELEMENT_NODE,this.TEXT_NODE=qe.TEXT_NODE;}get firstChild(){return this.childNodes[0]||null}get lastChild(){return this.childNodes[this.childNodes.length-1]||null}get nextSibling(){const e=this.parentNode;if(!e)return null;const t=e.childNodes,n=t.indexOf(this);return t[n+1]||null}contains(e){if(e===this)return !0;for(const t of this.childNodes)if(t.contains(e))return !0;return !1}appendChild(e){throw new Error("RRDomException: Failed to execute 'appendChild' on 'RRNode': This RRNode type does not support this method.")}insertBefore(e,t){throw new Error("RRDomException: Failed to execute 'insertBefore' on 'RRNode': This RRNode type does not support this method.")}removeChild(e){throw new Error("RRDomException: Failed to execute 'removeChild' on 'RRNode': This RRNode type does not support this method.")}toString(){return "RRNode"}}function Qe(e){return class extends e{constructor(e,t,n){super(),this.nodeType=qe.DOCUMENT_TYPE_NODE,this.RRNodeType=Ve.DocumentType,this.textContent=null,this.name=e,this.publicId=t,this.systemId=n,this.nodeName=e;}toString(){return "RRDocumentType"}}}function ze(e){return class extends e{constructor(e){super(),this.nodeType=qe.ELEMENT_NODE,this.RRNodeType=Ve.Element,this.attributes={},this.shadowRoot=null,this.tagName=e.toUpperCase(),this.nodeName=e.toUpperCase();}get textContent(){let e="";return this.childNodes.forEach((t=>e+=t.textContent)),e}set textContent(e){this.childNodes=[this.ownerDocument.createTextNode(e)];}get classList(){return new je(this.attributes.class,(e=>{this.attributes.class=e;}))}get id(){return this.attributes.id||""}get className(){return this.attributes.class||""}get style(){const e=this.attributes.style?function(e){const t={},n=/:(.+)/;return e.replace(/\/\*.*?\*\//g,"").split(/;(?![^(]*\))/g).forEach((function(e){if(e){const i=e.split(n);i.length>1&&(t[$e(i[0].trim())]=i[1].trim());}})),t}(this.attributes.style):{},t=/\B([A-Z])/g;return e.setProperty=(n,i,o)=>{if(t.test(n))return;const r=$e(n);i?e[r]=i:delete e[r],"important"===o&&(e[r]+=" !important"),this.attributes.style=We(e);},e.removeProperty=n=>{if(t.test(n))return "";const i=$e(n),o=e[i]||"";return delete e[i],this.attributes.style=We(e),o},e}getAttribute(e){return this.attributes[e]||null}setAttribute(e,t){this.attributes[e]=t;}setAttributeNS(e,t,n){this.setAttribute(t,n);}removeAttribute(e){delete this.attributes[e];}appendChild(e){return this.childNodes.push(e),e.parentNode=this,e.parentElement=this,e}insertBefore(e,t){if(null===t)return this.appendChild(e);const n=this.childNodes.indexOf(t);if(-1==n)throw new Error("Failed to execute 'insertBefore' on 'RRNode': The RRNode before which the new node is to be inserted is not a child of this RRNode.");return this.childNodes.splice(n,0,e),e.parentElement=this,e.parentNode=this,e}removeChild(e){const t=this.childNodes.indexOf(e);if(-1===t)throw new Error("Failed to execute 'removeChild' on 'RRElement': The RRNode to be removed is not a child of this RRNode.");return this.childNodes.splice(t,1),e.parentElement=null,e.parentNode=null,e}attachShadow(e){const t=this.ownerDocument.createElement("SHADOWROOT");return this.shadowRoot=t,t}dispatchEvent(e){return !0}toString(){let e="";for(const t in this.attributes)e+=`${t}="${this.attributes[t]}" `;return `${this.tagName} ${e}`}}}function Je(e){return class extends e{constructor(e){super(),this.nodeType=qe.TEXT_NODE,this.nodeName="#text",this.RRNodeType=Ve.Text,this.data=e;}get textContent(){return this.data}set textContent(e){this.data=e;}toString(){return `RRText text=${JSON.stringify(this.data)}`}}}function Xe(e){return class extends e{constructor(e){super(),this.nodeType=qe.COMMENT_NODE,this.nodeName="#comment",this.RRNodeType=Ve.Comment,this.data=e;}get textContent(){return this.data}set textContent(e){this.data=e;}toString(){return `RRComment text=${JSON.stringify(this.data)}`}}}function He(e){return class extends e{constructor(e){super(),this.nodeName="#cdata-section",this.nodeType=qe.CDATA_SECTION_NODE,this.RRNodeType=Ve.CDATA,this.data=e;}get textContent(){return this.data}set textContent(e){this.data=e;}toString(){return `RRCDATASection data=${JSON.stringify(this.data)}`}}}class je{constructor(e,t){if(this.classes=[],this.add=(...e)=>{for(const t of e){const e=String(t);this.classes.indexOf(e)>=0||this.classes.push(e);}this.onChange&&this.onChange(this.classes.join(" "));},this.remove=(...e)=>{this.classes=this.classes.filter((t=>-1===e.indexOf(t))),this.onChange&&this.onChange(this.classes.join(" "));},e){const t=e.trim().split(/\s+/);this.classes.push(...t);}this.onChange=t;}}var qe;!function(e){e[e.PLACEHOLDER=0]="PLACEHOLDER",e[e.ELEMENT_NODE=1]="ELEMENT_NODE",e[e.ATTRIBUTE_NODE=2]="ATTRIBUTE_NODE",e[e.TEXT_NODE=3]="TEXT_NODE",e[e.CDATA_SECTION_NODE=4]="CDATA_SECTION_NODE",e[e.ENTITY_REFERENCE_NODE=5]="ENTITY_REFERENCE_NODE",e[e.ENTITY_NODE=6]="ENTITY_NODE",e[e.PROCESSING_INSTRUCTION_NODE=7]="PROCESSING_INSTRUCTION_NODE",e[e.COMMENT_NODE=8]="COMMENT_NODE",e[e.DOCUMENT_NODE=9]="DOCUMENT_NODE",e[e.DOCUMENT_TYPE_NODE=10]="DOCUMENT_TYPE_NODE",e[e.DOCUMENT_FRAGMENT_NODE=11]="DOCUMENT_FRAGMENT_NODE";}(qe||(qe={}));const et={svg:"http://www.w3.org/2000/svg","xlink:href":"http://www.w3.org/1999/xlink",xmlns:"http://www.w3.org/2000/xmlns/"},tt={altglyph:"altGlyph",altglyphdef:"altGlyphDef",altglyphitem:"altGlyphItem",animatecolor:"animateColor",animatemotion:"animateMotion",animatetransform:"animateTransform",clippath:"clipPath",feblend:"feBlend",fecolormatrix:"feColorMatrix",fecomponenttransfer:"feComponentTransfer",fecomposite:"feComposite",feconvolvematrix:"feConvolveMatrix",fediffuselighting:"feDiffuseLighting",fedisplacementmap:"feDisplacementMap",fedistantlight:"feDistantLight",fedropshadow:"feDropShadow",feflood:"feFlood",fefunca:"feFuncA",fefuncb:"feFuncB",fefuncg:"feFuncG",fefuncr:"feFuncR",fegaussianblur:"feGaussianBlur",feimage:"feImage",femerge:"feMerge",femergenode:"feMergeNode",femorphology:"feMorphology",feoffset:"feOffset",fepointlight:"fePointLight",fespecularlighting:"feSpecularLighting",fespotlight:"feSpotLight",fetile:"feTile",feturbulence:"feTurbulence",foreignobject:"foreignObject",glyphref:"glyphRef",lineargradient:"linearGradient",radialgradient:"radialGradient"};function nt(e,t,n,i){const o=e.childNodes,r=t.childNodes;i=i||t.mirror||t.ownerDocument.mirror,(o.length>0||r.length>0)&&it(Array.from(o),r,e,n,i);let s=null,a=null;switch(t.RRNodeType){case Ve.Document:a=t.scrollData;break;case Ve.Element:{const o=e,r=t;switch(function(e,t,n){const i=e.attributes,o=t.attributes;for(const i in o){const r=o[i],s=n.getMeta(t);if(s&&"isSVG"in s&&s.isSVG&&et[i])e.setAttributeNS(et[i],i,r);else if("CANVAS"===t.tagName&&"rr_dataURL"===i){const t=document.createElement("img");t.src=r,t.onload=()=>{const n=e.getContext("2d");n&&n.drawImage(t,0,0,t.width,t.height);};}else e.setAttribute(i,r);}for(const{name:t}of Array.from(i))t in o||e.removeAttribute(t);t.scrollLeft&&(e.scrollLeft=t.scrollLeft),t.scrollTop&&(e.scrollTop=t.scrollTop);}(o,r,i),a=r.scrollData,s=r.inputData,r.tagName){case"AUDIO":case"VIDEO":{const t=e,n=r;void 0!==n.paused&&(n.paused?t.pause():t.play()),void 0!==n.muted&&(t.muted=n.muted),void 0!==n.volume&&(t.volume=n.volume),void 0!==n.currentTime&&(t.currentTime=n.currentTime),void 0!==n.playbackRate&&(t.playbackRate=n.playbackRate);break}case"CANVAS":{const i=t;if(null!==i.rr_dataURL){const e=document.createElement("img");e.onload=()=>{const t=o.getContext("2d");t&&t.drawImage(e,0,0,e.width,e.height);},e.src=i.rr_dataURL;}i.canvasMutations.forEach((t=>n.applyCanvas(t.event,t.mutation,e)));}break;case"STYLE":{const e=o.sheet;e&&t.rules.forEach((t=>n.applyStyleSheetMutation(t,e)));}}if(r.shadowRoot){o.shadowRoot||o.attachShadow({mode:"open"});const e=o.shadowRoot.childNodes,t=r.shadowRoot.childNodes;(e.length>0||t.length>0)&&it(Array.from(e),t,o.shadowRoot,n,i);}break}case Ve.Text:case Ve.Comment:case Ve.CDATA:e.textContent!==t.data&&(e.textContent=t.data);}if(a&&n.applyScroll(a,!0),s&&n.applyInput(s),"IFRAME"===t.nodeName){const o=e.contentDocument,r=t;if(o){const e=i.getMeta(r.contentDocument);e&&n.mirror.add(o,Object.assign({},e)),nt(o,r.contentDocument,n,i);}}}function it(e,t,n,i,o){var r;let s,a,l=0,c=e.length-1,d=0,u=t.length-1,h=e[l],p=e[c],g=t[d],m=t[u];for(;l<=c&&d<=u;){const f=i.mirror.getId(h),y=i.mirror.getId(p),v=o.getId(g),C=o.getId(m);if(void 0===h)h=e[++l];else if(void 0===p)p=e[--c];else if(-1!==f&&f===v)nt(h,g,i,o),h=e[++l],g=t[++d];else if(-1!==y&&y===C)nt(p,m,i,o),p=e[--c],m=t[--u];else if(-1!==f&&f===C)n.insertBefore(h,p.nextSibling),nt(h,m,i,o),h=e[++l],m=t[--u];else if(-1!==y&&y===v)n.insertBefore(p,h),nt(p,g,i,o),p=e[--c],g=t[++d];else {if(!s){s={};for(let t=l;t<=c;t++){const n=e[t];n&&i.mirror.hasNode(n)&&(s[i.mirror.getId(n)]=t);}}if(a=s[o.getId(g)],a){const t=e[a];n.insertBefore(t,h),nt(t,g,i,o),e[a]=void 0;}else {const t=ot(g,i.mirror,o);"#document"===n.nodeName&&(null===(r=i.mirror.getMeta(t))||void 0===r?void 0:r.type)===Ve.Element&&n.documentElement&&(n.removeChild(n.documentElement),e[l]=void 0,h=void 0),n.insertBefore(t,h||null),nt(t,g,i,o);}g=t[++d];}}if(l>c){const e=t[u+1];let r=null;for(e&&n.childNodes.forEach((t=>{i.mirror.getId(t)===o.getId(e)&&(r=t);}));d<=u;++d){const e=ot(t[d],i.mirror,o);n.insertBefore(e,r),nt(e,t[d],i,o);}}else if(d>u)for(;l<=c;l++){const t=e[l];t&&(n.removeChild(t),i.mirror.removeNodeFromMap(t));}}function ot(e,t,n){const i=n.getId(e),o=n.getMeta(e);let r=null;if(i>-1&&(r=t.getNode(i)),null!==r)return r;switch(e.RRNodeType){case Ve.Document:r=new Document;break;case Ve.DocumentType:r=document.implementation.createDocumentType(e.name,e.publicId,e.systemId);break;case Ve.Element:{let t=e.tagName.toLowerCase();t=tt[t]||t,r=o&&"isSVG"in o&&(null==o?void 0:o.isSVG)?document.createElementNS(et.svg,t):document.createElement(e.tagName);break}case Ve.Text:r=document.createTextNode(e.data);break;case Ve.Comment:r=document.createComment(e.data);break;case Ve.CDATA:r=document.createCDATASection(e.data);}return o&&t.add(r,Object.assign({},o)),r}class rt extends(function(e){return class t extends e{constructor(){super(...arguments),this.nodeType=qe.DOCUMENT_NODE,this.nodeName="#document",this.compatMode="CSS1Compat",this.RRNodeType=Ve.Document,this.textContent=null;}get documentElement(){return this.childNodes.find((e=>e.RRNodeType===Ve.Element&&"HTML"===e.tagName))||null}get body(){var e;return (null===(e=this.documentElement)||void 0===e?void 0:e.childNodes.find((e=>e.RRNodeType===Ve.Element&&"BODY"===e.tagName)))||null}get head(){var e;return (null===(e=this.documentElement)||void 0===e?void 0:e.childNodes.find((e=>e.RRNodeType===Ve.Element&&"HEAD"===e.tagName)))||null}get implementation(){return this}get firstElementChild(){return this.documentElement}appendChild(e){const t=e.RRNodeType;if((t===Ve.Element||t===Ve.DocumentType)&&this.childNodes.some((e=>e.RRNodeType===t)))throw new Error(`RRDomException: Failed to execute 'appendChild' on 'RRNode': Only one ${t===Ve.Element?"RRElement":"RRDoctype"} on RRDocument allowed.`);return e.parentElement=null,e.parentNode=this,this.childNodes.push(e),e}insertBefore(e,t){const n=e.RRNodeType;if((n===Ve.Element||n===Ve.DocumentType)&&this.childNodes.some((e=>e.RRNodeType===n)))throw new Error(`RRDomException: Failed to execute 'insertBefore' on 'RRNode': Only one ${n===Ve.Element?"RRElement":"RRDoctype"} on RRDocument allowed.`);if(null===t)return this.appendChild(e);const i=this.childNodes.indexOf(t);if(-1==i)throw new Error("Failed to execute 'insertBefore' on 'RRNode': The RRNode before which the new node is to be inserted is not a child of this RRNode.");return this.childNodes.splice(i,0,e),e.parentElement=null,e.parentNode=this,e}removeChild(e){const t=this.childNodes.indexOf(e);if(-1===t)throw new Error("Failed to execute 'removeChild' on 'RRDocument': The RRNode to be removed is not a child of this RRNode.");return this.childNodes.splice(t,1),e.parentElement=null,e.parentNode=null,e}open(){this.childNodes=[];}close(){}write(e){let t;if('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "">'===e?t="-//W3C//DTD XHTML 1.0 Transitional//EN":'<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "">'===e&&(t="-//W3C//DTD HTML 4.0 Transitional//EN"),t){const e=this.createDocumentType("html",t,"");this.open(),this.appendChild(e);}}createDocument(e,n,i){return new t}createDocumentType(e,t,n){const i=new(Qe(Pe))(e,t,n);return i.ownerDocument=this,i}createElement(e){const t=new(ze(Pe))(e);return t.ownerDocument=this,t}createElementNS(e,t){return this.createElement(t)}createTextNode(e){const t=new(Je(Pe))(e);return t.ownerDocument=this,t}createComment(e){const t=new(Xe(Pe))(e);return t.ownerDocument=this,t}createCDATASection(e){const t=new(He(Pe))(e);return t.ownerDocument=this,t}toString(){return "RRDocument"}}}(Pe)){constructor(e){super(),this.UNSERIALIZED_STARTING_ID=-2,this._unserializedId=this.UNSERIALIZED_STARTING_ID,this.mirror=new yt,this.scrollData=null,e&&(this.mirror=e);}get unserializedId(){return this._unserializedId--}createDocument(e,t,n){return new rt}createDocumentType(e,t,n){const i=new st(e,t,n);return i.ownerDocument=this,i}createElement(e){const t=e.toUpperCase();let n;switch(t){case"AUDIO":case"VIDEO":n=new lt(t);break;case"IFRAME":n=new ut(t,this.mirror);break;case"CANVAS":n=new ct(t);break;case"STYLE":n=new dt(t);break;default:n=new at(t);}return n.ownerDocument=this,n}createComment(e){const t=new pt(e);return t.ownerDocument=this,t}createCDATASection(e){const t=new gt(e);return t.ownerDocument=this,t}createTextNode(e){const t=new ht(e);return t.ownerDocument=this,t}destroyTree(){this.childNodes=[],this.mirror.reset();}open(){super.open(),this._unserializedId=this.UNSERIALIZED_STARTING_ID;}}const st=Qe(Pe);class at extends(ze(Pe)){constructor(){super(...arguments),this.inputData=null,this.scrollData=null;}}class lt extends(function(e){return class extends e{attachShadow(e){throw new Error("RRDomException: Failed to execute 'attachShadow' on 'RRElement': This RRElement does not support attachShadow")}play(){this.paused=!1;}pause(){this.paused=!0;}}}(at)){}class ct extends at{constructor(){super(...arguments),this.rr_dataURL=null,this.canvasMutations=[];}getContext(){return null}}class dt extends at{constructor(){super(...arguments),this.rules=[];}}class ut extends at{constructor(e,t){super(e),this.contentDocument=new rt,this.contentDocument.mirror=t;}}const ht=Je(Pe),pt=Xe(Pe),gt=He(Pe);function mt(e,t,n,i){let o;switch(e.nodeType){case qe.DOCUMENT_NODE:i&&"IFRAME"===i.nodeName?o=i.contentDocument:(o=t,o.compatMode=e.compatMode);break;case qe.DOCUMENT_TYPE_NODE:{const n=e;o=t.createDocumentType(n.name,n.publicId,n.systemId);break}case qe.ELEMENT_NODE:{const n=e,i=function(e){return e instanceof HTMLFormElement?"FORM":e.tagName.toUpperCase()}(n);o=t.createElement(i);const r=o;for(const{name:e,value:t}of Array.from(n.attributes))r.attributes[e]=t;n.scrollLeft&&(r.scrollLeft=n.scrollLeft),n.scrollTop&&(r.scrollTop=n.scrollTop);break}case qe.TEXT_NODE:o=t.createTextNode(e.textContent||"");break;case qe.CDATA_SECTION_NODE:o=t.createCDATASection(e.data);break;case qe.COMMENT_NODE:o=t.createComment(e.textContent||"");break;case qe.DOCUMENT_FRAGMENT_NODE:o=i.attachShadow({mode:"open"});break;default:return null}let r=n.getMeta(e);return t instanceof rt&&(r||(r=vt(o,t.unserializedId),n.add(e,r)),t.mirror.add(o,Object.assign({},r))),o}function ft(e,t=function(){return new Ge}(),n=new rt){return function e(i,o){const r=mt(i,n,t,o);if(null!==r)if("IFRAME"!==(null==o?void 0:o.nodeName)&&i.nodeType!==qe.DOCUMENT_FRAGMENT_NODE&&(null==o||o.appendChild(r),r.parentNode=o,r.parentElement=o),"IFRAME"===i.nodeName){const t=i.contentDocument;t&&e(t,r);}else i.nodeType!==qe.DOCUMENT_NODE&&i.nodeType!==qe.ELEMENT_NODE&&i.nodeType!==qe.DOCUMENT_FRAGMENT_NODE||(i.nodeType===qe.ELEMENT_NODE&&i.shadowRoot&&e(i.shadowRoot,r),i.childNodes.forEach((t=>e(t,r))));}(e,null),n}class yt{constructor(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}getId(e){var t;if(!e)return -1;const n=null===(t=this.getMeta(e))||void 0===t?void 0:t.id;return null!=n?n:-1}getNode(e){return this.idNodeMap.get(e)||null}getIds(){return Array.from(this.idNodeMap.keys())}getMeta(e){return this.nodeMetaMap.get(e)||null}removeNodeFromMap(e){const t=this.getId(e);this.idNodeMap.delete(t),e.childNodes&&e.childNodes.forEach((e=>this.removeNodeFromMap(e)));}has(e){return this.idNodeMap.has(e)}hasNode(e){return this.nodeMetaMap.has(e)}add(e,t){const n=t.id;this.idNodeMap.set(n,e),this.nodeMetaMap.set(e,t);}replace(e,t){const n=this.getNode(e);if(n){const e=this.nodeMetaMap.get(n);e&&this.nodeMetaMap.set(t,e);}this.idNodeMap.set(e,t);}reset(){this.idNodeMap=new Map,this.nodeMetaMap=new WeakMap;}}function vt(e,t){switch(e.RRNodeType){case Ve.Document:return {id:t,type:e.RRNodeType,childNodes:[]};case Ve.DocumentType:{const n=e;return {id:t,type:e.RRNodeType,name:n.name,publicId:n.publicId,systemId:n.systemId}}case Ve.Element:return {id:t,type:e.RRNodeType,tagName:e.tagName.toLowerCase(),attributes:{},childNodes:[]};case Ve.Text:case Ve.Comment:return {id:t,type:e.RRNodeType,textContent:e.textContent||""};case Ve.CDATA:return {id:t,type:e.RRNodeType,textContent:""}}}var Ct=Uint8Array,It=Uint16Array,At=Uint32Array,bt=new Ct([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0,0,0,0]),wt=new Ct([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,0,0]),Nt=new Ct([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]),Et=function(e,t){for(var n=new It(31),i=0;i<31;++i)n[i]=t+=1<<e[i-1];var o=new At(n[30]);for(i=1;i<30;++i)for(var r=n[i];r<n[i+1];++r)o[r]=r-n[i]<<5|i;return [n,o]},St=Et(bt,2),Tt=St[0],Dt=St[1];Tt[28]=258,Dt[258]=28;for(var Mt=Et(wt,0)[0],Rt=new It(32768),xt=0;xt<32768;++xt){var kt=(43690&xt)>>>1|(21845&xt)<<1;kt=(61680&(kt=(52428&kt)>>>2|(13107&kt)<<2))>>>4|(3855&kt)<<4,Rt[xt]=((65280&kt)>>>8|(255&kt)<<8)>>>1;}var Ft=function(e,t,n){for(var i=e.length,o=0,r=new It(t);o<i;++o)++r[e[o]-1];var s,a=new It(t);for(o=0;o<t;++o)a[o]=a[o-1]+r[o-1]<<1;{s=new It(1<<t);var l=15-t;for(o=0;o<i;++o)if(e[o])for(var c=o<<4|e[o],d=t-e[o],u=a[e[o]-1]++<<d,h=u|(1<<d)-1;u<=h;++u)s[Rt[u]>>>l]=c;}return s},Ot=new Ct(288);for(xt=0;xt<144;++xt)Ot[xt]=8;for(xt=144;xt<256;++xt)Ot[xt]=9;for(xt=256;xt<280;++xt)Ot[xt]=7;for(xt=280;xt<288;++xt)Ot[xt]=8;var Bt=new Ct(32);for(xt=0;xt<32;++xt)Bt[xt]=5;var Lt=Ft(Ot,9),Vt=Ft(Bt,5),_t=function(e){for(var t=e[0],n=1;n<e.length;++n)e[n]>t&&(t=e[n]);return t},Gt=function(e,t,n){var i=t/8>>0;return (e[i]|e[i+1]<<8)>>>(7&t)&n},Wt=function(e,t){var n=t/8>>0;return (e[n]|e[n+1]<<8|e[n+2]<<16)>>>(7&t)},Ut=function(e,t,n){(null==n||n>e.length)&&(n=e.length);var i=new(e instanceof It?It:e instanceof At?At:Ct)(n-t);return i.set(e.subarray(t,n)),i};function Zt(e,t){return function(e,t,n){var i=e.length,o=!t||n,r=!n||n.i;n||(n={}),t||(t=new Ct(3*i));var s,a=function(e){var n=t.length;if(e>n){var i=new Ct(Math.max(2*n,e));i.set(t),t=i;}},l=n.f||0,c=n.p||0,d=n.b||0,u=n.l,h=n.d,p=n.m,g=n.n,m=8*i;do{if(!u){n.f=l=Gt(e,c,1);var f=Gt(e,c+1,3);if(c+=3,!f){var y=e[(D=((s=c)/8>>0)+(7&s&&1)+4)-4]|e[D-3]<<8,v=D+y;if(v>i){if(r)throw "unexpected EOF";break}o&&a(d+y),t.set(e.subarray(D,v),d),n.b=d+=y,n.p=c=8*v;continue}if(1==f)u=Lt,h=Vt,p=9,g=5;else {if(2!=f)throw "invalid block type";var C=Gt(e,c,31)+257,I=Gt(e,c+10,15)+4,A=C+Gt(e,c+5,31)+1;c+=14;for(var b=new Ct(A),w=new Ct(19),N=0;N<I;++N)w[Nt[N]]=Gt(e,c+3*N,7);c+=3*I;var E=_t(w),S=(1<<E)-1;if(!r&&c+A*(E+7)>m)break;var T=Ft(w,E);for(N=0;N<A;){var D,M=T[Gt(e,c,S)];if(c+=15&M,(D=M>>>4)<16)b[N++]=D;else {var R=0,x=0;for(16==D?(x=3+Gt(e,c,3),c+=2,R=b[N-1]):17==D?(x=3+Gt(e,c,7),c+=3):18==D&&(x=11+Gt(e,c,127),c+=7);x--;)b[N++]=R;}}var k=b.subarray(0,C),F=b.subarray(C);p=_t(k),g=_t(F),u=Ft(k,p),h=Ft(F,g);}if(c>m)throw "unexpected EOF"}o&&a(d+131072);for(var O=(1<<p)-1,B=(1<<g)-1,L=p+g+18;r||c+L<m;){var V=(R=u[Wt(e,c)&O])>>>4;if((c+=15&R)>m)throw "unexpected EOF";if(!R)throw "invalid length/literal";if(V<256)t[d++]=V;else {if(256==V){u=null;break}var _=V-254;if(V>264){var G=bt[N=V-257];_=Gt(e,c,(1<<G)-1)+Tt[N],c+=G;}var W=h[Wt(e,c)&B],U=W>>>4;if(!W)throw "invalid distance";if(c+=15&W,F=Mt[U],U>3&&(G=wt[U],F+=Wt(e,c)&(1<<G)-1,c+=G),c>m)throw "unexpected EOF";o&&a(d+131072);for(var Z=d+_;d<Z;d+=4)t[d]=t[d-F],t[d+1]=t[d+1-F],t[d+2]=t[d+2-F],t[d+3]=t[d+3-F];d=Z;}}n.l=u,n.p=c,n.b=d,u&&(l=1,n.m=p,n.d=h,n.n=g);}while(!l);return d==t.length?t:Ut(t,0,d)}((function(e){if(8!=(15&e[0])||e[0]>>>4>7||(e[0]<<8|e[1])%31)throw "invalid zlib data";if(32&e[1])throw "invalid zlib data: preset dictionaries not supported"}(e),e.subarray(2,-4)),t)}const $t=e=>{if("string"!=typeof e)return e;try{const t=JSON.parse(e);if(t.timestamp)return t}catch(e){}try{const t=JSON.parse(function(e,t){var n="";if(!t&&"undefined"!=typeof TextDecoder)return (new TextDecoder).decode(e);for(var i=0;i<e.length;){var o=e[i++];o<128||t?n+=String.fromCharCode(o):o<224?n+=String.fromCharCode((31&o)<<6|63&e[i++]):o<240?n+=String.fromCharCode((15&o)<<12|(63&e[i++])<<6|63&e[i++]):(o=((15&o)<<18|(63&e[i++])<<12|(63&e[i++])<<6|63&e[i++])-65536,n+=String.fromCharCode(55296|o>>10,56320|1023&o));}return n}(Zt(function(e,t){var n=e.length;if(!t&&"undefined"!=typeof TextEncoder);for(var i=new Ct(e.length+(e.length>>>1)),o=0,r=function(e){i[o++]=e;},s=0;s<n;++s){if(o+5>i.length){var a=new Ct(o+8+(n-s<<1));a.set(i),i=a;}var l=e.charCodeAt(s);l<128||t?r(l):l<2048?(r(192|l>>>6),r(128|63&l)):l>55295&&l<57344?(r(240|(l=65536+(1047552&l)|1023&e.charCodeAt(++s))>>>18),r(128|l>>>12&63),r(128|l>>>6&63),r(128|63&l)):(r(224|l>>>12),r(128|l>>>6&63),r(128|63&l));}return Ut(i,0,o)}(e,!0))));if("v1"===t.v)return t;throw new Error(`These events were packed with packer ${t.v} which is incompatible with current packer v1.`)}catch(e){throw console.error(e),new Error("Unknown data format.")}};function Kt(e){return {all:e=e||new Map,on:function(t,n){var i=e.get(t);i?i.push(n):e.set(t,[n]);},off:function(t,n){var i=e.get(t);i&&(n?i.splice(i.indexOf(n)>>>0,1):e.set(t,[]));},emit:function(t,n){var i=e.get(t);i&&i.slice().map((function(e){e(n);})),(i=e.get("*"))&&i.slice().map((function(e){e(t,n);}));}}}var Yt,Pt=Object.freeze({__proto__:null,default:Kt});function Qt(e=window,t=document){if("scrollBehavior"in t.documentElement.style&&!0!==e.__forceSmoothScrollPolyfill__)return;const n=e.HTMLElement||e.Element,i={scroll:e.scroll||e.scrollTo,scrollBy:e.scrollBy,elementScroll:n.prototype.scroll||a,scrollIntoView:n.prototype.scrollIntoView},o=e.performance&&e.performance.now?e.performance.now.bind(e.performance):Date.now;const r=(s=e.navigator.userAgent,new RegExp(["MSIE ","Trident/","Edge/"].join("|")).test(s)?1:0);var s;function a(e,t){this.scrollLeft=e,this.scrollTop=t;}function l(e){if(null===e||"object"!=typeof e||void 0===e.behavior||"auto"===e.behavior||"instant"===e.behavior)return !0;if("object"==typeof e&&"smooth"===e.behavior)return !1;throw new TypeError("behavior member of ScrollOptions "+e.behavior+" is not a valid value for enumeration ScrollBehavior.")}function c(e,t){return "Y"===t?e.clientHeight+r<e.scrollHeight:"X"===t?e.clientWidth+r<e.scrollWidth:void 0}function d(t,n){const i=e.getComputedStyle(t,null)["overflow"+n];return "auto"===i||"scroll"===i}function u(e){const t=c(e,"Y")&&d(e,"Y"),n=c(e,"X")&&d(e,"X");return t||n}function h(e){for(;e!==t.body&&!1===u(e);)e=e.parentNode||e.host;return e}function p(t){let n,i,r,s=(o()-t.startTime)/468;var a;s=s>1?1:s,a=s,n=.5*(1-Math.cos(Math.PI*a)),i=t.startX+(t.x-t.startX)*n,r=t.startY+(t.y-t.startY)*n,t.method.call(t.scrollable,i,r),i===t.x&&r===t.y||e.requestAnimationFrame(p.bind(e,t));}function g(n,r,s){let l,c,d,u;const h=o();n===t.body?(l=e,c=e.scrollX||e.pageXOffset,d=e.scrollY||e.pageYOffset,u=i.scroll):(l=n,c=n.scrollLeft,d=n.scrollTop,u=a),p({scrollable:l,method:u,startTime:h,startX:c,startY:d,x:r,y:s});}e.scroll=e.scrollTo=function(){void 0!==arguments[0]&&(!0!==l(arguments[0])?g.call(e,t.body,void 0!==arguments[0].left?~~arguments[0].left:e.scrollX||e.pageXOffset,void 0!==arguments[0].top?~~arguments[0].top:e.scrollY||e.pageYOffset):i.scroll.call(e,void 0!==arguments[0].left?arguments[0].left:"object"!=typeof arguments[0]?arguments[0]:e.scrollX||e.pageXOffset,void 0!==arguments[0].top?arguments[0].top:void 0!==arguments[1]?arguments[1]:e.scrollY||e.pageYOffset));},e.scrollBy=function(){void 0!==arguments[0]&&(l(arguments[0])?i.scrollBy.call(e,void 0!==arguments[0].left?arguments[0].left:"object"!=typeof arguments[0]?arguments[0]:0,void 0!==arguments[0].top?arguments[0].top:void 0!==arguments[1]?arguments[1]:0):g.call(e,t.body,~~arguments[0].left+(e.scrollX||e.pageXOffset),~~arguments[0].top+(e.scrollY||e.pageYOffset)));},n.prototype.scroll=n.prototype.scrollTo=function(){if(void 0===arguments[0])return;if(!0===l(arguments[0])){if("number"==typeof arguments[0]&&void 0===arguments[1])throw new SyntaxError("Value could not be converted");return void i.elementScroll.call(this,void 0!==arguments[0].left?~~arguments[0].left:"object"!=typeof arguments[0]?~~arguments[0]:this.scrollLeft,void 0!==arguments[0].top?~~arguments[0].top:void 0!==arguments[1]?~~arguments[1]:this.scrollTop)}const e=arguments[0].left,t=arguments[0].top;g.call(this,this,void 0===e?this.scrollLeft:~~e,void 0===t?this.scrollTop:~~t);},n.prototype.scrollBy=function(){void 0!==arguments[0]&&(!0!==l(arguments[0])?this.scroll({left:~~arguments[0].left+this.scrollLeft,top:~~arguments[0].top+this.scrollTop,behavior:arguments[0].behavior}):i.elementScroll.call(this,void 0!==arguments[0].left?~~arguments[0].left+this.scrollLeft:~~arguments[0]+this.scrollLeft,void 0!==arguments[0].top?~~arguments[0].top+this.scrollTop:~~arguments[1]+this.scrollTop));},n.prototype.scrollIntoView=function(){if(!0===l(arguments[0]))return void i.scrollIntoView.call(this,void 0===arguments[0]||arguments[0]);const n=h(this),o=n.getBoundingClientRect(),r=this.getBoundingClientRect();n!==t.body?(g.call(this,n,n.scrollLeft+r.left-o.left,n.scrollTop+r.top-o.top),"fixed"!==e.getComputedStyle(n).position&&e.scrollBy({left:o.left,top:o.top,behavior:"smooth"})):e.scrollBy({left:r.left,top:r.top,behavior:"smooth"});};}class zt{constructor(e=[],t){this.timeOffset=0,this.raf=null,this.actions=e,this.speed=t.speed,this.liveMode=t.liveMode;}addAction(e){if(!this.actions.length||this.actions[this.actions.length-1].delay<=e.delay)return void this.actions.push(e);const t=this.findActionIndex(e);this.actions.splice(t,0,e);}start(){this.timeOffset=0;let e=performance.now();const t=()=>{const n=performance.now();for(this.timeOffset+=(n-e)*this.speed,e=n;this.actions.length;){const e=this.actions[0];if(!(this.timeOffset>=e.delay))break;this.actions.shift(),e.doAction();}(this.actions.length>0||this.liveMode)&&(this.raf=requestAnimationFrame(t));};this.raf=requestAnimationFrame(t);}clear(){this.raf&&(cancelAnimationFrame(this.raf),this.raf=null),this.actions.length=0;}setSpeed(e){this.speed=e;}toggleLiveMode(e){this.liveMode=e;}isActive(){return null!==this.raf}findActionIndex(e){let t=0,n=this.actions.length-1;for(;t<=n;){const i=Math.floor((t+n)/2);if(this.actions[i].delay<e.delay)t=i+1;else {if(!(this.actions[i].delay>e.delay))return i+1;n=i-1;}}return t}}function Jt(e,t){if(e.type===be.IncrementalSnapshot&&e.data.source===we.MouseMove&&e.data.positions&&e.data.positions.length){const n=e.data.positions[0].timeOffset,i=e.timestamp+n;return e.delay=i-t,i-t}return e.delay=e.timestamp-t,e.delay}
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -10316,8 +10424,6 @@ class Record {
                 password: true,
                 text: true,
             },
-            // slimDOMOptions: true,
-            // blockClass: /^el-/,
             emit(event, checkout) {
                 // if(checkout) this.rrwebSessionSet();
                 // 保存获取到的 event 数据，event里面是序列号后的DOM和鼠标事件等
@@ -10327,17 +10433,15 @@ class Record {
                     path: normalizeUrlForPath(window.location.href),
                 }, DB_CONFIG.RECORD_STORE_NAME);
             },
-            checkoutEveryNms: 1000 * 60 * 10,
+            checkoutEveryNms: 10 * 1000,
+            checkoutEveryNth: 200, // 每 200 个 event 重新制作快照
         });
         return this.stopFn;
     }
-    // rrwebSessionSet(){
-    // }
     async replay(dom, config) {
-        const startTime = config?.startTime || new Date().getTime() - 300000;
-        const endTime = config?.endTime || new Date().getTime() + 3000;
+        const startTime = config?.startTime || getCurrentUnix() - 300000;
+        const endTime = config?.endTime || getCurrentUnix() + 3000;
         const dataList = await this.getRange(startTime, endTime);
-        console.log('🚀 ~ Record ~ replay ~  dataList:', dataList.map((item) => item.data));
         setTimeout(() => {
             const replayInstance = new Qn({
                 target: dom,
@@ -10400,19 +10504,22 @@ class ClickTracker extends EventManager {
         };
         if (pageCoords.x !== null && pageCoords.y !== null) {
             const eventData = {
-                time: getTime(event),
+                timestamp: getCurrentUnix(),
+                createTime: formatDate(new Date()),
                 type: this.type,
+                pageUrl: normalizeUrlForPath(window.location.href),
                 // event,
-                data: {
+                data: JSON.stringify({
                     // target: JSON.stringify(targetElement),
                     x: pageCoords.x,
                     y: pageCoords.y,
+                    timestamp: getCurrentUnix(),
                     ...relativeCoords,
                     button: event.button,
                     text: text(targetElement),
                     link: linkElement?.href ?? null,
                     hash: null,
-                },
+                }),
             };
             console.log('🚀 ~ ClickTracker ~ handler ~ eventData:', eventData);
             this.messageWrapper.enqueue({ ...eventData, session: new Date().getDate() }, DB_CONFIG.ACTION_STORE_NAME);
@@ -10459,6 +10566,7 @@ class InputTracker extends EventManager {
                 target: JSON.stringify(input),
                 value: v,
                 type: this.type,
+                timestamp: getCurrentUnix(),
             };
             console.log('🚀 ~ ClickTracker ~ handler ~ data:', data);
             // If last entry in the queue is for the same target node as the current one, remove it so we can later swap it with current data.
@@ -10466,7 +10574,15 @@ class InputTracker extends EventManager {
                 state[state.length - 1].data.target === data.target) {
                 state.pop();
             }
-            this.messageWrapper.enqueue({ ...data, session: new Date().getDate() }, DB_CONFIG.ACTION_STORE_NAME);
+            this.messageWrapper.enqueue({
+                timestamp: getCurrentUnix(),
+                createTime: formatDate(new Date()),
+                pageUrl: normalizeUrlForPath(window.location.href),
+                // event: event,
+                type: this.type,
+                data: JSON.stringify(data),
+                session: new Date().getDate(),
+            }, DB_CONFIG.ACTION_STORE_NAME);
             // state.push({ time: getTime(event), event: Event.Input, data });
             // clearTimeout(timeout);
             // timeout = setTimeout(process, Setting.InputLookAhead, Event.Input);
@@ -10500,9 +10616,18 @@ class ResizeTracker extends EventManager {
                 ? Math.min(de.clientHeight, window.innerHeight)
                 : window.innerHeight,
             type: this.type,
+            timestamp: getCurrentUnix(),
         };
         console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data$2);
-        this.messageWrapper.enqueue({ ...data$2, session: new Date().getDate() }, DB_CONFIG.ACTION_STORE_NAME);
+        this.messageWrapper.enqueue({
+            timestamp: getCurrentUnix(),
+            createTime: formatDate(new Date()),
+            pageUrl: normalizeUrlForPath(window.location.href),
+            // event: event,
+            type: this.type,
+            data: JSON.stringify(data$2),
+            session: new Date().getDate(),
+        }, DB_CONFIG.ACTION_STORE_NAME);
     }
 }
 __decorate([
@@ -10550,9 +10675,18 @@ class SelectTracker extends EventManager {
             end: current.focusNode,
             endOffset: current.focusOffset,
             type: this.type,
+            timestamp: getCurrentUnix(),
         };
         console.log('🚀 ~ ResizeTracker ~ handler ~ data:', data$1);
-        this.messageWrapper.enqueue({ ...data$1, session: new Date().getDate() }, DB_CONFIG.ACTION_STORE_NAME);
+        this.messageWrapper.enqueue({
+            timestamp: getCurrentUnix(),
+            createTime: formatDate(new Date()),
+            pageUrl: normalizeUrlForPath(window.location.href),
+            // event: event,
+            type: this.type,
+            data: JSON.stringify(data$1),
+            session: new Date().getDate(),
+        }, DB_CONFIG.ACTION_STORE_NAME);
     }
 }
 __decorate([
@@ -10599,20 +10733,23 @@ class ClipboardTracker extends EventManager {
         // 输出事件相关信息
         if (dataObject) {
             console.log({
-                time: getTime(event),
+                // time: getTime(event),
                 // event: event,
-                type: this.type,
-                data: {
+                // type: this.type,
+                data: JSON.stringify({
                     target: JSON.stringify(event.target),
                     clipboardData: dataObject,
-                },
+                }),
             });
             this.messageWrapper.enqueue({
-                time: getTime(event),
+                timestamp: getCurrentUnix(),
+                createTime: formatDate(new Date()),
+                pageUrl: normalizeUrlForPath(window.location.href),
                 // event: event,
                 type: this.type,
                 data: {
                     // target: JSON.stringify(event.target),
+                    timestamp: getCurrentUnix(),
                     clipboardData: dataObject,
                 },
                 session: new Date().getDate(),
@@ -10637,11 +10774,19 @@ class SubmitTracker extends EventManager {
     }
     handler(event) {
         (data = {
-            time: getTime(event),
+            // time: getTime(event),
             value: event.target.value,
-            type: this.type,
+            // type: this.type,
+            timestamp: getCurrentUnix(),
         }),
-            this.messageWrapper.enqueue({ ...data, session: new Date().getDate() }, DB_CONFIG.ACTION_STORE_NAME);
+            this.messageWrapper.enqueue({
+                timestamp: getCurrentUnix(),
+                pageUrl: normalizeUrlForPath(window.location.href),
+                createTime: formatDate(new Date()),
+                type: this.type,
+                data: JSON.stringify(data),
+                session: new Date().getDate(),
+            }, DB_CONFIG.ACTION_STORE_NAME);
     }
 }
 __decorate([

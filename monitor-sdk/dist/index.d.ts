@@ -48,20 +48,10 @@ interface AnalysisData{
   pageUrl?: string;
   screenResolution?: any;
   referrer?: string;
-  metrics?:object;
+  metrics?:string;
   timestamp?: any;
-  slowResources?:Record<string, PerformanceResources[]>
+  slowResources?:string
 }
- interface PerformanceResources{
-    name: string;
-    startTime: number;
-    duration: number;
-    transferSize: number;
-    decodedBodySize: number;
-    responseStart: number;
-    responseEnd: number;
-    initiatorType: string;
- }
 
 /**
  * 页面浏览跟踪器类。
@@ -144,10 +134,6 @@ interface UVData {
     userAgent?: string;
     language?: string;
     timeZoneOffset?: number;
-    screenResolution?: {
-        width: number;
-        height: number;
-    };
 }
 declare class UvTracker {
     uvData: UVData | null;
@@ -223,6 +209,7 @@ declare class MessageQueueDBWrapper extends IndexedDBWrapper {
     }): MessageQueueDBWrapper;
     enqueue(data: any, storeName: any): Promise<void>;
     dequeue(storeName: any): Promise<IMessage[] | undefined>;
+    updateStatus(messages: any, storeName: any): void;
     batchDeleteBeforeDate(storeNameList: string[], hoursAgo: number): Promise<void>;
 }
 
@@ -233,7 +220,8 @@ declare class HttpError extends Error {
     method: string;
     requestUrl: string;
     data: string;
-    constructor(status: number, method: string, requestUrl: string, data: string, message: string, xhr: XMLHttpRequest);
+    stack: string;
+    constructor(status: number, method: string, requestUrl: string, data: string, message: string, xhr: XMLHttpRequest, stack: string);
 }
 
 interface ErrorInfo {
@@ -243,7 +231,7 @@ interface ErrorInfo {
     cause?: string;
     timestamp: string;
     userAgent: string;
-    url: string;
+    pageUrl: string;
     operationSequence: any[];
     logContext: any;
     method?: string;
@@ -262,7 +250,7 @@ declare class ErrorTracker {
     clearOperationSequence(): void;
     setLogContext(context: any): void;
     clearLogContext(): void;
-    getRange(startTime?: any, endTime?: any): Promise<string[]>;
+    getRange(startTime?: any, endTime?: any): Promise<string>;
     collectError(error: Error | string | HttpError): Promise<ErrorInfo>;
     private getCommonErrorInfo;
 }
@@ -304,14 +292,18 @@ declare class Report {
     websocketManager: WebSocketManager;
     messageWrapper: any;
     config: MonitorConfig;
-    constructor(config: MonitorConfig);
+    uvTracker: UvTracker;
+    constructor(config: MonitorConfig, uvTracker: UvTracker);
     start(baseUrl: any, useWebSocket?: boolean): void;
+    setSuccessfulStatus(trafficList: any, actionList: any, interfaceList: any): void;
+    mapWithStoreName(list: any, storeName: any): any;
     clearIndex(): void;
-    fetchReport(url: any, data: any): Promise<void>;
+    fetchReport(url: any, data: any): Promise<unknown>;
     webSocketReport(data: any): Promise<void>;
-    getRange(startTime?: any, endTime?: any): Promise<any>;
+    getRange(startTime?: any, endTime?: any): Promise<string>;
 }
 
+type historyFunction = (data: any, unused: string, url?: string | URL) => void;
 declare class Monitor extends EventManager {
     static instance: Monitor | null;
     pvTracker: PageViewTracker;
@@ -320,9 +312,10 @@ declare class Monitor extends EventManager {
     uvData: UVData$1;
     pvData: AnalysisData;
     stayDuration: number;
-    originalPushState: (data: any, unused: string, url?: string | URL) => void;
-    originalReplaceState: (data: any, unused: string, url?: string | URL) => void;
+    originalPushState: historyFunction;
+    originalReplaceState: historyFunction;
     Events: Object;
+    private errorMutex;
     originalFetch: any;
     reportUtils: Report;
     config: MonitorConfig;
@@ -331,13 +324,17 @@ declare class Monitor extends EventManager {
         userId: string;
     };
     report: Report;
+    reportError: {
+        cancel: () => void;
+        flush: () => any;
+    } & ((...args: any[]) => void);
     constructor(config: MonitorConfig);
     initializeDatabase(): void;
     onPopState(event: PopStateEvent): Promise<void>;
     onLoad(event: Event): Promise<void>;
     onBeforeUnload(event: BeforeUnloadEvent): void;
     onVisablechange(event: BeforeUnloadEvent): void;
-    onError(error: Error): Promise<void>;
+    onError(error: ErrorEvent): Promise<void>;
     onUnhandlerejection(error: {
         type: 'unhandledrejection';
         promise: Promise<any>;
@@ -348,12 +345,13 @@ declare class Monitor extends EventManager {
     removeEventListeners(): void;
     private onPageChange;
     sendMessage(message: any, storeName: any): Promise<void>;
-    reportError(error: Error): Promise<void>;
-    updateDurationMessage(): Promise<void>;
+    basicReportError(error: Error): Promise<void>;
+    updateDurationMessage(stayDuration: any): Promise<boolean>;
     getLastData(storeName: string): Promise<IMessage | undefined>;
 }
 
 interface RecordReplayConfig extends RRwebPlayerOptions {
+    props: any;
     startTime?: number | string;
     endTime?: number | string;
 }

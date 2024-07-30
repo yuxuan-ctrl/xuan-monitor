@@ -84,6 +84,7 @@ export default class PageViewTracker {
     switch (method) {
       case 'pushState':
       case 'replaceState':
+        this.storeCurrentPageEntryTime();
         this.monitor.pvData = await this.updatePageViewTime(url);
         break;
       case 'popstate':
@@ -107,7 +108,6 @@ export default class PageViewTracker {
       return 0;
     }
     const stayDuration = performance.now() - this.currentPageEntryTime;
-    this.monitor.stayDuration = stayDuration;
     this.storeCurrentPageEntryTime();
     return stayDuration;
   }

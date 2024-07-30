@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-02-29 15:37:44
+ * @LastEditTime: 2024-07-30 10:49:26
  * @FilePath: \monitor-sdk\src\core\Message.ts
  * @Description:
  *
@@ -10,7 +10,7 @@
  */
 import { IMessage } from '../types';
 import IndexedDBWrapper from '../db/index';
-import {getCurrentUnix} from "../utils";
+import { getCurrentUnix } from '../utils';
 
 export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   // 实例
@@ -62,15 +62,20 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
       this.maxMessageCount
     );
     if (messages.length > 0) {
+      return messages;
+    }
+
+    return undefined;
+  }
+
+  public updateStatus(messages,storeName) {
+    if (messages.length > 0) {
       messages.forEach(async (mes) => {
         if (mes.status === 'pending') {
           await this.update(mes.id!, { status: 'consumed' }, storeName);
         }
       });
-
-      return messages;
     }
-    return undefined;
   }
 
   public async batchDeleteBeforeDate(

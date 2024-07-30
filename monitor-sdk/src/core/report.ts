@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
- * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-05-08 16:47:32
+ * @LastEditors: yuxuan-ctrl
+ * @LastEditTime: 2024-07-30 10:49:39
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -17,6 +17,7 @@ import {
   normalizeUrlForPath,
   recursiveTimeout,
   getCurrentUnix,
+  mapDataProperties,
 } from '../utils';
 import { MonitorConfig } from '../types';
 import MessageQueueDBWrapper from './Message';
@@ -56,8 +57,6 @@ export default class Report {
     );
     this.clearIndex();
     recursiveTimeout(async () => {
-      const startTime = getCurrentUnix() - 30000;
-      const endTime = getCurrentUnix() + 30000;
       const trafficList = await this.messageWrapper.dequeue(
         DB_CONFIG.TRAFFIC_STORE_NAME
       );
@@ -67,6 +66,7 @@ export default class Report {
       const interfaceList = await this.messageWrapper.dequeue(
         DB_CONFIG.INTERFACE_STORE_NAME
       );
+
       if (
         isArray(trafficList) ||
         isArray(actionList) ||
@@ -79,24 +79,51 @@ export default class Report {
           location: await getUserLocation(3000),
           userAgent: navigator.userAgent,
           timestamp: formatDate(new Date()),
-          eventList: isArray(trafficList)
-            ? trafficList.map((item) => item.data)
-            : [],
-          actionList: isArray(actionList)
-            ? actionList.map((item) => item.data)
-            : [],
-          interfaceList: isArray(interfaceList)
-            ? interfaceList.map((item) => item.data)
-            : [],
-          // record: await this.getRange(startTime, endTime),
+          eventList: mapDataProperties(trafficList),
+          actionList: mapDataProperties(actionList),
+          interfaceList: mapDataProperties(interfaceList),
         };
         if (useWebSocket && this.websocketManager) {
+          //todo webSocket Methods
           this.webSocketReport(reportData);
         } else {
-          this.fetchReport(`${baseUrl}/monitor/report`, reportData);
+          await this.fetchReport(`${baseUrl}/monitor/report`, reportData);
+          this.setSuccessfulStatus(trafficList, actionList, interfaceList);
         }
       }
     }, this.timeInterval);
+  }
+
+  setSuccessfulStatus(trafficList, actionList, interfaceList) {
+    // 处理每个数组
+    const trafficSuccessfulResult = this.mapWithStoreName(
+      trafficList,
+      DB_CONFIG.TRAFFIC_STORE_NAME
+    );
+    const actionSuccessfulResult = this.mapWithStoreName(
+      actionList,
+      DB_CONFIG.ACTION_STORE_NAME
+    );
+    const interfaceSuccessfulResult = this.mapWithStoreName(
+      interfaceList,
+      DB_CONFIG.INTERFACE_STORE_NAME
+    );
+
+    // 合并所有数组
+    const combineSuccessfulResult = [
+      ...trafficSuccessfulResult,
+      ...actionSuccessfulResult,
+      ...interfaceSuccessfulResult,
+    ];
+
+    combineSuccessfulResult.forEach((res) => {
+      this.messageWrapper.updateStatus(res.id.res.storeName);
+    });
+  }
+
+  // 创建一个函数来处理数组中的每个元素
+  mapWithStoreName(list, storeName) {
+    return list.map((item) => ({ id: item.id, storeName }));
   }
 
   clearIndex() {
@@ -115,14 +142,8 @@ export default class Report {
 
   async fetchReport(url, data) {
     const req = new Request();
-<<<<<<< HEAD
     const response = await req.post(url, data);
     return response;
-=======
-    try {
-      req.post(url, data);
-    } catch (e) {}
->>>>>>> efe45857e2ab067a9366522f321caa9c68401b3d
   }
 
   async webSocketReport(data: any) {

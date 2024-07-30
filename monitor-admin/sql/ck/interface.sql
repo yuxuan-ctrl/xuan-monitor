@@ -24,6 +24,6 @@ CREATE TABLE default.interface_info
     ENGINE = MergeTree
 ORDER BY (id,
  timestamp)
-SETTINGS parts_to_delay_insert = 600,
- parts_to_throw_insert = 600,
+SETTINGS parts_to_delay_insert = 60000,
+ parts_to_throw_insert = 60000,
  index_granularity = 8192;

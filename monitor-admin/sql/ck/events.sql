@@ -47,5 +47,5 @@ CREATE TABLE default.event_info
 PARTITION BY toStartOfDay(create_time)
 ORDER BY create_time
 SETTINGS index_granularity = 8192,
-    parts_to_delay_insert = 600,
- parts_to_throw_insert = 600;
+    parts_to_delay_insert = 60000,
+ parts_to_throw_insert = 60000;

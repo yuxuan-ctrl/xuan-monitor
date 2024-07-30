@@ -115,8 +115,14 @@ export default class Report {
 
   async fetchReport(url, data) {
     const req = new Request();
+<<<<<<< HEAD
     const response = await req.post(url, data);
     return response;
+=======
+    try {
+      req.post(url, data);
+    } catch (e) {}
+>>>>>>> efe45857e2ab067a9366522f321caa9c68401b3d
   }
 
   async webSocketReport(data: any) {

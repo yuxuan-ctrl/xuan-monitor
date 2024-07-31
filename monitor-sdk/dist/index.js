@@ -603,10 +603,17 @@ function wrapFetch(originalFetch, callback) {
                 let endTimeFetch = performance.now();
                 let durationFetch = endTimeFetch - startTimeFetch;
                 let requestUrl = typeof args[0] === 'string' ? args[0] : args[0].href;
+                const body = args[1]?.body || '';
+                const headers = args[1]?.headers || '';
+                const res = await response.json();
                 enqueueHttpRequest({
                     method,
-                    requestUrl: requestUrl,
+                    requestUrl,
                     duration: durationFetch.toFixed(2),
+                    response: res,
+                    status: response.status,
+                    body,
+                    headers,
                 });
                 if (!response.ok && !response.url.includes('/monitor/errorReport')) {
                     const error = new HttpError(response.status, method, response.url, response, `HTTP Error ${response.status} config : ${response.statusText}`, response, errorContext);
@@ -665,6 +672,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     let method = null;
     let data = null;
     let errorContext = '';
+    let headers = {};
     function wrappedXMLHttpRequest() {
         let startTime = performance.now();
         const originalRequest = new OriginalXMLHttpRequest();
@@ -681,6 +689,13 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
                 callback(error); // 调用回调函数，将错误传递给上层处理
             }
         };
+        // 重写 setRequestHeader 方法
+        const originSetRequestHeader = originalRequest.setRequestHeader;
+        originalRequest.setRequestHeader = function (name, value) {
+            headers[name] = value; // 记录请求头
+            // 调用原始的 setRequestHeader 方法
+            originSetRequestHeader.call(this, name, value);
+        };
         //  // 保存原始的 onreadystatechange 函数
         const originalOnReadyStateChange = originalRequest.onreadystatechange;
         originalRequest.onreadystatechange = function (event) {
@@ -693,9 +708,10 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
                     method,
                     requestUrl,
                     duration: duration.toFixed(2),
-                    reponse: originalRequest.response,
+                    response: originalRequest.response,
                     status: originalRequest.status,
                     body: data,
+                    headers
                 });
                 if (originalRequest.status >= 400 &&
                     !requestUrl.includes('/monitor/errorReport')) {

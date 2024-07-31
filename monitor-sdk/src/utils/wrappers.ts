@@ -43,11 +43,17 @@ function wrapFetch(originalFetch, callback) {
           let endTimeFetch = performance.now();
           let durationFetch = endTimeFetch - startTimeFetch;
           let requestUrl = typeof args[0] === 'string' ? args[0] : args[0].href;
-
+          const body = args[1]?.body || '';
+          const headers = args[1]?.headers || '';
+          const res = await response.json()
           enqueueHttpRequest({
             method,
-            requestUrl: requestUrl,
+            requestUrl,
             duration: durationFetch.toFixed(2),
+            response: JSON.stringify(res),
+            status: response.status,
+            body,
+            headers:JSON.stringify(headers),
           });
           if (!response.ok && !response.url.includes('/monitor/errorReport')) {
             const error = new HttpError(
@@ -178,6 +184,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   let method = null;
   let data = null;
   let errorContext = '';
+  let headers = {};
   function wrappedXMLHttpRequest() {
     let startTime = performance.now();
     const originalRequest = new OriginalXMLHttpRequest();
@@ -195,8 +202,18 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       }
     };
 
+    // 重写 setRequestHeader 方法
+    const originSetRequestHeader = originalRequest.setRequestHeader;
+
+    originalRequest.setRequestHeader = function (name, value) {
+      headers[name] = value; // 记录请求头
+      // 调用原始的 setRequestHeader 方法
+      originSetRequestHeader.call(this, name, value);
+    };
+
     //  // 保存原始的 onreadystatechange 函数
     const originalOnReadyStateChange = originalRequest.onreadystatechange;
+
     originalRequest.onreadystatechange = function (event) {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
         let endTime = performance.now();
@@ -207,9 +224,10 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
           method,
           requestUrl,
           duration: duration.toFixed(2),
-          reponse: originalRequest.response,
+          response: originalRequest.response,
           status: originalRequest.status,
           body: data,
+          headers:JSON.stringify(headers)
         });
         if (
           originalRequest.status >= 400 &&

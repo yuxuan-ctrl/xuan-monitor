@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-07-30 17:33:35
+ * @LastEditTime: 2024-07-31 09:22:02
  * @FilePath: \monitor-sdk\src\core\Message.ts
  * @Description:
  *
@@ -11,6 +11,15 @@
 import { IMessage } from '../types';
 import IndexedDBWrapper from '../db/index';
 import { getCurrentUnix } from '../utils';
+import { DB_CONFIG } from '@/config/dbconfig';
+
+const {
+  TRAFFIC_STORE_NAME,
+  Error_STORE_NAME,
+  ACTION_STORE_NAME,
+  RECORD_STORE_NAME,
+  INTERFACE_STORE_NAME,
+} = DB_CONFIG;
 
 export default class MessageQueueDBWrapper extends IndexedDBWrapper {
   // 实例
@@ -41,7 +50,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
     const message: IMessage = {
       data,
       timestamp: getCurrentUnix(),
-      status: 'enter',
+      status: storeName === TRAFFIC_STORE_NAME ? 'enter' : 'pending',
       pageUrl: data.pageUrl,
     };
     await this.add(message, storeName);
@@ -68,7 +77,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
     return undefined;
   }
 
-  public async findLatestPage(storeName){
+  public async findLatestPage(storeName) {
     const condition = (item) => {
       return item.status === 'enter';
     };
@@ -88,7 +97,7 @@ export default class MessageQueueDBWrapper extends IndexedDBWrapper {
     return undefined;
   }
 
-  public updateStatus(id,storeName,status) {
+  public updateStatus(id, storeName, status) {
     this.update(id, { status }, storeName);
   }
 

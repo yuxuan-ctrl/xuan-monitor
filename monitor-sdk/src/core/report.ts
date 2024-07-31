@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-07-30 17:56:17
+ * @LastEditTime: 2024-07-31 09:08:30
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *
@@ -68,8 +68,7 @@ export default class Report {
     recursiveTimeout(async () => {
       const trafficList = await this.messageWrapper.dequeue(TRAFFIC_STORE_NAME);
       const actionList = await this.messageWrapper.dequeue(ACTION_STORE_NAME);
-      const interfaceList =
-        await this.messageWrapper.dequeue(INTERFACE_STORE_NAME);
+      const interfaceList = await this.messageWrapper.dequeue(INTERFACE_STORE_NAME);
 
       if (
         isArray(trafficList) ||

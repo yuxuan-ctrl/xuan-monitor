@@ -96,7 +96,7 @@ export default class ErrorTracker {
   private getCommonErrorInfo(error: Error | string): Partial<ErrorInfo> {
     return {
       errorType: error instanceof Error ? error.name : 'Non-JavaScript Error',
-      errorMessage: error instanceof Error ? error.message : error,
+      errorMessage: error instanceof Error ? error.message : JSON.stringify(error),
       stackTrace: error instanceof Error ? error.stack : undefined,
       cause: ((error instanceof Error && error.cause) as string) || '',
       timestamp: formatDate(new Date()),

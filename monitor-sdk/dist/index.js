@@ -468,6 +468,16 @@ class IndexedDBWrapper {
     }
 }
 
+const DB_CONFIG = {
+    DB_NAME: 'monitor',
+    TRAFFIC_STORE_NAME: 'traffic_analytics',
+    Error_STORE_NAME: 'errors',
+    ACTION_STORE_NAME: 'actions',
+    RECORD_STORE_NAME: 'records',
+    INTERFACE_STORE_NAME: 'interfaces',
+};
+
+const { TRAFFIC_STORE_NAME: TRAFFIC_STORE_NAME$2, Error_STORE_NAME: Error_STORE_NAME$2, ACTION_STORE_NAME: ACTION_STORE_NAME$2, RECORD_STORE_NAME: RECORD_STORE_NAME$2, INTERFACE_STORE_NAME: INTERFACE_STORE_NAME$2, } = DB_CONFIG;
 class MessageQueueDBWrapper extends IndexedDBWrapper {
     // 实例
     static _instance = null;
@@ -491,7 +501,7 @@ class MessageQueueDBWrapper extends IndexedDBWrapper {
         const message = {
             data,
             timestamp: getCurrentUnix(),
-            status: 'enter',
+            status: storeName === TRAFFIC_STORE_NAME$2 ? 'enter' : 'pending',
             pageUrl: data.pageUrl,
         };
         await this.add(message, storeName);
@@ -561,21 +571,12 @@ class MessageQueueDBWrapper extends IndexedDBWrapper {
     }
 }
 
-const DB_CONFIG = {
-    DB_NAME: 'monitor',
-    TRAFFIC_STORE_NAME: 'traffic_analytics',
-    Error_STORE_NAME: 'errors',
-    ACTION_STORE_NAME: 'actions',
-    RECORD_STORE_NAME: 'records',
-    INTERFACE_STORE_NAME: 'interfaces',
-};
-
 const messageWrapper = MessageQueueDBWrapper.getInstance({
     dbName: 'monitorxq',
     dbVersion: 1,
     storeName: DB_CONFIG.INTERFACE_STORE_NAME,
 });
-const enqueueHttpRequest = debounce(function (data) {
+const enqueueHttpRequest = function (data) {
     if (data &&
         !data?.requestUrl.includes('/monitor/report') &&
         !data?.requestUrl.includes('/monitor/errorReport')) {
@@ -588,7 +589,7 @@ const enqueueHttpRequest = debounce(function (data) {
         };
         messageWrapper.enqueue({ ...eventData, session: new Date().getDate() }, DB_CONFIG.INTERFACE_STORE_NAME);
     }
-}, 1000);
+};
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
     return function wrappedFetch(...args) {
@@ -662,7 +663,6 @@ function wrapHistory(history, callback) {
 }
 function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     let method = null;
-    let requestUrl = null;
     let data = null;
     let errorContext = '';
     function wrappedXMLHttpRequest() {
@@ -670,10 +670,9 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
         const originalRequest = new OriginalXMLHttpRequest();
         // 包裹 open 方法
         const originalOpen = originalRequest.open;
-        originalRequest.open = function (...args) {
+        OriginalXMLHttpRequest.prototype.open = function (...args) {
             try {
                 method = args[0];
-                requestUrl = args[1];
                 originalOpen.apply(this, args);
             }
             catch (error) {
@@ -688,15 +687,19 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
             if (originalRequest.readyState === XMLHttpRequest.DONE) {
                 let endTime = performance.now();
                 let duration = endTime - startTime;
+                const requestUrl = originalRequest.responseURL;
                 console.log(`请求和响应耗时: ${duration.toFixed(2)} 毫秒`);
                 enqueueHttpRequest({
                     method,
                     requestUrl,
                     duration: duration.toFixed(2),
+                    reponse: originalRequest.response,
+                    status: originalRequest.status,
+                    body: data,
                 });
                 if (originalRequest.status >= 400 &&
                     !requestUrl.includes('/monitor/errorReport')) {
-                    const error = new HttpError(originalRequest.status, method, requestUrl, data, `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`, originalRequest, errorContext);
+                    const error = new HttpError(originalRequest.status, method, data, requestUrl, `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`, originalRequest, errorContext);
                     callback(error); // 调用回调函数，将错误传递给上层处理
                 }
                 // 调用原始的 onreadystatechange 函数
@@ -719,7 +722,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
             }
         };
         method = null;
-        requestUrl = null;
         data = null;
         errorContext = null;
         return originalRequest;
@@ -4657,7 +4659,7 @@ class ErrorTracker {
     getCommonErrorInfo(error) {
         return {
             errorType: error instanceof Error ? error.name : 'Non-JavaScript Error',
-            errorMessage: error instanceof Error ? error.message : error,
+            errorMessage: error instanceof Error ? error.message : JSON.stringify(error),
             stackTrace: error instanceof Error ? error.stack : undefined,
             cause: (error instanceof Error && error.cause) || '',
             timestamp: formatDate(new Date()),
@@ -4748,7 +4750,7 @@ function Listener(config) {
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 10:17:23
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-07-30 17:56:17
+ * @LastEditTime: 2024-07-31 09:08:30
  * @FilePath: \monitor-sdk\src\core\Report.ts
  * @Description:
  *

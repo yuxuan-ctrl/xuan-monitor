@@ -10,7 +10,7 @@ const messageWrapper = MessageQueueDBWrapper.getInstance({
   storeName: DB_CONFIG.INTERFACE_STORE_NAME,
 });
 
-const enqueueHttpRequest = debounce(function (data) {
+const enqueueHttpRequest = function (data) {
   if (
     data &&
     !data?.requestUrl.includes('/monitor/report') &&
@@ -28,7 +28,7 @@ const enqueueHttpRequest = debounce(function (data) {
       DB_CONFIG.INTERFACE_STORE_NAME
     );
   }
-}, 1000);
+};
 
 // 包裹 fetch API
 function wrapFetch(originalFetch, callback) {
@@ -176,7 +176,6 @@ function wrapHistory(history, callback) {
 
 function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
   let method = null;
-  let requestUrl = null;
   let data = null;
   let errorContext = '';
   function wrappedXMLHttpRequest() {
@@ -185,10 +184,9 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
 
     // 包裹 open 方法
     const originalOpen = originalRequest.open;
-    originalRequest.open = function (...args) {
+    OriginalXMLHttpRequest.prototype.open = function (...args) {
       try {
         method = args[0];
-        requestUrl = args[1];
         originalOpen.apply(this, args);
       } catch (error) {
         console.log('🚀 ~ wrappedXMLHttpRequest ~ error:', error);
@@ -203,11 +201,15 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
         let endTime = performance.now();
         let duration = endTime - startTime;
+        const requestUrl = originalRequest.responseURL;
         console.log(`请求和响应耗时: ${duration.toFixed(2)} 毫秒`);
         enqueueHttpRequest({
           method,
           requestUrl,
           duration: duration.toFixed(2),
+          reponse: originalRequest.response,
+          status: originalRequest.status,
+          body: data,
         });
         if (
           originalRequest.status >= 400 &&
@@ -216,8 +218,8 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
           const error = new HttpError(
             originalRequest.status,
             method,
-            requestUrl,
             data,
+            requestUrl,
             `HTTP Error ${originalRequest.status} config : ${originalRequest.responseText}`,
             originalRequest,
             errorContext
@@ -247,7 +249,6 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
     };
 
     method = null;
-    requestUrl = null;
     data = null;
     errorContext = null;
     return originalRequest;

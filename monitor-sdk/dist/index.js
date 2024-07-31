@@ -610,10 +610,10 @@ function wrapFetch(originalFetch, callback) {
                     method,
                     requestUrl,
                     duration: durationFetch.toFixed(2),
-                    response: res,
+                    response: JSON.stringify(res),
                     status: response.status,
                     body,
-                    headers,
+                    headers: JSON.stringify(headers),
                 });
                 if (!response.ok && !response.url.includes('/monitor/errorReport')) {
                     const error = new HttpError(response.status, method, response.url, response, `HTTP Error ${response.status} config : ${response.statusText}`, response, errorContext);
@@ -711,7 +711,7 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
                     response: originalRequest.response,
                     status: originalRequest.status,
                     body: data,
-                    headers
+                    headers: JSON.stringify(headers)
                 });
                 if (originalRequest.status >= 400 &&
                     !requestUrl.includes('/monitor/errorReport')) {

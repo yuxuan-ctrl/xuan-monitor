@@ -38,4 +38,15 @@ public class InterfaceInfo {
     @JsonProperty("duration")
     private Float duration;
 
+    @JsonProperty("body")
+    private String body;
+
+    @JsonProperty("headers")
+    private String headers;
+
+    @JsonProperty("response")
+    private String response;
+
+    @JsonProperty("status")
+    private int status;
 }

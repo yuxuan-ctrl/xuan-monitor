@@ -19,7 +19,15 @@ CREATE TABLE default.interface_info
 
     `timestamp` Int64,
 
-    `duration` Float64
+    `duration` Float64,
+
+    `body` String,
+
+    `headers` String,
+
+    `response` String,
+
+    `status` Int32
 )
     ENGINE = MergeTree
 ORDER BY (id,

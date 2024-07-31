@@ -87,6 +87,10 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
                         .pageUrl(interfaceInfo.getPageUrl())
                         .timestamp(interfaceInfo.getTimestamp())
                         .userId(userId)
+                        .status(interfaceInfo.getStatus())
+                        .body(interfaceInfo.getBody())
+                        .headers(interfaceInfo.getHeaders())
+                        .response(interfaceInfo.getResponse())
                         .build())
                 .collect(Collectors.toList());
 

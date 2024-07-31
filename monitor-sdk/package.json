@@ -1,8 +1,8 @@
 {
-  "name": "monitor-sdk",
-  "version": "1.0.0",
-  "description": "监控SDK",
-  "main": "dist/monitor.esm.js",
+  "name": "@front-insight/front-insight-sdk",
+  "version": "0.0.1",
+  "description": "Front-Insight-SDK是一个集PV、UV采集分析、错误监控、用户行为追踪的Web-SDK，支持Vue或者React等主流框架",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
     "build": "rollup --environment NODE_ENV:development -c scripts/rollup.base.js",
@@ -10,7 +10,11 @@
     "test": "jest",
     "prettier:fix": "npx prettier --write ./src/"
   },
-  "author": "yuxuanli",
+  "files":[
+    "dist",
+    "package.json"
+  ],
+  "author": "yuxuan-ctrl",
   "license": "ISC",
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^4.2.1",

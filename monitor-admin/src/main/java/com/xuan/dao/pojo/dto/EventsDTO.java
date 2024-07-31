@@ -45,6 +45,10 @@ public class  EventsDTO {
     @JsonProperty("interfaceList")
     private List<InterfaceInfo> interfaceList;
 
+    @JsonProperty("currentEnterPageUrl")
+    private String currentEnterPageUrl;
+
+
     String record;
 
 }

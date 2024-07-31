@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuan.common.utils.CalculateUtil;
 import com.xuan.common.utils.IpUtil;
+import com.xuan.configuration.SharedService;
 import com.xuan.dao.mapper.clickhouse.EventsMapper;
 import com.xuan.dao.mapper.postgres.SystemsMapper;
 import com.xuan.dao.mapper.postgres.UserMapper;
@@ -64,6 +65,9 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
     @Autowired
     public SystemsMapper systemsMapper;
 
+    @Autowired
+    public SharedService sharedService;
+
     @Override
     public ReportVo recordMonitorInfo(EventsDTO eventsDto, HttpServletRequest httpRequest) throws IOException {
         String appId = eventsDto.getAppId();
@@ -75,6 +79,9 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
         List<ActionInfo> actionList = eventsDto.getActionList();
         List<EventInfo> eventList = eventsDto.getEventList();
         List<InterfaceInfo> interfaceList = eventsDto.getInterfaceList();
+
+        // record current appId with its status
+        sharedService.setAppProperties(appId,eventsDto);
 
         if(!systemsMapper.exists(new LambdaQueryWrapper<Systems>().eq(Systems::getAppId,appId))){
             systemsMapper.insert(Systems.builder()

@@ -25,9 +25,8 @@ public class MonitorController {
     @PostMapping("/report")
     @ApiOperation("监控信息上传")
     public Result<ReportVo> report(@RequestBody EventsDTO eventsDto, HttpServletRequest httpRequest) throws Exception{
-        log.info("监控信息：{}",httpRequest);
-        log.info("监控信息：{}",httpRequest.getHeader("Authorization"));
-
+        log.info("AppId：{}",eventsDto.getAppId());
+        log.info("当前进入页面：{}",eventsDto.getCurrentEnterPageUrl());
         ReportVo reportVo = monitorService.recordMonitorInfo(eventsDto,httpRequest);
         return Result.success(reportVo);
     }

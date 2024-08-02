@@ -64,7 +64,7 @@ export default class Monitor extends EventManager {
     this.pvTracker = new PageViewTracker(config?.userId, this);
     this.uvTracker = new UvTracker(config?.userId, this);
     this.report = new Report(config, this.uvTracker);
-    this.report.start('/api');
+    this.report.start(this.config?.baseUrl || '/api');
     this.baseInfo = { appId: config.appId, userId: config?.userId };
     this.errorTracker = new ErrorTracker();
     this.reportError = debounce(this.basicReportError, 1000);

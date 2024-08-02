@@ -1,0 +1,9 @@
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# COPY the specific JAR file from the target directory, which is one level up from the Dockerfile
+COPY target/front-insight-server-0.0.1.jar .
+
+# Specify the command to run the JAR file
+CMD ["java", "-jar", "front-insight-server-0.0.1.jar"]

@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  clickhouse:
+    build: ./clickhouse
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+
+  postgres:
+    build: ./postgres
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: Chrdw@123
+      POSTGRES_DB: monitor
+    ports:
+      - "5432:5432"
+
+  front-insight-server:
+    build: ./
+    depends_on:
+      - clickhouse
+      - postgres
+    ports:
+      - "5200:5200"

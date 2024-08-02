@@ -1,6 +1,6 @@
 {
   "name": "@front-insight/front-insight-sdk",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Front-Insight-SDK是一个集PV、UV采集分析、错误监控、用户行为追踪的Web-SDK，支持Vue或者React等主流框架",
   "main": "dist/index.js",
   "type": "module",

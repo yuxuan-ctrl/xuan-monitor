@@ -42,4 +42,10 @@ public class PerformanceController {
         Page<InterfaceInfo> interfacePageData = performanceService.getInterfaceList(performanceDTO);
         return Result.success(interfacePageData);
     }
+
+    @GetMapping("/getInterfaceInfoById")
+    public Result<InterfaceInfo> getInterfaceInfoById(@RequestParam(required = true, name = "id", defaultValue = "") String id) {
+        InterfaceInfo interfaceInfo = performanceService.getInterfaceInfoById(id);
+        return Result.success(interfaceInfo);
+    }
 }

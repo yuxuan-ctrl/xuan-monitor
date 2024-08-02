@@ -2,8 +2,8 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-03-19 18:17:17
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-22 15:18:50
- * @FilePath: \monitor-ui-2\src\pages\Performance\api\index.tsx
+ * @LastEditTime: 2024-08-02 16:10:56
+ * @FilePath: \xuan-monitor\monitor-ui-2\src\pages\Performance\api\index.tsx
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
@@ -16,34 +16,18 @@ import { useState, type FC } from 'react';
 import api from '@/services/monitor';
 import AvatarImg from '../../../../public/icons/avatar.png'; // 引入图片
 import './index.less';
+import SystemSelect from '@/components/Bussiness/SystemSelect';
 
 const Performance = () => {
+  const [appId, setAppId] = useState<string>('');
   const [pagination, setPagination] = useState({
     pageIndex: 1,
     pageSize: 10,
   });
   const [requestUrl, setRequestUrl] = useState('');
   const [method, setMethod] = useState('');
-  const [timeStep, setTimeStep] = useState('1');
-  const [appId, setAppId] = useState('');
+  const [timeStep, setTimeStep] = useState('');
   const intl = useIntl();
-
-  const columns: ProColumns<API.RuleListItem>[] = [
-    {
-      title: <FormattedMessage id="pages.performance.api.requestUrl" defaultMessage="requestUrl" />,
-      dataIndex: 'requestUrl',
-      tip: '请求路径',
-    },
-    {
-      title: <FormattedMessage id="pages.performance.api.method" defaultMessage="method" />,
-      dataIndex: 'method',
-    },
-    {
-      title: <FormattedMessage id="pages.performance.api.duration" defaultMessage="duration" />,
-      dataIndex: 'duration',
-      search: false,
-    },
-  ];
 
   // Request
   const { loading, data } = useRequest(
@@ -75,20 +59,63 @@ const Performance = () => {
     console.log('🚀 ~ gotoFun ~ row:', row);
     switch (type) {
       case 'details':
-        history.push('/errors/details', { id: row.esErrorId });
+        history.push('/performance/api/details', { id: row.id });
         break;
     }
   };
+
+  const columns: ProColumns<API.RuleListItem>[] = [
+    {
+      title: <FormattedMessage id="pages.performance.api.requestUrl" defaultMessage="requestUrl" />,
+      dataIndex: 'requestUrl',
+      tip: '请求路径',
+    },
+    {
+      title: <FormattedMessage id="pages.performance.api.method" defaultMessage="method" />,
+      dataIndex: 'method',
+    },
+    {
+      title: <FormattedMessage id="pages.performance.api.status" defaultMessage="status" />,
+      dataIndex: 'status',
+      search: false,
+    },
+    {
+      title: <FormattedMessage id="pages.performance.api.createTime" defaultMessage="createTime" />,
+      dataIndex: 'createTime',
+      search: false,
+    },
+    {
+      title: <FormattedMessage id="pages.performance.api.duration" defaultMessage="duration" />,
+      dataIndex: 'duration',
+      search: false,
+    },
+    {
+      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
+      dataIndex: 'option',
+      valueType: 'option',
+      render: (_, row) => [
+        <a
+          key="config"
+          onClick={() => {
+            gotoFun('details', row);
+          }}
+        >
+          <FormattedMessage id="pages.searchTable.userDetail" defaultMessage="详情" />
+        </a>,
+      ],
+    },
+  ];
   return (
     <PageContainer>
       <div className="timeStep">
         <span>接口耗时分段：</span>
-        <Radio.Group defaultValue="1" buttonStyle="solid" onChange={handleRadioChange}>
+        <Radio.Group defaultValue="" buttonStyle="solid" onChange={handleRadioChange}>
           <Radio.Button value="1">低于1秒</Radio.Button>
           <Radio.Button value="2">1-5秒</Radio.Button>
           <Radio.Button value="3">5-10秒</Radio.Button>
           <Radio.Button value="4">10秒以上</Radio.Button>
         </Radio.Group>
+        <SystemSelect appId={appId} setAppId={setAppId}/>
       </div>
       <ProTable<API.RuleListItem, API.PageParams>
         headerTitle={intl.formatMessage({

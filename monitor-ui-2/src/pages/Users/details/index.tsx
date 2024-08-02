@@ -3,8 +3,8 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-26 16:15:36
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-21 17:29:31
- * @FilePath: \monitor-ui-2\src\pages\Users\details\index.tsx
+ * @LastEditTime: 2024-08-02 15:04:05
+ * @FilePath: \xuan-monitor\monitor-ui-2\src\pages\Users\details\index.tsx
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
@@ -101,6 +101,7 @@ const Basic: FC = () => {
           title="基本信息"
           style={{
             marginBottom: 32,
+            marginRight:32
           }}
         >
           <Descriptions.Item label="用户ID">{data?.user?.userId}</Descriptions.Item>

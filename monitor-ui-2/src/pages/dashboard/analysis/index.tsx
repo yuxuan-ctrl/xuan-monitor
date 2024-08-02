@@ -2,8 +2,8 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 15:35:31
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-28 11:27:55
- * @FilePath: \monitor-ui-2\src\pages\dashboard\analysis\index.tsx
+ * @LastEditTime: 2024-08-02 16:50:10
+ * @FilePath: \xuan-monitor\monitor-ui-2\src\pages\dashboard\analysis\index.tsx
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
@@ -26,6 +26,8 @@ import TopSearch from './components/TopSearch';
 import type { AnalysisData } from './data.d';
 import useStyles from './style.style';
 import { getTimeDistance } from './utils/utils';
+import SystemSelect from '@/components/Bussiness/SystemSelect';
+
 type RangePickerValue = RangePickerProps<dayjs.Dayjs>['value'];
 type AnalysisProps = {
   dashboardAndanalysis: AnalysisData;
@@ -42,14 +44,13 @@ const Analysis: FC<AnalysisProps> = () => {
   const [currentDay, setCurrentDay] = useState<string>(dayjs().format('YYYY-MM-DD'));
   const [appId, setAppId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-  const [systemOptions, setSystemOptions] = useState<any[]>([]);
   const [rangePickerValue, setRangePickerValue] = useState<RangePickerValue>(
     getTimeDistance('month'),
   );
+
   const getRangeString = (type: number) => {
     return rangePickerValue![type]?.format('YYYY-MM-DD');
   };
-  // Request
 
   const fetchMetrics = async () => {
     setLoading(true);
@@ -77,20 +78,6 @@ const Analysis: FC<AnalysisProps> = () => {
       refreshDeps: [], // 当 currentDay 改变时自动重新发起请求
     },
   );
-
-  //useEffect
-  useEffect(() => {
-    setSystemOptions(
-      Array.isArray(systemList)
-        ? systemList.map((item) => {
-            return { label: item.appName, value: item.appId };
-          })
-        : [],
-    );
-    if (systemList && systemList.length > 0 && systemList[0]) {
-      setAppId(systemList[0].appId as string);
-    }
-  }, [systemList]);
 
   useEffect(() => {
     appId && fetchMetrics().then((res) => setMetricsData(res.data as API.MetricsVo));
@@ -153,13 +140,7 @@ const Analysis: FC<AnalysisProps> = () => {
     <GridContent>
       <>
         <Suspense fallback={<PageLoading />}>
-          <Select
-            style={{ width: '200px', marginRight: '24px' }}
-            placeholder="请选择当前系统"
-            value={appId}
-            onChange={(value) => setAppId(value)}
-            options={systemOptions}
-          />
+          <SystemSelect appId={appId} setAppId={setAppId} />
           <DatePicker onChange={handleChange} style={{ marginBottom: '24px' }} />
           <IntroduceRow loading={loading} visitData={metricsData || {}} currentDay={currentDay} />
         </Suspense>

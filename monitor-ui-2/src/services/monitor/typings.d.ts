@@ -67,6 +67,7 @@ declare namespace API {
   type EventsDTO = {
     actionList?: ActionInfo[];
     appId?: string;
+    currentEnterPageUrl?: string;
     eventList?: EventInfo[];
     interfaceList?: InterfaceInfo[];
     location?: Location;
@@ -98,6 +99,11 @@ declare namespace API {
     id: string;
   };
 
+  type getInterfaceInfoByIdUsingGETParams = {
+    /** id */
+    id?: string;
+  };
+
   type getInterfacePageUsingGETParams = {
     /** appId */
     appId?: string;
@@ -105,10 +111,12 @@ declare namespace API {
     pageIndex?: number;
     /** pageSize */
     pageSize?: number;
-    /** userId */
-    userId?: string;
     /** timeStep */
     timeStep?: string;
+    /** method */
+    method?: string;
+    /** requestUrl */
+    requestUrl?: string;
   };
 
   type getMetricsUsingGETParams = {
@@ -161,12 +169,16 @@ declare namespace API {
 
   type InterfaceInfo = {
     appId?: string;
+    body?: string;
     createTime?: string;
     duration?: number;
+    headers?: string;
     id?: string;
     method?: string;
     pageUrl?: string;
     requestUrl?: string;
+    response?: string;
+    status?: number;
     timestamp?: number;
     userId?: string;
   };
@@ -296,6 +308,12 @@ declare namespace API {
   type ResultErrorInfo = {
     code?: number;
     data?: ErrorInfo;
+    msg?: string;
+  };
+
+  type ResultInterfaceInfo = {
+    code?: number;
+    data?: InterfaceInfo;
     msg?: string;
   };
 

@@ -15,7 +15,7 @@ const Users: FC = () => {
     pageSize: 10,
   });
   const [userId, setUserId] = useState('');
-  // Request
+
   const { loading, data } = useRequest(
     () => api.userController.getUserPageUsingGet({ ...pagination,userId }),
     {
@@ -24,13 +24,6 @@ const Users: FC = () => {
     },
   );
 
-  // const getPageData = () => {
-  //   return api.userController.getUserPageUsingGet({ ...pagination });
-  // };
-
-  console.log('🚀 ~ data:', data);
-
-  //methods
   const gotoFun = (type, row) => {
     console.log('🚀 ~ gotoFun ~ row:', row);
     switch (type) {

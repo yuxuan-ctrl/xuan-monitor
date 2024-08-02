@@ -21,13 +21,41 @@ public class PerformanceServiceCkImpl implements PerformanceService {
 
     @Override
     public Page<InterfaceInfo> getInterfaceList(PerformanceDTO performanceDTO) {
-        Page<InterfaceInfo> page = new Page(performanceDTO.getPageIndex(), performanceDTO.getPageSize());
-        Page<InterfaceInfo> interfaceInfoPage = interfaceCkMapper.selectPage(page, new LambdaQueryWrapper<InterfaceInfo>()
+        Page<InterfaceInfo> page = new Page<>(performanceDTO.getPageIndex(), performanceDTO.getPageSize());
+
+        LambdaQueryWrapper<InterfaceInfo> queryWrapper = new LambdaQueryWrapper<InterfaceInfo>()
                 .eq(StringUtils.isNoneBlank(performanceDTO.getAppId()), InterfaceInfo::getAppId, performanceDTO.getAppId())
                 .eq(StringUtils.isNoneBlank(performanceDTO.getMethod()), InterfaceInfo::getMethod, performanceDTO.getMethod())
-                .eq(StringUtils.isNoneBlank(performanceDTO.getRequestUrl()), InterfaceInfo::getRequestUrl, performanceDTO.getRequestUrl())
-        );
-//        List<InterfaceInfo> aggregatedInterfaceList = interfaceCkMapper.getAggregatedInterfaceList(performanceDTO);
+                .like(StringUtils.isNoneBlank(performanceDTO.getRequestUrl()), InterfaceInfo::getRequestUrl, performanceDTO.getRequestUrl());
+
+        // 根据 duration 添加过滤条件
+        if (StringUtils.isNotBlank(performanceDTO.getTimeStep())) {
+            switch (performanceDTO.getTimeStep()) {
+                case "1":
+                    queryWrapper.le(InterfaceInfo::getDuration, 100);
+                    break;
+                case "2":
+                    queryWrapper.between(InterfaceInfo::getDuration, 100, 500);
+                    break;
+                case "3":
+                    queryWrapper.between(InterfaceInfo::getDuration, 500, 1000);
+                    break;
+                case "4":
+                    queryWrapper.ge(InterfaceInfo::getDuration, 1000);
+                    break;
+                default:
+                    // 不做任何操作
+                    break;
+            }
+        }
+
+        Page<InterfaceInfo> interfaceInfoPage = interfaceCkMapper.selectPage(page, queryWrapper);
+
         return interfaceInfoPage;
+    }
+
+    @Override
+    public InterfaceInfo getInterfaceInfoById(String id) {
+        return interfaceCkMapper.selectById(id);
     }
 }

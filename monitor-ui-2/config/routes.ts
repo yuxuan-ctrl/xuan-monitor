@@ -2,8 +2,8 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-19 18:17:38
- * @FilePath: \monitor-ui-2\config\routes.ts
+ * @LastEditTime: 2024-08-02 15:10:36
+ * @FilePath: \xuan-monitor\monitor-ui-2\config\routes.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
@@ -139,6 +139,12 @@ export default [
         path: '/performance/api',
         name: 'performance-api',
         component: './Performance/api',
+      },
+      {
+        path: '/performance/api/details',
+        name: 'performance-api-details',
+        component: './Performance/api/details',
+        hideInMenu: true,
       },
       // {
       //   path: '/users/details',

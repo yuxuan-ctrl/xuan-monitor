@@ -23,4 +23,5 @@ import java.util.List;
 public interface PerformanceService  {
 
     Page<InterfaceInfo> getInterfaceList(PerformanceDTO performanceDTO);
+    InterfaceInfo getInterfaceInfoById(String id);
 }

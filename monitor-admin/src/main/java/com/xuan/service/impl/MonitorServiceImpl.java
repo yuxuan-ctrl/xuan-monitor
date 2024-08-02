@@ -34,6 +34,7 @@ import com.xuan.service.MonitoringDataStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -69,6 +70,7 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
     public SharedService sharedService;
 
     @Override
+    @Transactional
     public ReportVo recordMonitorInfo(EventsDTO eventsDto, HttpServletRequest httpRequest) throws IOException {
         String appId = eventsDto.getAppId();
         String userId = eventsDto.getUserId();
@@ -126,7 +128,7 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
         user.setPlatform(platform);
         user.setLocation(JSON.toJSONString(location));
         user.setUserAgent(userAgent);
-        userMapper.update(user, new LambdaQueryWrapper<Users>().eq(Users::getUserId, user.getUserId()));
+        userMapper.updateUser(user);
     }
 
 

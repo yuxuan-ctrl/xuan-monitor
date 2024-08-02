@@ -11,6 +11,7 @@ import com.xuan.service.MonitoringDataStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class MonitoringDataStorageServiceEsImpl implements MonitoringDataStorage
     private ESDocumentService esDocumentService;
 
     @Override
+    @Transactional
     public void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList, List<InterfaceInfo> interfaceDataList) throws IOException {
         esDocumentService.ensureIndexExists("events", "actions");
 

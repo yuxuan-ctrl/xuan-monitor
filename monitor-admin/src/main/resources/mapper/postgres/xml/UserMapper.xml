@@ -22,6 +22,9 @@
         GROUP BY belong_city
     </select>
 
+    <update id="updateUser" >
+        UPDATE users SET ip_address = #{user.ipAddress},platform= #{user.platform},user_agent= #{user.userAgent},last_login_time= #{user.lastLoginTime},location= #{user.location} WHERE user_id = #{user.userId}
+    </update>
     <!-- 若有必要，保留原有的查询方法 -->
     <!-- 定义selectNewList方法的SQL查询语句 -->
     <!-- 此处假设Systems表与问题无关，故省略 -->

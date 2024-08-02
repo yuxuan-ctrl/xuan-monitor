@@ -1,8 +1,8 @@
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-11 14:37:34
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-07-30 17:36:02
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-08-02 11:08:02
  * @FilePath: \monitor-sdk\src\core\monitor.ts
  * @Description:
  *
@@ -140,7 +140,11 @@ export default class Monitor extends EventManager {
     // 创建一个新的 fetch 函数
     if (typeof window.fetch === 'function') {
       const originalFetch = window.fetch;
-      window.fetch = wrapFetch(originalFetch, this.reportError.bind(this));
+      window.fetch = wrapFetch(
+        originalFetch,
+        this.reportError.bind(this),
+        this.config
+      );
     }
 
     if (typeof window.setTimeout === 'function') {
@@ -155,7 +159,8 @@ export default class Monitor extends EventManager {
       const OriginalXMLHttpRequest = window.XMLHttpRequest;
       window.XMLHttpRequest = wrapXMLHttpRequest(
         OriginalXMLHttpRequest,
-        this.reportError.bind(this)
+        this.reportError.bind(this),
+        this.config
       ) as any;
     }
   }

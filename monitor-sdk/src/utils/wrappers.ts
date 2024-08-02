@@ -11,6 +11,9 @@ const messageWrapper = MessageQueueDBWrapper.getInstance({
 });
 
 const enqueueHttpRequest = function (data) {
+  if (!data.config?.enableSuccessLogging && data.status === 200) {
+    return;
+  }
   if (
     data &&
     !data?.requestUrl.includes('/monitor/report') &&
@@ -31,7 +34,7 @@ const enqueueHttpRequest = function (data) {
 };
 
 // 包裹 fetch API
-function wrapFetch(originalFetch, callback) {
+function wrapFetch(originalFetch, callback, config) {
   return function wrappedFetch(...args) {
     let startTimeFetch = performance.now();
     const method = args.length > 1 ? args[1]?.method : 'GET';
@@ -45,7 +48,7 @@ function wrapFetch(originalFetch, callback) {
           let requestUrl = typeof args[0] === 'string' ? args[0] : args[0].href;
           const body = args[1]?.body || '';
           const headers = args[1]?.headers || '';
-          const res = await response.json()
+          const res = await response.json();
           enqueueHttpRequest({
             method,
             requestUrl,
@@ -53,7 +56,8 @@ function wrapFetch(originalFetch, callback) {
             response: JSON.stringify(res),
             status: response.status,
             body,
-            headers:JSON.stringify(headers),
+            headers: JSON.stringify(headers),
+            config,
           });
           if (!response.ok && !response.url.includes('/monitor/errorReport')) {
             const error = new HttpError(
@@ -180,7 +184,7 @@ function wrapHistory(history, callback) {
   };
 }
 
-function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
+function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback, config) {
   let method = null;
   let data = null;
   let errorContext = '';
@@ -227,7 +231,8 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
           response: originalRequest.response,
           status: originalRequest.status,
           body: data,
-          headers:JSON.stringify(headers)
+          headers: JSON.stringify(headers),
+          config,
         });
         if (
           originalRequest.status >= 400 &&

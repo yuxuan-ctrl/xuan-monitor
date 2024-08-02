@@ -3,8 +3,8 @@ import { RRwebPlayerOptions } from 'rrweb-player';
 /*
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-05 14:03:01
- * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-02-21 14:29:01
+ * @LastEditors: yuxuan-ctrl 
+ * @LastEditTime: 2024-08-02 11:20:43
  * @FilePath: \monitor-sdk\src\types\index.d.ts
  * @Description:
  *
@@ -16,6 +16,7 @@ interface MonitorConfig {
   baseUrl: string;
   reportFrequency?: number; // 上报频率（单位：秒）
   dataRetentionHours?: number;
+  enableSuccessLogging?:boolean;
 }
 
 interface UVData$1 {

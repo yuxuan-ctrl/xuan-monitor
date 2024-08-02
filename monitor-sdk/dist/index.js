@@ -577,6 +577,9 @@ const messageWrapper = MessageQueueDBWrapper.getInstance({
     storeName: DB_CONFIG.INTERFACE_STORE_NAME,
 });
 const enqueueHttpRequest = function (data) {
+    if (!data.config?.enableSuccessLogging && data.status === 200) {
+        return;
+    }
     if (data &&
         !data?.requestUrl.includes('/monitor/report') &&
         !data?.requestUrl.includes('/monitor/errorReport')) {
@@ -591,7 +594,7 @@ const enqueueHttpRequest = function (data) {
     }
 };
 // 包裹 fetch API
-function wrapFetch(originalFetch, callback) {
+function wrapFetch(originalFetch, callback, config) {
     return function wrappedFetch(...args) {
         let startTimeFetch = performance.now();
         const method = args.length > 1 ? args[1]?.method : 'GET';
@@ -614,6 +617,7 @@ function wrapFetch(originalFetch, callback) {
                     status: response.status,
                     body,
                     headers: JSON.stringify(headers),
+                    config,
                 });
                 if (!response.ok && !response.url.includes('/monitor/errorReport')) {
                     const error = new HttpError(response.status, method, response.url, response, `HTTP Error ${response.status} config : ${response.statusText}`, response, errorContext);
@@ -668,7 +672,7 @@ function wrapHistory(history, callback) {
         }
     };
 }
-function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
+function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback, config) {
     let method = null;
     let data = null;
     let errorContext = '';
@@ -711,7 +715,8 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback) {
                     response: originalRequest.response,
                     status: originalRequest.status,
                     body: data,
-                    headers: JSON.stringify(headers)
+                    headers: JSON.stringify(headers),
+                    config,
                 });
                 if (originalRequest.status >= 400 &&
                     !requestUrl.includes('/monitor/errorReport')) {
@@ -6325,7 +6330,7 @@ class Monitor extends EventManager {
         this.pvTracker = new PageViewTracker(config?.userId, this);
         this.uvTracker = new UvTracker(config?.userId, this);
         this.report = new Report(config, this.uvTracker);
-        this.report.start('/api');
+        this.report.start(this.config?.baseUrl || '/api');
         this.baseInfo = { appId: config.appId, userId: config?.userId };
         this.errorTracker = new ErrorTracker();
         this.reportError = debounce(this.basicReportError, 1000);
@@ -6382,7 +6387,7 @@ class Monitor extends EventManager {
         // 创建一个新的 fetch 函数
         if (typeof window.fetch === 'function') {
             const originalFetch = window.fetch;
-            window.fetch = wrapFetch(originalFetch, this.reportError.bind(this));
+            window.fetch = wrapFetch(originalFetch, this.reportError.bind(this), this.config);
         }
         if (typeof window.setTimeout === 'function') {
             const originalSetTimeout = window.setTimeout;
@@ -6390,7 +6395,7 @@ class Monitor extends EventManager {
         }
         if (typeof window.XMLHttpRequest === 'function') {
             const OriginalXMLHttpRequest = window.XMLHttpRequest;
-            window.XMLHttpRequest = wrapXMLHttpRequest(OriginalXMLHttpRequest, this.reportError.bind(this));
+            window.XMLHttpRequest = wrapXMLHttpRequest(OriginalXMLHttpRequest, this.reportError.bind(this), this.config);
         }
     }
     removeEventListeners() {

@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-08-02 15:10:36
+ * @LastEditTime: 2024-08-05 09:09:39
  * @FilePath: \xuan-monitor\monitor-ui-2\config\routes.ts
  * @Description:
  *
@@ -21,17 +21,17 @@
  * @doc https://umijs.org/docs/guides/routes
  */
 export default [
-  {
-    path: '/user',
-    layout: false,
-    routes: [
-      {
-        name: 'login',
-        path: '/user/login',
-        component: './User/Login',
-      },
-    ],
-  },
+  // {
+  //   path: '/user',
+  //   layout: false,
+  //   routes: [
+  //     {
+  //       name: 'login',
+  //       path: '/user/login',
+  //       component: './User/Login',
+  //     },
+  //   ],
+  // },
   {
     path: '/welcome',
     name: 'welcome',
@@ -130,11 +130,11 @@ export default [
         path: '/performance',
         redirect: '/performance/list',
       },
-      {
-        path: '/performance/page',
-        name: 'performance-page',
-        component: './Performance/page',
-      },
+      // {
+      //   path: '/performance/page',
+      //   name: 'performance-page',
+      //   component: './Performance/page',
+      // },
       {
         path: '/performance/api',
         name: 'performance-api',
@@ -154,12 +154,12 @@ export default [
       // },
     ],
   },
-  {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './TableList',
-  },
+  // {
+  //   name: 'list.table-list',
+  //   icon: 'table',
+  //   path: '/list',
+  //   component: './TableList',
+  // },
   {
     path: '/',
     redirect: '/welcome',

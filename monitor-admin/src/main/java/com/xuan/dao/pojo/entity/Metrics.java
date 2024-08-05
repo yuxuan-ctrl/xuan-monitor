@@ -15,7 +15,6 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("public.metrics") // 表名应为实际数据库中的表名，这里假设是'public.metrics"'
 public class Metrics {
 
     @TableId(value = "id", type = IdType.AUTO)

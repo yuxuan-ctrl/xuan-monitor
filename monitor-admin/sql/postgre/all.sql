@@ -30,3 +30,25 @@ CREATE TABLE errors (
                         is_resolved INTEGER,
                         PRIMARY KEY (error_type, es_error_id)
 );
+
+-- public.metrics definition
+
+-- Drop table
+
+-- DROP TABLE public.metrics;
+
+CREATE TABLE public.metrics (
+                                id varchar NOT NULL,
+                                "date" varchar NOT NULL,
+                                most_visited_page_id varchar NOT NULL,
+                                most_visited_page_views int8 NOT NULL,
+                                total_stay_duration float8 NOT NULL,
+                                average_stay_duration float8 NOT NULL,
+                                total_page_views int8 NOT NULL,
+                                unique_visitors int4 NOT NULL,
+                                create_time varchar DEFAULT CURRENT_TIMESTAMP NULL,
+                                all_users_length int4 NULL,
+                                most_frequent_platform varchar NULL,
+                                most_frequent_screen_resolution varchar NULL,
+                                CONSTRAINT metrics_pkey PRIMARY KEY (id)
+);

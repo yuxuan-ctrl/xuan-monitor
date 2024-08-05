@@ -34,7 +34,6 @@ public class MonitoringDataStorageServiceCkImpl implements MonitoringDataStorage
     public InterfaceCkMapper interfaceCkMapper;
 
     @Override
-    @Transactional
     public void recordMonitoringData(String appId, String userId, List<ActionInfo> actionDataList, List<EventInfo> eventDataList, List<InterfaceInfo> interfaceDataList) throws IOException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         // 使用此格式器来格式化当前时间

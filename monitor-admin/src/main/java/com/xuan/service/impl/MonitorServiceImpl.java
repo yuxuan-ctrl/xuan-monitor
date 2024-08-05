@@ -70,7 +70,6 @@ public class MonitorServiceImpl extends ServiceImpl<EventsMapper, EventInfo> imp
     public SharedService sharedService;
 
     @Override
-    @Transactional
     public ReportVo recordMonitorInfo(EventsDTO eventsDto, HttpServletRequest httpRequest) throws IOException {
         String appId = eventsDto.getAppId();
         String userId = eventsDto.getUserId();

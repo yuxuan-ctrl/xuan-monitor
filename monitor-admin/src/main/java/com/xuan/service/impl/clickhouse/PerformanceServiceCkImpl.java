@@ -7,6 +7,7 @@ import com.xuan.dao.pojo.dto.PerformanceDTO;
 import com.xuan.dao.pojo.entity.Errors;
 import com.xuan.dao.pojo.entity.clickhouse.InterfaceInfo;
 import com.xuan.service.PerformanceService;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,10 @@ public class PerformanceServiceCkImpl implements PerformanceService {
         LambdaQueryWrapper<InterfaceInfo> queryWrapper = new LambdaQueryWrapper<InterfaceInfo>()
                 .eq(StringUtils.isNoneBlank(performanceDTO.getAppId()), InterfaceInfo::getAppId, performanceDTO.getAppId())
                 .eq(StringUtils.isNoneBlank(performanceDTO.getMethod()), InterfaceInfo::getMethod, performanceDTO.getMethod())
+                .eq(StringUtils.isNoneBlank(performanceDTO.getMethod()), InterfaceInfo::getMethod, performanceDTO.getMethod())
+                .eq(StringUtils.isNoneBlank(performanceDTO.getStatus()), InterfaceInfo::getStatus, performanceDTO.getStatus())
+                .gt(StringUtils.isNoneBlank(performanceDTO.getStartTime()), InterfaceInfo::getCreateTime, performanceDTO.getStartTime())
+                .lt(StringUtils.isNoneBlank(performanceDTO.getEndTime()), InterfaceInfo::getCreateTime, performanceDTO.getEndTime())
                 .like(StringUtils.isNoneBlank(performanceDTO.getRequestUrl()), InterfaceInfo::getRequestUrl, performanceDTO.getRequestUrl());
 
         // 根据 duration 添加过滤条件

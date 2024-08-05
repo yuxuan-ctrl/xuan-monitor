@@ -23,22 +23,7 @@ public class PerformanceController {
     public PerformanceService performanceService;
 
     @GetMapping("/getInterfacePage")
-    public Result<Page<InterfaceInfo>> getInterfacePage(@RequestParam(required = false, name = "appId", defaultValue = "") String appId,
-                                                        @RequestParam(required = false, name = "pageIndex", defaultValue = "") int pageIndex,
-                                                        @RequestParam(required = false, name = "pageSize", defaultValue = "") int pageSize,
-                                                        @RequestParam(required = false, name = "timeStep", defaultValue = "") String timeStep,
-                                                        @RequestParam(required = false, name = "method", defaultValue = "") String method,
-                                                        @RequestParam(required = false, name = "requestUrl", defaultValue = "") String requestUrl) {
-
-        PerformanceDTO performanceDTO = PerformanceDTO.builder()
-                .appId(appId)
-                .timeStep(timeStep)
-                .method(method)
-                .pageIndex(pageIndex)
-                .pageSize(pageSize)
-                .requestUrl(requestUrl)
-                .build();
-
+    public Result<Page<InterfaceInfo>> getInterfacePage(PerformanceDTO performanceDTO) {
         Page<InterfaceInfo> interfacePageData = performanceService.getInterfaceList(performanceDTO);
         return Result.success(interfacePageData);
     }

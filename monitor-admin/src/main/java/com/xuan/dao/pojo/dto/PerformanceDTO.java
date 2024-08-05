@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -27,6 +28,9 @@ public class PerformanceDTO implements Serializable {
     @JsonProperty("userId")
     String userId;
     String method;
+    String status;
+    String startTime;
+    String endTime;
 
     @JsonProperty("timeStep")
     String timeStep;

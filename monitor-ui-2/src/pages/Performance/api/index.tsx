@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-03-19 18:17:17
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-08-02 16:10:56
+ * @LastEditTime: 2024-08-05 14:40:42
  * @FilePath: \xuan-monitor\monitor-ui-2\src\pages\Performance\api\index.tsx
  * @Description:
  *
@@ -26,6 +26,9 @@ const Performance = () => {
   });
   const [requestUrl, setRequestUrl] = useState('');
   const [method, setMethod] = useState('');
+  const [status, setStatus] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [timeStep, setTimeStep] = useState('');
   const intl = useIntl();
 
@@ -38,10 +41,22 @@ const Performance = () => {
         requestUrl,
         method,
         timeStep,
+        status,
+        startTime,
+        endTime,
       }),
     {
       // 这里设置默认请求时使用的参数
-      refreshDeps: [pagination.pageIndex, appId, requestUrl, method, timeStep],
+      refreshDeps: [
+        pagination.pageIndex,
+        appId,
+        requestUrl,
+        method,
+        status,
+        startTime,
+        endTime,
+        timeStep,
+      ],
     },
   );
 
@@ -77,17 +92,23 @@ const Performance = () => {
     {
       title: <FormattedMessage id="pages.performance.api.status" defaultMessage="status" />,
       dataIndex: 'status',
-      search: false,
     },
     {
       title: <FormattedMessage id="pages.performance.api.createTime" defaultMessage="createTime" />,
       dataIndex: 'createTime',
-      search: false,
+      valueType: 'dateRange',
+      hideInTable: true,
+      search: {
+        transform: (value) => {
+          setStartTime(value[0]);
+          setEndTime(value[1]);
+        },
+      },
     },
     {
       title: <FormattedMessage id="pages.performance.api.duration" defaultMessage="duration" />,
       dataIndex: 'duration',
-      search: false,
+      hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -115,7 +136,7 @@ const Performance = () => {
           <Radio.Button value="3">5-10秒</Radio.Button>
           <Radio.Button value="4">10秒以上</Radio.Button>
         </Radio.Group>
-        <SystemSelect appId={appId} setAppId={setAppId}/>
+        <SystemSelect appId={appId} setAppId={setAppId} />
       </div>
       <ProTable<API.RuleListItem, API.PageParams>
         headerTitle={intl.formatMessage({
@@ -125,6 +146,7 @@ const Performance = () => {
         beforeSearchSubmit={async (params) => {
           setRequestUrl(params.requestUrl);
           setMethod(params.method);
+          setStatus(params.status);
         }}
         rowKey="key"
         search={{

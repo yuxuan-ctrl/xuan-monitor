@@ -39,7 +39,6 @@ CREATE TABLE errors (
 
 CREATE TABLE public.metrics (
                                 id varchar NOT NULL,
-                                "date" varchar NOT NULL,
                                 most_visited_page_id varchar NOT NULL,
                                 most_visited_page_views int8 NOT NULL,
                                 total_stay_duration float8 NOT NULL,
@@ -50,5 +49,6 @@ CREATE TABLE public.metrics (
                                 all_users_length int4 NULL,
                                 most_frequent_platform varchar NULL,
                                 most_frequent_screen_resolution varchar NULL,
+                                app_id VARCHAR(255),
                                 CONSTRAINT metrics_pkey PRIMARY KEY (id)
 );

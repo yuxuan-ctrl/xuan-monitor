@@ -13,7 +13,7 @@ public interface DataAggregationService {
      *
      * @throws IOException 当处理Elasticsearch数据时可能出现的IO异常
      */
-    void processAndAggregateYesterdayData() throws IOException;
+    void processAndAggregateYesterdayData(String appId) throws IOException;
 
 
     }

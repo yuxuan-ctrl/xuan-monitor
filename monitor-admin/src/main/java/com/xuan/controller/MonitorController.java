@@ -5,6 +5,7 @@ import com.xuan.dao.pojo.entity.clickhouse.ErrorInfo;
 import com.xuan.dao.pojo.dto.EventsDTO;
 import com.xuan.dao.pojo.vo.ReportVo;
 import com.xuan.service.MonitorService;
+import com.xuan.task.TrafficAnalyticsAggregationTask;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,9 @@ public class MonitorController {
     @Autowired
     public MonitorService monitorService;
 
+    @Autowired
+    private TrafficAnalyticsAggregationTask trafficAnalyticsAggregationTask;
+
     @PostMapping("/report")
     @ApiOperation("监控信息上传")
     public Result<ReportVo> report(@RequestBody EventsDTO eventsDto, HttpServletRequest httpRequest) throws Exception{
@@ -36,6 +40,15 @@ public class MonitorController {
     public Result<ReportVo> errorReport(@RequestBody ErrorInfo errorInfo) throws Exception{
 
         monitorService.errorHandler(errorInfo);
+
+        return Result.success(null,"上传成功");
+    }
+
+    @GetMapping("/mannulAggregateYesterdayData")
+    @ApiOperation("手动调整昨日数据")
+    public Result<Object> mannulAggregateYesterdayData() throws Exception{
+
+        trafficAnalyticsAggregationTask.aggregateYesterdayData();
 
         return Result.success(null,"上传成功");
     }

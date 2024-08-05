@@ -30,14 +30,15 @@ public class ClickHouseServiceImpl implements ClickHouseService {
 
     @Override
     public Metrics aggregateData(MetricsDTO metricsDTO) throws IOException {
-        Instant startTime = metricsDTO.getStartTimeOrDefault(Instant.now().minus(hoursBack, ChronoUnit.HOURS));
-        Instant endTime = metricsDTO.getEndTimeOrDefault(Instant.now());
+        Instant startTime = metricsDTO.getStartTimeOrDefault(new Date().toInstant().minus(hoursBack, ChronoUnit.HOURS));
+        Instant endTime = metricsDTO.getEndTimeOrDefault(new Date().toInstant());
 
         List<EventInfo> eventList = eventsMapper.selectList(
                         new LambdaQueryWrapper<EventInfo>()
                                 .eq(StringUtils.isNoneBlank(metricsDTO.getAppId()),EventInfo::getAppId,metricsDTO.getAppId())
-                                .gt(EventInfo::getCreateTime, new Date(startTime.toEpochMilli()))
-                                .lt(EventInfo::getCreateTime, new Date(endTime.toEpochMilli())))
+                                .gt(EventInfo::getCreateTime, startTime)
+                                .lt(EventInfo::getCreateTime, endTime)
+                )
                 .stream().toList();
         if (!eventList.isEmpty()) {
             Metrics metrics = CalculateUtil.calculateMetrics(eventList);

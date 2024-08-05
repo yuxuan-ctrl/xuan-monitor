@@ -46,6 +46,9 @@ public class EventInfo implements BaseInfo{
     @JsonProperty("timestamp")
     private String timestamp;
 
+    @JsonProperty("createTime")
+    private String createTime;
+
     @JsonProperty("referrer")
     private String referrer;
 
@@ -67,7 +70,6 @@ public class EventInfo implements BaseInfo{
     @JsonProperty("stayDuration")
     private double stayDuration;
 
-    private String createTime;
 
     private String metrics;
 

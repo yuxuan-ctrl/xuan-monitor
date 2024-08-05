@@ -1,6 +1,7 @@
 server:
   port: 5200
 
+
 spring:
   datastore:
     #      type: elasticsearch
@@ -50,7 +51,7 @@ spring:
 xuan:
   task:
     # 定时任务入库时间
-    cron: "* * * * */10 *"
+    cron: "0 0 * * * *"
     hoursBack: 48
   jwt:
     # 设置jwt签名加密时使用的秘钥
@@ -65,3 +66,11 @@ xuan:
     user-ttl: 7200000
     # 设置前端传递过来的令牌名称
     user-token-name: token
+logging:
+  level:
+    org:
+      apache:
+        ibatis: debug
+    com:
+      xuan:
+        dp: debug

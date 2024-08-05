@@ -26,7 +26,7 @@ public class DataAggregationServiceEsImpl implements DataAggregationService {
     private MetricsMapper metricsMapper;
 
     @Override
-    public void processAndAggregateYesterdayData() throws IOException {
+    public void processAndAggregateYesterdayData(String appId) throws IOException {
         esDocumentService.ensureIndexExists("events", "actions");
         List<EventInfo> eventList = esDocumentService.queryPastHours("events", "timestamp", EventInfo.class,new MetricsDTO());
         if(!eventList.isEmpty()){

@@ -1,4 +1,5 @@
 CREATE TABLE users (
+                       app_id varchar(255) NULL,
                        user_id VARCHAR(255) NOT NULL,
                        create_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
                        last_login_time TIMESTAMP WITHOUT TIME ZONE,

@@ -104,7 +104,7 @@ const Region: React.FC = () => {
         }),
       });
 
-      const url = '/api/static/china-province.geojson';
+      const url = `${process.env.DEV}/static/china-province.geojson`;
 
       const response = await fetch(url);
       const data = await response.json();

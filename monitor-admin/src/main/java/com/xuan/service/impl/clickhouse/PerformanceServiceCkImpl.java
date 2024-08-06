@@ -37,16 +37,16 @@ public class PerformanceServiceCkImpl implements PerformanceService {
         if (StringUtils.isNotBlank(performanceDTO.getTimeStep())) {
             switch (performanceDTO.getTimeStep()) {
                 case "1":
-                    queryWrapper.le(InterfaceInfo::getDuration, 100);
+                    queryWrapper.le(InterfaceInfo::getDuration, 1000);
                     break;
                 case "2":
-                    queryWrapper.between(InterfaceInfo::getDuration, 100, 500);
+                    queryWrapper.between(InterfaceInfo::getDuration, 1000, 5000);
                     break;
                 case "3":
-                    queryWrapper.between(InterfaceInfo::getDuration, 500, 1000);
+                    queryWrapper.between(InterfaceInfo::getDuration, 5000, 10000);
                     break;
                 case "4":
-                    queryWrapper.ge(InterfaceInfo::getDuration, 1000);
+                    queryWrapper.ge(InterfaceInfo::getDuration, 10000);
                     break;
                 default:
                     // 不做任何操作

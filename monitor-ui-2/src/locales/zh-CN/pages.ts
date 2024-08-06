@@ -2,7 +2,7 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-22 16:11:42
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-08-02 14:51:53
+ * @LastEditTime: 2024-08-06 09:09:46
  * @FilePath: \xuan-monitor\monitor-ui-2\src\locales\zh-CN\pages.ts
  * @Description:
  *
@@ -85,7 +85,7 @@ export default {
   'pages.region.userCount': '用户数',
   'pages.performance.api.requestUrl': '请求地址',
   'pages.performance.api.method': '请求方法',
-  'pages.performance.api.duration': '平均耗时',
+  'pages.performance.api.duration': '平均耗时（ms）',
   'pages.performance.api.status': '状态码',
   'pages.performance.api.createTime': '请求时间',
 };

@@ -5,6 +5,7 @@
 -- DROP TABLE public.users;
 
 CREATE TABLE public.users (
+                              app_id varchar(255) NULL,
                               user_name varchar(255) NOT NULL,
                               pass_word varchar(255) NOT NULL,
                               system_ids varchar(255) NOT NULL,

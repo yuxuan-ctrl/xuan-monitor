@@ -50,7 +50,8 @@ public class SystemsServiceImpl extends ServiceImpl<SystemsMapper, Systems> impl
     @Transactional
     public Systems editSystem(Systems systems) {
         if(!ObjectUtils.isEmpty(exists(systems.getAppId()))){
-            systemsMapper.update(systems,new LambdaQueryWrapper<Systems>()
+            Systems entity = Systems.builder().appType(systems.getAppType()).appName(systems.getAppName()).createTime(systems.getCreateTime()).build();
+            systemsMapper.update(entity,new LambdaQueryWrapper<Systems>()
                     .eq(Systems::getAppId,systems.getAppId()));
         }
         return null;

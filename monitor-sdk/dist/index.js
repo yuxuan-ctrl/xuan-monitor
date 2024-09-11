@@ -571,6 +571,7 @@ class MessageQueueDBWrapper extends IndexedDBWrapper {
     }
 }
 
+const REQUEST_HEADER = 'Fi-Request-Id';
 const messageWrapper = MessageQueueDBWrapper.getInstance({
     dbName: 'monitorxq',
     dbVersion: 1,
@@ -600,6 +601,9 @@ function wrapFetch(originalFetch, callback, config) {
         const method = args.length > 1 ? args[1]?.method : 'GET';
         let errorContext = new Error().stack;
         try {
+            if (Reflect.has(args[1], 'headers')) {
+                args[1].headers[REQUEST_HEADER] = createUUid();
+            }
             return originalFetch
                 .apply(this, args)
                 .then(async (response) => {
@@ -680,6 +684,13 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback, config) {
     function wrappedXMLHttpRequest() {
         let startTime = performance.now();
         const originalRequest = new OriginalXMLHttpRequest();
+        // 重写 setRequestHeader 方法
+        const originSetRequestHeader = originalRequest.setRequestHeader;
+        originalRequest.setRequestHeader = function (name, value) {
+            headers[name] = value; // 记录请求头
+            // 调用原始的 setRequestHeader 方法
+            originSetRequestHeader.call(this, name, value);
+        };
         // 包裹 open 方法
         const originalOpen = originalRequest.open;
         OriginalXMLHttpRequest.prototype.open = function (...args) {
@@ -693,16 +704,12 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback, config) {
                 callback(error); // 调用回调函数，将错误传递给上层处理
             }
         };
-        // 重写 setRequestHeader 方法
-        const originSetRequestHeader = originalRequest.setRequestHeader;
-        originalRequest.setRequestHeader = function (name, value) {
-            headers[name] = value; // 记录请求头
-            // 调用原始的 setRequestHeader 方法
-            originSetRequestHeader.call(this, name, value);
-        };
         //  // 保存原始的 onreadystatechange 函数
         const originalOnReadyStateChange = originalRequest.onreadystatechange;
         originalRequest.onreadystatechange = function (event) {
+            if (originalRequest.readyState === XMLHttpRequest.OPENED) {
+                originalRequest.setRequestHeader(REQUEST_HEADER, createUUid());
+            }
             if (originalRequest.readyState === XMLHttpRequest.DONE) {
                 let endTime = performance.now();
                 let duration = endTime - startTime;

@@ -2,8 +2,8 @@
  * @Author: yuxuan-ctrl
  * @Date: 2023-12-18 09:17:00
  * @LastEditors: yuxuan-ctrl 
- * @LastEditTime: 2024-07-31 09:22:02
- * @FilePath: \monitor-sdk\src\core\Message.ts
+ * @LastEditTime: 2024-08-08 14:19:38
+ * @FilePath: \xuan-monitor\monitor-sdk\src\core\Message.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
@@ -11,7 +11,7 @@
 import { IMessage } from '../types';
 import IndexedDBWrapper from '../db/index';
 import { getCurrentUnix } from '../utils';
-import { DB_CONFIG } from '@/config/dbconfig';
+import { DB_CONFIG } from '../config/dbconfig';
 
 const {
   TRAFFIC_STORE_NAME,

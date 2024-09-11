@@ -2,8 +2,8 @@
  * @Author: yuxuan-ctrl
  * @Date: 2024-02-04 09:07:38
  * @LastEditors: yuxuan-ctrl
- * @LastEditTime: 2024-03-05 16:58:43
- * @FilePath: \monitor-ui-2\src\utils\record.ts
+ * @LastEditTime: 2024-08-08 15:05:31
+ * @FilePath: \xuan-monitor\monitor-ui-2\src\utils\record.ts
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
@@ -26,7 +26,7 @@ export default class Record {
   // }
 
   async replay(dom, dataList, config?: RecordReplayConfig) {
-    const parseData = JSON.parse(dataList).map((item) => JSON.parse(item));
+    const parseData = (dataList).map((item) => JSON.parse(item));
 
     setTimeout(() => {
       const replayInstance = new rrwebPlayer({

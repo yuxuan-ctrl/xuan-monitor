@@ -2,8 +2,14 @@ import { debounce } from './debounce';
 import HttpError from '../model/HttpError';
 import MessageQueueDBWrapper from '../core/Message';
 import { DB_CONFIG } from '../config/dbconfig';
-import { formatDate, getCurrentUnix, normalizeUrlForPath } from '../utils';
+import {
+  formatDate,
+  getCurrentUnix,
+  normalizeUrlForPath,
+  createUUid,
+} from '../utils';
 
+const REQUEST_HEADER = 'Fi-Request-Id';
 const messageWrapper = MessageQueueDBWrapper.getInstance({
   dbName: 'monitorxq',
   dbVersion: 1,
@@ -40,6 +46,9 @@ function wrapFetch(originalFetch, callback, config) {
     const method = args.length > 1 ? args[1]?.method : 'GET';
     let errorContext = new Error().stack;
     try {
+      if (Reflect.has(args[1], 'headers')) {
+        args[1].headers[REQUEST_HEADER] = createUUid();
+      }
       return originalFetch
         .apply(this, args)
         .then(async (response) => {
@@ -193,6 +202,14 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback, config) {
     let startTime = performance.now();
     const originalRequest = new OriginalXMLHttpRequest();
 
+    // 重写 setRequestHeader 方法
+    const originSetRequestHeader = originalRequest.setRequestHeader;
+    originalRequest.setRequestHeader = function (name, value) {
+      headers[name] = value; // 记录请求头
+      // 调用原始的 setRequestHeader 方法
+      originSetRequestHeader.call(this, name, value);
+    };
+
     // 包裹 open 方法
     const originalOpen = originalRequest.open;
     OriginalXMLHttpRequest.prototype.open = function (...args) {
@@ -206,19 +223,13 @@ function wrapXMLHttpRequest(OriginalXMLHttpRequest, callback, config) {
       }
     };
 
-    // 重写 setRequestHeader 方法
-    const originSetRequestHeader = originalRequest.setRequestHeader;
-
-    originalRequest.setRequestHeader = function (name, value) {
-      headers[name] = value; // 记录请求头
-      // 调用原始的 setRequestHeader 方法
-      originSetRequestHeader.call(this, name, value);
-    };
-
     //  // 保存原始的 onreadystatechange 函数
     const originalOnReadyStateChange = originalRequest.onreadystatechange;
 
     originalRequest.onreadystatechange = function (event) {
+      if(originalRequest.readyState === XMLHttpRequest.OPENED){
+        originalRequest.setRequestHeader(REQUEST_HEADER, createUUid());
+      }
       if (originalRequest.readyState === XMLHttpRequest.DONE) {
         let endTime = performance.now();
         let duration = endTime - startTime;
